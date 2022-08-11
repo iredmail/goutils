@@ -18,18 +18,12 @@ func hasSystemTable(gdb *goqu.Database) (bool, error) {
 				"type": "table",
 				"name": tableSystem,
 			})
-
-		break
 	case dialectMysql:
 		sd = gdb.From("information_schema.TABLES").
 			Where(goqu.Ex{"table_name": tableSystem})
-
-		break
-	case DialectPostgres:
+	case dialectPostgres:
 		sd = gdb.From("pg_class").
 			Where(goqu.Ex{"relname": tableSystem})
-
-		break
 	}
 
 	count, err := sd.Count()
@@ -43,16 +37,10 @@ func createSystemTable(gdb *goqu.Database) error {
 	switch dialect {
 	case dialectSQLite:
 		exec = schemaSystemSqlite
-
-		break
 	case dialectMysql:
 		exec = schemaSystemMysql
-
-		break
-	case DialectPostgres:
+	case dialectPostgres:
 		exec = schemaSystemPostgres
-
-		break
 	}
 
 	_, err := gdb.Exec(exec)

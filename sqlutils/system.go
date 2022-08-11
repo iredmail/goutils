@@ -10,7 +10,7 @@ const (
 	// https://github.com/doug-martin/goqu/blob/master/docs/dialect.md#dialect
 	dialectSQLite   = "sqlite3"
 	dialectMysql    = "mysql"
-	DialectPostgres = "postgres"
+	dialectPostgres = "postgres"
 
 	schemaSystemSqlite = `
 CREATE TABLE IF NOT EXISTS system (
