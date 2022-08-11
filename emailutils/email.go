@@ -73,8 +73,8 @@ func ExtractDomainsFromEmails(emails []string) (domains []string) {
 	return domains
 }
 
-// StripEmailExtension removes '+extension' in email address.
-func StripEmailExtension(email string) string {
+// StripExtension removes '+extension' in email address.
+func StripExtension(email string) string {
 	if !IsEmail(email) {
 		return email
 	}
@@ -126,7 +126,7 @@ func ExtractEmailsFromAddressList(s string) (emails []string, err error) {
 		i := strings.Trim(addr.Address, `'"`)
 
 		// 去掉地址扩展并转换为小写
-		i = strings.ToLower(StripEmailExtension(i))
+		i = strings.ToLower(StripExtension(i))
 
 		emails = append(emails, i)
 	}

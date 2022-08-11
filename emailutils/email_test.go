@@ -24,9 +24,9 @@ func TestEmail(t *testing.T) {
 	assert.Equal(t, ExtractDomainFromEmail("user@[192.168.1.1]"), "192.168.1.1")
 
 	// Username address extension
-	assert.Equal(t, StripEmailExtension("User@A.Io"), "user@a.io")
-	assert.Equal(t, StripEmailExtension("User+ext-123=456@a.iO"), "user@a.io")
-	assert.Equal(t, StripEmailExtension("User-123=456@A.iO"), "user-123=456@a.io")
+	assert.Equal(t, StripExtension("User@A.Io"), "user@a.io")
+	assert.Equal(t, StripExtension("User+ext-123=456@a.iO"), "user@a.io")
+	assert.Equal(t, StripExtension("User-123=456@A.iO"), "user-123=456@a.io")
 
 	// Parse email addresses.
 	expected := `"Name" <u@d.io>`
