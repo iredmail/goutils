@@ -1,14 +1,16 @@
 package ctxutils
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 
-	"spider/internal/cfg"
-	"spider/internal/email"
-	"spider/internal/respcode"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/iredmail/goutils/emailutils"
+)
+
+const (
+	defaultPageSizeLimit = 100
 )
 
 func QueryInt(ctx *fiber.Ctx, key string, defaultValue int) (num int) {
@@ -30,14 +32,14 @@ func QueryPage(ctx *fiber.Ctx) (page int) {
 // QueryLimit 用于查询 URL query parameters（`/?limit=x`）里 `limit` 参数的值。
 // 如果没有指定则默认为 cfg.WebPageSize。
 func QueryLimit(ctx *fiber.Ctx) (page int) {
-	return QueryInt(ctx, "limit", cfg.WebPageSize)
+	return QueryInt(ctx, "limit", defaultPageSizeLimit)
 }
 
 func QueryDomain(ctx *fiber.Ctx) (domain string, err error) {
 	domain = ctx.Query("domain")
 
-	if !email.IsDomain(domain) {
-		return "", respcode.ErrInvalidEmailDomain
+	if !emailutils.IsDomain(domain) {
+		return "", errors.New("INVALID_EMAIL_DOMAIN")
 	}
 
 	return domain, nil
@@ -46,8 +48,8 @@ func QueryDomain(ctx *fiber.Ctx) (domain string, err error) {
 func QueryParticipant(ctx *fiber.Ctx) (addr string, err error) {
 	addr = ctx.Query("participant")
 
-	if !email.IsEmail(addr) {
-		return "", respcode.ErrInvalidEmail
+	if !emailutils.IsEmail(addr) {
+		return "", errors.New("INVALID_EMAIL")
 	}
 
 	return addr, nil

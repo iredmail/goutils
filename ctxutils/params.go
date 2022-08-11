@@ -1,30 +1,17 @@
 package ctxutils
 
 import (
-	"spider/internal/email"
-	"spider/internal/respcode"
-	"spider/internal/types"
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/iredmail/goutils/emailutils"
 )
-
-func ParamHUID(ctx *fiber.Ctx) (types.HUID, bool) {
-	s := ctx.Params("huid")
-
-	return types.StringToHUID(s)
-}
-
-func ParamAUID(ctx *fiber.Ctx) (types.AUID, bool) {
-	s := ctx.Params("auid")
-
-	return types.StringToAUID(s)
-}
 
 func ParamDomain(ctx *fiber.Ctx) (domain string, err error) {
 	domain = ctx.Params("domain")
 
-	if !email.IsDomain(domain) {
-		return "", respcode.ErrInvalidEmailDomain
+	if !emailutils.IsDomain(domain) {
+		return "", errors.New("INVALID_EMAIL_DOMAIN")
 	}
 
 	return domain, nil
@@ -33,8 +20,8 @@ func ParamDomain(ctx *fiber.Ctx) (domain string, err error) {
 func ParamEmail(ctx *fiber.Ctx) (addr string, err error) {
 	addr = ctx.Params("email")
 
-	if !email.IsEmail(addr) {
-		return "", respcode.ErrInvalidEmail
+	if !emailutils.IsEmail(addr) {
+		return "", errors.New("INVALID_EMAIL")
 	}
 
 	return addr, nil
