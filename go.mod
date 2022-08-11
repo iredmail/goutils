@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/gofiber/fiber/v2 v2.36.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	modernc.org/sqlite v1.18.1
 )
@@ -26,7 +26,7 @@ require (
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	golang.org/x/tools v0.1.10 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/uint128 v1.1.1 // indirect
 	modernc.org/cc/v3 v3.36.0 // indirect
 	modernc.org/ccgo/v3 v3.16.8 // indirect
