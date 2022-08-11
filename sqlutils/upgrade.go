@@ -7,16 +7,28 @@ import (
 	"github.com/doug-martin/goqu/v9"
 )
 
-func hasSystemTable(gdb *goqu.Database, dialect string) (bool, error) {
+func hasSystemTable(gdb *goqu.Database) (bool, error) {
+	dialect := gdb.Dialect()
 	var sd *goqu.SelectDataset
 	switch dialect {
-	case sqliteDialect:
+	case dialectSQLite:
 		sd = gdb.From("sqlite_master").
 			Select("name").
 			Where(goqu.Ex{
 				"type": "table",
 				"name": tableSystem,
 			})
+
+		break
+	case dialectMysql:
+		sd = gdb.From("information_schema.TABLES").
+			Where(goqu.Ex{"table_name": tableSystem})
+
+		break
+	case DialectPostgres:
+		sd = gdb.From("pg_class").
+			Where(goqu.Ex{"relname": tableSystem})
+
 		break
 	}
 
@@ -25,11 +37,21 @@ func hasSystemTable(gdb *goqu.Database, dialect string) (bool, error) {
 	return count == 1, err
 }
 
-func createSystemTable(gdb *goqu.Database, dialect string) error {
+func createSystemTable(gdb *goqu.Database) error {
+	dialect := gdb.Dialect()
 	var exec string
 	switch dialect {
-	case sqliteDialect:
+	case dialectSQLite:
 		exec = schemaSystemSqlite
+
+		break
+	case dialectMysql:
+		exec = schemaSystemMysql
+
+		break
+	case DialectPostgres:
+		exec = schemaSystemPostgres
+
 		break
 	}
 
@@ -78,15 +100,14 @@ func updateSQLSchemaVersion(gdb *goqu.Database, version int) error {
 //
 // - `subFSSQLFiles` 是使用 fs.Sub 方法提取需要升级的 sql 文件所在的子目录。
 func UpgradeSQLSchema(gdb *goqu.Database, subFSSQLFiles fs.FS, latestVersion int) error {
-	dialect := gdb.Dialect()
-	hasTable, err := hasSystemTable(gdb, dialect)
+	hasTable, err := hasSystemTable(gdb)
 	if err != nil {
 		return err
 	}
 
 	// 初始安装，数据库尚未初始化，没有 system 表。
 	if !hasTable {
-		if err = createSystemTable(gdb, dialect); err != nil {
+		if err = createSystemTable(gdb); err != nil {
 			return err
 		}
 
@@ -106,6 +127,10 @@ func UpgradeSQLSchema(gdb *goqu.Database, subFSSQLFiles fs.FS, latestVersion int
 	}
 
 	if localVersion >= latestVersion {
+		return nil
+	}
+
+	if subFSSQLFiles == nil {
 		return nil
 	}
 

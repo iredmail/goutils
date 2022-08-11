@@ -8,9 +8,9 @@ const (
 	keySQLSchemaVersion = "sql_schema_version"
 
 	// https://github.com/doug-martin/goqu/blob/master/docs/dialect.md#dialect
-	sqliteDialect   = "sqlite3"
-	mysqlDialect    = "mysql"
-	postgresDialect = "postgres"
+	dialectSQLite   = "sqlite3"
+	dialectMysql    = "mysql"
+	DialectPostgres = "postgres"
 
 	schemaSystemSqlite = `
 CREATE TABLE IF NOT EXISTS system (
@@ -24,20 +24,21 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_system_k ON system (k);
 
 	schemaSystemMysql = `
 CREATE TABLE IF NOT EXISTS system (
-    id  INTEGER PRIMARY KEY AUTOINCREMENT,
-    k   TEXT NOT NULL,
-    v   TEXT NOT NULL
-) STRICT;
+    id  INT(10) UNSIGNED AUTO_INCREMENT,
+    k   VARCHAR(255) NOT NULL,
+    v   VARCHAR(255) NOT NULL,
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_system_k ON system (k);
+	PRIMARY KEY (id),
+	UNIQUE INDEX idx_system_k (k)
+) ENGINE=InnoDB;
 `
 
 	schemaSystemPostgres = `
 CREATE TABLE IF NOT EXISTS system (
-    id  INTEGER PRIMARY KEY AUTOINCREMENT,
-    k   TEXT NOT NULL,
-    v   TEXT NOT NULL
-) STRICT;
+    id  SERIAL PRIMARY KEY,
+    k   VARCHAR(255) NOT NULL,
+    v   VARCHAR(255) NOT NULL
+);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_system_k ON system (k);
 `
