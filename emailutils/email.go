@@ -1,4 +1,4 @@
-package email
+package emailutils
 
 import (
 	"errors"
@@ -34,8 +34,8 @@ func IsDomain(s string) bool {
 	return regexDomain.MatchString(s)
 }
 
-// ExtractEmailLocalPart 返回邮件地址里的 local part 部分。
-func ExtractEmailLocalPart(e string) (string, error) {
+// ExtractLocalPart 返回邮件地址里的 local part 部分。
+func ExtractLocalPart(e string) (string, error) {
 	parts := strings.Split(e, "@")
 	if len(parts) != 2 {
 		return "", fmt.Errorf("invalid archiving address: %s", e)
@@ -44,9 +44,9 @@ func ExtractEmailLocalPart(e string) (string, error) {
 	return parts[0], nil
 }
 
-// ExtractDomainFromEmail 返回邮件地址里的（转换为小写字母的）域名部分。
+// ExtractDomain 返回邮件地址里的（转换为小写字母的）域名部分。
 // 如果域名是 IP 地址（如：`[192.168.1.1]`），则返回（不含中括号的）IP 地址。
-func ExtractDomainFromEmail(e string) string {
+func ExtractDomain(e string) string {
 	parts := strings.Split(e, "@")
 	domain := parts[len(parts)-1]
 
@@ -61,9 +61,9 @@ func ExtractDomainFromEmail(e string) string {
 	return strings.ToLower(domain)
 }
 
-func ExtractDomainsFromEmails(emails []string) (domains []string) {
+func ExtractDomains(emails []string) (domains []string) {
 	for _, addr := range emails {
-		d := ExtractDomainFromEmail(addr)
+		d := ExtractDomain(addr)
 
 		if !slices.Contains(domains, d) {
 			domains = append(domains, d)
