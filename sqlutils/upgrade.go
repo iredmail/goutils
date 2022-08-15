@@ -7,7 +7,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 )
 
-func hasSystemTable(gdb *goqu.Database, dbname string) (bool, error) {
+func hasSystemTable(gdb *goqu.Database, dbName string) (bool, error) {
 	dialect := gdb.Dialect()
 	var sd *goqu.SelectDataset
 	switch dialect {
@@ -20,7 +20,7 @@ func hasSystemTable(gdb *goqu.Database, dbname string) (bool, error) {
 			})
 	case dialectMysql:
 		sd = gdb.From("information_schema.TABLES").
-			Where(goqu.Ex{"table_schema": dbname, "table_name": tableSystem})
+			Where(goqu.Ex{"table_schema": dbName, "table_name": tableSystem})
 	case dialectPostgres:
 		sd = gdb.From("pg_class").
 			Where(goqu.Ex{"relname": tableSystem})
@@ -87,8 +87,8 @@ func updateSQLSchemaVersion(gdb *goqu.Database, version int) error {
 // UpgradeSQLSchema 升级 sql 表结构
 //
 // - `subFSSQLFiles` 是使用 fs.Sub 方法提取需要升级的 sql 文件所在的子目录。
-func UpgradeSQLSchema(gdb *goqu.Database, subFSSQLFiles fs.FS, dbname string, latestVersion int) error {
-	hasTable, err := hasSystemTable(gdb, dbname)
+func UpgradeSQLSchema(gdb *goqu.Database, subFSSQLFiles fs.FS, dbName string, latestVersion int) error {
+	hasTable, err := hasSystemTable(gdb, dbName)
 	if err != nil {
 		return err
 	}
