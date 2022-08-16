@@ -1,4 +1,4 @@
-package utils
+package goutils
 
 import (
 	"golang.org/x/exp/slices"
