@@ -25,7 +25,7 @@ type Config struct {
 	WithCompress bool // 是否开启 gzip 压缩
 }
 
-func LoggerRotateFile(c *Config, maxSize int) (*log, error) {
+func NewLoggerRotateFile(c *Config, maxSize int) (*log, error) {
 	pth := filepath.Join(c.LogDir, c.FileName)
 	h, err := handler.NewSizeRotateFileHandler(
 		pth,
@@ -71,9 +71,9 @@ func LoggerRotateFile(c *Config, maxSize int) (*log, error) {
 	return (*log)(l), nil
 }
 
-// LoggerRotateTime
+// NewLoggerRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
-func LoggerRotateTime(c *Config, rotateInterval string) (*log, error) {
+func NewLoggerRotateTime(c *Config, rotateInterval string) (*log, error) {
 	if len(rotateInterval) == 0 {
 		return nil, errors.New("empty rotate interval")
 	}
