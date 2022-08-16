@@ -13,7 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type log slog.SugaredLogger
+type Logger slog.SugaredLogger
 
 type Config struct {
 	LogLevel     slog.Level
@@ -25,7 +25,7 @@ type Config struct {
 	WithCompress bool // 是否开启 gzip 压缩
 }
 
-func NewRotateFile(c *Config, maxSize int) (*log, error) {
+func NewRotateFile(c *Config, maxSize int) (*Logger, error) {
 	pth := filepath.Join(c.LogDir, c.FileName)
 	h, err := handler.NewSizeRotateFileHandler(
 		pth,
@@ -40,14 +40,14 @@ func NewRotateFile(c *Config, maxSize int) (*log, error) {
 	}
 
 	var logTemplate string
-	// 当 log level 为 debug 时开启 caller，方便快速定位打印日志位置
+	// 当 Logger level 为 debug 时开启 caller，方便快速定位打印日志位置
 	if c.LogLevel == slog.DebugLevel {
 		logTemplate = "{{datetime}} {{level}} [{{caller}}] {{message}}\n"
 	} else {
 		logTemplate = "{{datetime}} {{level}} {{message}}\n"
 	}
 
-	// 自定义 log formatter
+	// 自定义 Logger formatter
 	logFormatter := slog.NewTextFormatter(logTemplate)
 	logFormatter.TimeFormat = c.TimeFormat
 	h.SetFormatter(logFormatter)
@@ -68,12 +68,12 @@ func NewRotateFile(c *Config, maxSize int) (*log, error) {
 	l.AddHandler(h)
 	l.DoNothingOnPanicFatal()
 
-	return (*log)(l), nil
+	return (*Logger)(l), nil
 }
 
 // NewRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
-func NewRotateTime(c *Config, rotateInterval string) (*log, error) {
+func NewRotateTime(c *Config, rotateInterval string) (*Logger, error) {
 	if len(rotateInterval) == 0 {
 		return nil, errors.New("empty rotate interval")
 	}
@@ -103,14 +103,14 @@ func NewRotateTime(c *Config, rotateInterval string) (*log, error) {
 	}
 
 	var logTemplate string
-	// 当 log level 为 debug 时开启 caller，方便快速定位打印日志位置
+	// 当 Logger level 为 debug 时开启 caller，方便快速定位打印日志位置
 	if c.LogLevel == slog.DebugLevel {
 		logTemplate = "{{datetime}} {{level}} [{{caller}}] {{message}}\n"
 	} else {
 		logTemplate = "{{datetime}} {{level}} {{message}}\n"
 	}
 
-	// 自定义 log formatter
+	// 自定义 Logger formatter
 	logFormatter := slog.NewTextFormatter(logTemplate)
 	logFormatter.TimeFormat = c.TimeFormat
 	h.SetFormatter(logFormatter)
@@ -131,21 +131,21 @@ func NewRotateTime(c *Config, rotateInterval string) (*log, error) {
 	l.AddHandler(h)
 	l.DoNothingOnPanicFatal()
 
-	return (*log)(l), nil
+	return (*Logger)(l), nil
 }
 
-func (l *log) Info(format string, args ...interface{}) {
+func (l *Logger) Info(format string, args ...interface{}) {
 	l.Infof(format, args...)
 }
 
-func (l *log) Warn(format string, args ...interface{}) {
+func (l *Logger) Warn(format string, args ...interface{}) {
 	l.Warnf(format, args...)
 }
 
-func (l *log) Error(format string, args ...interface{}) {
+func (l *Logger) Error(format string, args ...interface{}) {
 	l.Errorf(format, args...)
 }
 
-func (l *log) Debug(format string, args ...interface{}) {
+func (l *Logger) Debug(format string, args ...interface{}) {
 	l.Debugf(format, args...)
 }
