@@ -5,3 +5,4 @@ Util functions for Go development.
 - `sqlutils`: Util functions with [`goqu`](https://github.com/doug-martin/goqu),
   for SQLite, MySQL, PostgreSQL.
 - `emailutils`: Util functions for handling email addresses, domain names, etc.
+- `logger`: Util functions with [`slog`](https://github.com/phuslu/log)
