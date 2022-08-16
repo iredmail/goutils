@@ -48,7 +48,7 @@ func ExtractLocalPart(e string) (string, error) {
 // 如果域名是 IP 地址（如：`[192.168.1.1]`），则返回（不含中括号的）IP 地址。
 func ExtractDomain(e string) string {
 	parts := strings.Split(e, "@")
-	domain := parts[len(parts)-1]
+	domain := strings.ToLower(parts[len(parts)-1])
 
 	if strings.HasPrefix(domain, "[") {
 		// IP address.
@@ -58,7 +58,7 @@ func ExtractDomain(e string) string {
 		return d2
 	}
 
-	return strings.ToLower(domain)
+	return domain
 }
 
 func ExtractDomains(emails []string) (domains []string) {

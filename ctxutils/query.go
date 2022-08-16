@@ -23,6 +23,29 @@ func QueryInt(ctx *fiber.Ctx, key string, defaultValue int) (num int) {
 	return num
 }
 
+func QueryInt64(ctx *fiber.Ctx, key string, defaultValue ...int64) (num int64) {
+	dv := int64(0)
+
+	if len(defaultValue) > 0 {
+		dv = defaultValue[0]
+	}
+
+	i := ctx.Query(key, fmt.Sprintf("%d", dv))
+	v, err := strconv.ParseInt(i, 10, 64)
+	if err != nil {
+		return 0
+	}
+
+	return v
+}
+
+func QueryBool(ctx *fiber.Ctx, key string) bool {
+	query := ctx.Query(key, "false")
+	parseBool, _ := strconv.ParseBool(query)
+
+	return parseBool
+}
+
 // QueryPage 用于查询 URL query parameters（`/?page=x`）里 `page` 参数的值。
 // 如果没有指定则默认为 1。
 func QueryPage(ctx *fiber.Ctx) (page int) {
