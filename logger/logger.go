@@ -3,7 +3,7 @@ package logger
 import (
 	"errors"
 	"fmt"
-	"path/filepath"
+	"log/syslog"
 	"strings"
 	"time"
 
@@ -16,42 +16,35 @@ import (
 type Logger slog.SugaredLogger
 
 type Config struct {
-	LogLevel     slog.Level
-	LogDir       string
-	FileName     string
-	BufferSize   int // 指定缓冲区的大小，注意：默认为 8 * 1024。当为 0 时将会即时写入日志文件
-	MaxBackups   int
-	TimeFormat   string
-	WithCompress bool // 是否开启 gzip 压缩
+	Target         string
+	Level          string
+	SyslogServer   string
+	SysTag         string
+	path           string
+	MaxSize        int
+	RotateInterval string
+	BufferSize     int // 指定缓冲区的大小，注意：默认为 8 * 1024。当为 0 时将会即时写入日志文件
+	MaxBackups     int
+	TimeFormat     string
+	WithCompress   bool // 是否开启 gzip 压缩
 }
 
-func NewRotateFile(c *Config, maxSize int) (*Logger, error) {
-	pth := filepath.Join(c.LogDir, c.FileName)
-	h, err := handler.NewSizeRotateFileHandler(
-		pth,
-		maxSize,
-		handler.WithBuffSize(c.BufferSize),
-		handler.WithCompress(c.WithCompress),
-		handler.WithLogLevels(slog.AllLevels),
-	)
-
-	if err != nil {
-		return nil, err
-	}
-
+func New(c *Config) (*Logger, error) {
 	var logTemplate string
+	var syslogLevel syslog.Priority
 	// 当 Logger level 为 debug 时开启 caller，方便快速定位打印日志位置
-	if c.LogLevel == slog.DebugLevel {
+	level := slog.LevelByName(c.Level)
+	if level == slog.DebugLevel {
+		syslogLevel = syslog.LOG_DEBUG
 		logTemplate = "{{datetime}} {{level}} [{{caller}}] {{message}}\n"
 	} else {
+		syslogLevel = syslog.LOG_INFO
 		logTemplate = "{{datetime}} {{level}} {{message}}\n"
 	}
 
 	// 自定义 Logger formatter
 	logFormatter := slog.NewTextFormatter(logTemplate)
 	logFormatter.TimeFormat = c.TimeFormat
-	h.SetFormatter(logFormatter)
-
 	l := slog.NewStdLogger().Configure(func(sl *slog.SugaredLogger) {
 		sl.ReportCaller = true
 		sl.CallerSkip = 6
@@ -64,74 +57,90 @@ func NewRotateFile(c *Config, maxSize int) (*Logger, error) {
 		f.EnableColor = false
 	})
 
-	l.Level = c.LogLevel
-	l.AddHandler(h)
+	switch c.Target {
+	case "file":
+		var h *handler.SyncCloseHandler
+		var err error
+		if c.MaxSize > 0 {
+			h, err = handlerRotateFile(c)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			h, err = handlerRotateTime(c)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		h.SetFormatter(logFormatter)
+		l.AddHandler(h)
+	case "syslog":
+		if strings.HasPrefix(c.SyslogServer, "/") {
+			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.SysTag)
+			if err != nil {
+				return nil, err
+			}
+			h.SetFormatter(logFormatter)
+			l.AddHandler(h)
+
+			break
+		}
+
+		w, err := syslog.Dial("tcp", c.SyslogServer, syslogLevel|syslog.LOG_MAIL, c.SysTag)
+		if err != nil {
+			return nil, err
+		}
+		h := handler.NewBufferedHandler(w, c.BufferSize, level)
+		h.SetFormatter(logFormatter)
+		l.AddHandler(h)
+	default:
+		h := handler.NewConsoleHandler([]slog.Level{level})
+		h.SetFormatter(logFormatter)
+		l.AddHandler(h)
+	}
+
+	l.Level = level
 	l.DoNothingOnPanicFatal()
 
 	return (*Logger)(l), nil
 }
 
-// NewRotateTime
+func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
+	return handler.NewSizeRotateFileHandler(
+		c.path,
+		c.MaxSize,
+		handler.WithBuffSize(c.BufferSize),
+		handler.WithCompress(c.WithCompress),
+		handler.WithLogLevels(slog.AllLevels),
+	)
+}
+
+// handlerRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
-func NewRotateTime(c *Config, rotateInterval string) (*Logger, error) {
-	if len(rotateInterval) == 0 {
+func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
+	if len(c.RotateInterval) == 0 {
 		return nil, errors.New("empty rotate interval")
 	}
 
-	lastChar := rotateInterval[len(rotateInterval)-1]
+	lastChar := c.RotateInterval[len(c.RotateInterval)-1]
 	lowerLastChar := strings.ToLower(string(lastChar))
 	if !slices.Contains([]string{"w", "d", "h", "m", "s"}, lowerLastChar) {
 		return nil, fmt.Errorf("unsuppored rotate interval type: %s", lowerLastChar)
 	}
 
-	rotateIntervalDuration, err := time.ParseDuration(rotateInterval)
+	rotateIntervalDuration, err := time.ParseDuration(c.RotateInterval)
 	if err != nil {
 		return nil, err
 	}
 
-	pth := filepath.Join(c.LogDir, c.FileName)
-	h, err := handler.NewTimeRotateFileHandler(
-		pth,
+	return handler.NewTimeRotateFileHandler(
+		c.path,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
 		handler.WithBuffSize(c.BufferSize),
 		handler.WithCompress(c.WithCompress),
 		handler.WithLogLevels(slog.AllLevels),
 	)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var logTemplate string
-	// 当 Logger level 为 debug 时开启 caller，方便快速定位打印日志位置
-	if c.LogLevel == slog.DebugLevel {
-		logTemplate = "{{datetime}} {{level}} [{{caller}}] {{message}}\n"
-	} else {
-		logTemplate = "{{datetime}} {{level}} {{message}}\n"
-	}
-
-	// 自定义 Logger formatter
-	logFormatter := slog.NewTextFormatter(logTemplate)
-	logFormatter.TimeFormat = c.TimeFormat
-	h.SetFormatter(logFormatter)
-
-	l := slog.NewStdLogger().Configure(func(sl *slog.SugaredLogger) {
-		sl.ReportCaller = true
-		sl.CallerSkip = 6
-	})
-	l.Config(func(sl *slog.SugaredLogger) {
-		f := sl.Formatter.(*slog.TextFormatter)
-		f.TimeFormat = c.TimeFormat
-		f.SetTemplate(logTemplate)
-		f.FullDisplay = true
-		f.EnableColor = false
-	})
-
-	l.Level = c.LogLevel
-	l.AddHandler(h)
-	l.DoNothingOnPanicFatal()
-
-	return (*Logger)(l), nil
 }
 
 func (l *Logger) Info(format string, args ...interface{}) {
