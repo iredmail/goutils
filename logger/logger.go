@@ -94,10 +94,6 @@ func New(c *Config) (*Logger, error) {
 		h := handler.NewBufferedHandler(w, c.LogBufferSize, level)
 		h.SetFormatter(logFormatter)
 		l.AddHandler(h)
-	default:
-		h := handler.NewConsoleHandler([]slog.Level{level})
-		h.SetFormatter(logFormatter)
-		l.AddHandler(h)
 	}
 
 	l.Level = level
