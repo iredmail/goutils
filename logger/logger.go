@@ -16,24 +16,24 @@ import (
 type Logger slog.SugaredLogger
 
 type Config struct {
-	Target         string
-	Level          string
-	SyslogServer   string
-	SysTag         string
-	path           string
-	MaxSize        int
-	RotateInterval string
-	BufferSize     int // 指定缓冲区的大小，注意：默认为 8 * 1024。当为 0 时将会即时写入日志文件
-	MaxBackups     int
-	TimeFormat     string
-	WithCompress   bool // 是否开启 gzip 压缩
+	LogTarget         string `json:"log_target"`
+	LogLevel          string `json:"log_level"`
+	LogSyslogServer   string `json:"log_syslog_server"`
+	LogSysTag         string `json:"log_sys_tag"`
+	LogPath           string `json:"log_path"`
+	LogMaxSize        int    `json:"log_max_size"`
+	LogRotateInterval string `json:"log_rotate_interval"`
+	LogBufferSize     int    `json:"log_buffer_size"` // 指定缓冲区的大小，注意：默认为 8 * 1024。当为 0 时将会即时写入日志文件
+	LogMaxBackups     int    `json:"log_max_backups"`
+	LogTimeFormat     string `json:"log_time_format"`
+	LogWithCompress   bool   `json:"log_with_compress"` // 是否开启 gzip 压缩
 }
 
 func New(c *Config) (*Logger, error) {
 	var logTemplate string
 	var syslogLevel syslog.Priority
 	// 当 Logger level 为 debug 时开启 caller，方便快速定位打印日志位置
-	level := slog.LevelByName(c.Level)
+	level := slog.LevelByName(c.LogLevel)
 	if level == slog.DebugLevel {
 		syslogLevel = syslog.LOG_DEBUG
 		logTemplate = "{{datetime}} {{level}} [{{caller}}] {{message}}\n"
@@ -44,24 +44,24 @@ func New(c *Config) (*Logger, error) {
 
 	// 自定义 Logger formatter
 	logFormatter := slog.NewTextFormatter(logTemplate)
-	logFormatter.TimeFormat = c.TimeFormat
+	logFormatter.TimeFormat = c.LogTimeFormat
 	l := slog.NewStdLogger().Configure(func(sl *slog.SugaredLogger) {
 		sl.ReportCaller = true
 		sl.CallerSkip = 6
 	})
 	l.Config(func(sl *slog.SugaredLogger) {
 		f := sl.Formatter.(*slog.TextFormatter)
-		f.TimeFormat = c.TimeFormat
+		f.TimeFormat = c.LogTimeFormat
 		f.SetTemplate(logTemplate)
 		f.FullDisplay = true
 		f.EnableColor = false
 	})
 
-	switch c.Target {
+	switch c.LogTarget {
 	case "file":
 		var h *handler.SyncCloseHandler
 		var err error
-		if c.MaxSize > 0 {
+		if c.LogMaxSize > 0 {
 			h, err = handlerRotateFile(c)
 			if err != nil {
 				return nil, err
@@ -76,8 +76,8 @@ func New(c *Config) (*Logger, error) {
 		h.SetFormatter(logFormatter)
 		l.AddHandler(h)
 	case "syslog":
-		if strings.HasPrefix(c.SyslogServer, "/") {
-			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.SysTag)
+		if strings.HasPrefix(c.LogSyslogServer, "/") {
+			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.LogSysTag)
 			if err != nil {
 				return nil, err
 			}
@@ -87,11 +87,11 @@ func New(c *Config) (*Logger, error) {
 			break
 		}
 
-		w, err := syslog.Dial("tcp", c.SyslogServer, syslogLevel|syslog.LOG_MAIL, c.SysTag)
+		w, err := syslog.Dial("tcp", c.LogSyslogServer, syslogLevel|syslog.LOG_MAIL, c.LogSysTag)
 		if err != nil {
 			return nil, err
 		}
-		h := handler.NewBufferedHandler(w, c.BufferSize, level)
+		h := handler.NewBufferedHandler(w, c.LogBufferSize, level)
 		h.SetFormatter(logFormatter)
 		l.AddHandler(h)
 	default:
@@ -108,10 +108,10 @@ func New(c *Config) (*Logger, error) {
 
 func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 	return handler.NewSizeRotateFileHandler(
-		c.path,
-		c.MaxSize,
-		handler.WithBuffSize(c.BufferSize),
-		handler.WithCompress(c.WithCompress),
+		c.LogPath,
+		c.LogMaxSize,
+		handler.WithBuffSize(c.LogBufferSize),
+		handler.WithCompress(c.LogWithCompress),
 		handler.WithLogLevels(slog.AllLevels),
 	)
 }
@@ -119,26 +119,26 @@ func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 // handlerRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
 func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
-	if len(c.RotateInterval) == 0 {
+	if len(c.LogRotateInterval) == 0 {
 		return nil, errors.New("empty rotate interval")
 	}
 
-	lastChar := c.RotateInterval[len(c.RotateInterval)-1]
+	lastChar := c.LogRotateInterval[len(c.LogRotateInterval)-1]
 	lowerLastChar := strings.ToLower(string(lastChar))
 	if !slices.Contains([]string{"w", "d", "h", "m", "s"}, lowerLastChar) {
 		return nil, fmt.Errorf("unsuppored rotate interval type: %s", lowerLastChar)
 	}
 
-	rotateIntervalDuration, err := time.ParseDuration(c.RotateInterval)
+	rotateIntervalDuration, err := time.ParseDuration(c.LogRotateInterval)
 	if err != nil {
 		return nil, err
 	}
 
 	return handler.NewTimeRotateFileHandler(
-		c.path,
+		c.LogPath,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
-		handler.WithBuffSize(c.BufferSize),
-		handler.WithCompress(c.WithCompress),
+		handler.WithBuffSize(c.LogBufferSize),
+		handler.WithCompress(c.LogWithCompress),
 		handler.WithLogLevels(slog.AllLevels),
 	)
 }
