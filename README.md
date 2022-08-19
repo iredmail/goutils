@@ -1,5 +1,7 @@
 Util functions for Go development.
 
+__NOTE__: It's for personal use, we don't accept feature requests and PRs.
+
 - `ctxutils`: Util functions for [`gofiber`](https://gofiber.io) web framework,
   mostly `fiber.Ctx`.
 - `sqlutils`: Util functions with [`goqu`](https://github.com/doug-martin/goqu),
