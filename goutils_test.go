@@ -18,8 +18,8 @@ func TestGoUtils(t *testing.T) {
 	arrStr = []string{"a", "b", "c"}
 	str := "ptr"
 	ptr = &str
-	assert.True(t, IsNotEmpty("str"))
-	assert.True(t, IsNotEmpty(arrInt))
-	assert.True(t, IsNotEmpty(arrStr))
-	assert.True(t, IsNotEmpty(ptr))
+	assert.True(t, NotEmpty("str"))
+	assert.True(t, NotEmpty(arrInt))
+	assert.True(t, NotEmpty(arrStr))
+	assert.True(t, NotEmpty(ptr))
 }

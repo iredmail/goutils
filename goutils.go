@@ -24,9 +24,9 @@ func IsEmpty(v any) bool {
 	return false
 }
 
-// IsNotEmpty
+// NotEmpty
 // supported: string, []any, ptr
-func IsNotEmpty(v any) bool {
+func NotEmpty(v any) bool {
 	rt := reflect.TypeOf(v)
 	switch rt.Kind() {
 	case reflect.String:
