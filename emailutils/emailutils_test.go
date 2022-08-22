@@ -20,8 +20,8 @@ func TestEmail(t *testing.T) {
 	assert.False(t, IsDomain("abcdefg"))
 	assert.False(t, IsDomain("1234"))
 
-	assert.Equal(t, ExtractDomainFromEmail("user@A.io"), "a.io")
-	assert.Equal(t, ExtractDomainFromEmail("user@[192.168.1.1]"), "192.168.1.1")
+	assert.Equal(t, ExtractDomain("user@A.io"), "a.io")
+	assert.Equal(t, ExtractDomain("user@[192.168.1.1]"), "192.168.1.1")
 
 	// Username address extension
 	assert.Equal(t, StripExtension("User@A.Io"), "user@a.io")
