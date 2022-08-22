@@ -1,6 +1,7 @@
 package goutils
 
 import (
+	"net"
 	"reflect"
 
 	"golang.org/x/exp/slices"
@@ -39,6 +40,12 @@ func NotEmpty(v any) bool {
 	}
 
 	return true
+}
+
+func IsIPv4(address string) bool {
+	ip := net.ParseIP(address)
+
+	return ip.To4() != nil
 }
 
 func Intersect[T comparable](s1, s2 []T) []T {
