@@ -4,8 +4,8 @@ import (
 	"net"
 	"reflect"
 
-	"golang.org/x/exp/slices"
 	"github.com/google/uuid"
+	"golang.org/x/exp/slices"
 )
 
 func IsUUID(u string) bool {
@@ -19,7 +19,7 @@ func IsUUID(u string) bool {
 }
 
 // IsEmpty
-// supported: string, []any, ptr
+// supported: string, []any, map, ptr
 func IsEmpty(v any) bool {
 	tf := reflect.TypeOf(v)
 	switch tf.Kind() {
@@ -27,6 +27,13 @@ func IsEmpty(v any) bool {
 		return len(v.(string)) == 0
 	case reflect.Slice:
 		rv := reflect.ValueOf(v)
+		return rv.Len() == 0
+	case reflect.Map:
+		rv := reflect.ValueOf(v)
+		if rv.IsNil() {
+			return true
+		}
+
 		return rv.Len() == 0
 	case reflect.Pointer:
 		rv := reflect.ValueOf(v)
@@ -37,7 +44,7 @@ func IsEmpty(v any) bool {
 }
 
 // NotEmpty
-// supported: string, []any, ptr
+// supported: string, []any, map, ptr
 func NotEmpty(v any) bool {
 	rt := reflect.TypeOf(v)
 	switch rt.Kind() {
@@ -46,11 +53,18 @@ func NotEmpty(v any) bool {
 	case reflect.Slice:
 		rv := reflect.ValueOf(v)
 		return rv.Len() > 0
+	case reflect.Map:
+		rv := reflect.ValueOf(v)
+		if rv.IsNil() {
+			return false
+		}
+
+		return rv.Len() > 0
 	case reflect.Ptr:
 		return v != nil
 	}
 
-	return true
+	return false
 }
 
 func IsIPv4(address string) bool {
