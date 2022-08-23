@@ -36,7 +36,7 @@ func New(c *Config) (*Logger, error) {
 	level := slog.LevelByName(c.LogLevel)
 	if level == slog.DebugLevel {
 		syslogLevel = syslog.LOG_DEBUG
-		logTemplate = "{{datetime}} {{level}} [{{caller}}] {{message}}\n"
+		logTemplate = "{{datetime}} {{level}} {{message}} [{{caller}}]\n"
 	} else {
 		syslogLevel = syslog.LOG_INFO
 		logTemplate = "{{datetime}} {{level}} {{message}}\n"
