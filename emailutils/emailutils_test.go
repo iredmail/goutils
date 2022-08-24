@@ -66,4 +66,14 @@ func TestNetwork(t *testing.T) {
 
 	assert.True(t, IsCIDRNetwork("192.168.2.1/24"))
 	assert.False(t, IsCIDRNetwork("192.168.2.1"))
+
+	assert.True(t, IsWildcardAddr("172.13.1.*"))
+	assert.True(t, IsWildcardAddr("172.13.*.1"))
+	assert.True(t, IsWildcardAddr("172.*.1.1"))
+	assert.False(t, IsWildcardAddr("172.2.*"))
+	assert.False(t, IsWildcardAddr("172.256.*.1"))
+
+	assert.True(t, IsWildcardIPv4("172.31.1.*"))
+	assert.False(t, IsWildcardIPv4("172.256.1.*"))
+	assert.False(t, IsWildcardIPv4("172.1.*"))
 }

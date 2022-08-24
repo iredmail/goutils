@@ -35,8 +35,12 @@ func IsDomain(s string) bool {
 	return regexDomain.MatchString(s)
 }
 
-func IsTLDDomain(d string) bool    { return true } // TODO
-func IsWildcardAddr(s string) bool { return true } // TODO
+func IsTLDDomain(d string) bool { return true } // TODO
+func IsWildcardAddr(s string) bool {
+	s = strings.ReplaceAll(s, "*", "1")
+
+	return net.ParseIP(s) != nil
+}
 func IsStrictIP(s string) bool {
 	return net.ParseIP(s) != nil
 }
@@ -45,7 +49,15 @@ func IsCIDRNetwork(s string) bool {
 
 	return err == nil
 }
-func IsWildcardIPv4(s string) bool { return true } // TODO
+func IsWildcardIPv4(s string) bool {
+	s = strings.ReplaceAll(s, "*", "1")
+	ip := net.ParseIP(s)
+	if ip == nil {
+		return false
+	}
+
+	return ip.To4() != nil
+}
 
 // ExtractLocalPart 返回邮件地址里的 local part 部分。
 func ExtractLocalPart(e string) (string, error) {
