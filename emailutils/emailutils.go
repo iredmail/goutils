@@ -3,6 +3,7 @@ package emailutils
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/mail"
 	"regexp"
 	"strings"
@@ -36,8 +37,14 @@ func IsDomain(s string) bool {
 
 func IsTLDDomain(d string) bool    { return true } // TODO
 func IsWildcardAddr(s string) bool { return true } // TODO
-func IsStrictIP(s string) bool     { return true } // TODO
-func IsCIDRNetwork(s string) bool  { return true } // TODO
+func IsStrictIP(s string) bool {
+	return net.ParseIP(s) != nil
+}
+func IsCIDRNetwork(s string) bool {
+	_, _, err := net.ParseCIDR(s)
+
+	return err == nil
+}
 func IsWildcardIPv4(s string) bool { return true } // TODO
 
 // ExtractLocalPart 返回邮件地址里的 local part 部分。
