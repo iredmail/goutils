@@ -8,4 +8,4 @@ __NOTE__: It's for personal use, we don't accept feature requests and PRs.
   for SQLite, MySQL, PostgreSQL.
 - `emailutils`: Util functions for handling email addresses, domain names, etc.
 - `timeutils`: Util functions for time formatting and convert.
-- `logger`: Util functions with [`slog`](https://github.com/phuslu/log)
+- `log`: Util functions for logging with [`slog`](https://github.com/phuslu/log)

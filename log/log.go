@@ -1,4 +1,4 @@
-package logger
+package log
 
 import (
 	"errors"
@@ -32,17 +32,19 @@ type Config struct {
 func New(c *Config) (*Logger, error) {
 	var logTemplate string
 	var syslogLevel syslog.Priority
-	// 当 Logger level 为 debug 时开启 caller，方便快速定位打印日志位置
+
 	level := slog.LevelByName(c.LogLevel)
 	if level == slog.DebugLevel {
 		syslogLevel = syslog.LOG_DEBUG
-		logTemplate = "{{datetime}} {{level}} {{message}} [{{caller}}]\n"
+		// 当 log level 为 debug 时开启 caller，方便快速定位打印日志位置
+		// logTemplate = "{{datetime}} {{level}} {{message}} [{{caller}}]\n"
 	} else {
 		syslogLevel = syslog.LOG_INFO
-		logTemplate = "{{datetime}} {{level}} {{message}}\n"
+		// logTemplate = "{{datetime}} {{level}} {{message}}\n"
 	}
+	logTemplate = "{{datetime}} {{level}} {{message}}\n"
 
-	// 自定义 Logger formatter
+	// custom log format
 	logFormatter := slog.NewTextFormatter(logTemplate)
 	logFormatter.TimeFormat = c.LogTimeFormat
 	l := slog.NewStdLogger().Configure(func(sl *slog.SugaredLogger) {
