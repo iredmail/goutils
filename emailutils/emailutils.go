@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	regexEmail  = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	regexDomain = regexp.MustCompile(`^(([a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[0-9]{1})|([0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z0-9]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z0-9]{2,3})$`)
+	regexEmail     = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	regexDomain    = regexp.MustCompile(`^(([a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[0-9]{1})|([0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z0-9]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z0-9]{2,3})$`)
+	regexTLDDomain = regexp.MustCompile("[a-z0-9\\-]{2,25}")
 )
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
@@ -35,7 +36,14 @@ func IsDomain(s string) bool {
 	return regexDomain.MatchString(s)
 }
 
-func IsTLDDomain(d string) bool { return true } // TODO
+func IsTLDDomain(d string) bool {
+	if !IsDomain(d) {
+		return false
+	}
+
+	return regexTLDDomain.MatchString(d)
+}
+
 func IsWildcardAddr(s string) bool {
 	s = strings.ReplaceAll(s, "*", "1")
 
