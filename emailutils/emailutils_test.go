@@ -23,6 +23,10 @@ func TestEmail(t *testing.T) {
 	assert.Equal(t, ExtractDomain("user@A.io"), "a.io")
 	assert.Equal(t, ExtractDomain("user@[192.168.1.1]"), "192.168.1.1")
 
+	assert.Equal(t, ExtractUsername("user"), "user")          // invalid email
+	assert.Equal(t, ExtractUsername("user@A.io"), "user")     // valid
+	assert.Equal(t, ExtractUsername("user+ext@A.io"), "user") // valid with extension
+
 	// Username address extension
 	assert.Equal(t, StripExtension("User@A.Io"), "user@a.io")
 	assert.Equal(t, StripExtension("User+ext-123=456@a.iO"), "user@a.io")

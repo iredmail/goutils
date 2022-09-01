@@ -66,14 +66,14 @@ func IsWildcardIPv4(s string) bool {
 	return ip.To4() != nil
 }
 
-// ExtractLocalPart returns local part (without extension) of email address.
+// ExtractUsername returns username (without extension) of email address.
 // If s is not a valid email address, s is returned.
-func ExtractLocalPart(s string) string {
+func ExtractUsername(s string) string {
 	if !IsEmail(s) {
 		return s
 	}
 
-	return strings.Split(s, "@")[0]
+	return strings.Split(StripExtension(s), "@")[0]
 }
 
 // ExtractDomain 返回邮件地址里的（转换为小写字母的）域名部分。
