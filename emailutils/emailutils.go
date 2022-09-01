@@ -2,7 +2,6 @@ package emailutils
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"net/mail"
 	"regexp"
@@ -67,14 +66,14 @@ func IsWildcardIPv4(s string) bool {
 	return ip.To4() != nil
 }
 
-// ExtractLocalPart 返回邮件地址里的 local part 部分。
-func ExtractLocalPart(e string) (string, error) {
-	parts := strings.Split(e, "@")
-	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid archiving address: %s", e)
+// ExtractLocalPart returns local part (without extension) of email address.
+// If s is not a valid email address, s is returned.
+func ExtractLocalPart(s string) string {
+	if !IsEmail(s) {
+		return s
 	}
 
-	return parts[0], nil
+	return strings.Split(s, "@")[0]
 }
 
 // ExtractDomain 返回邮件地址里的（转换为小写字母的）域名部分。
