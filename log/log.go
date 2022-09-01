@@ -80,6 +80,11 @@ func New(c *Config) (*Logger, error) {
 		h.SetFormatter(logFormatter)
 		l.AddHandler(h)
 	case "syslog":
+		if len(c.LogSyslogServer) == 0 {
+			// Use local syslog socket by default.
+			c.LogSyslogServer = "/dev/log"
+		}
+
 		if strings.HasPrefix(c.LogSyslogServer, "/") {
 			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.LogSyslogTag)
 			if err != nil {
