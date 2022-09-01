@@ -62,10 +62,10 @@ func New(c *Config) (*Logger, error) {
 	})
 
 	switch c.LogTarget {
-	case "stdout":
-		h := handler.NewConsoleHandler([]slog.Level{level})
-		h.SetFormatter(logFormatter)
-		l.AddHandler(h)
+	// case "stdout":
+	// 	h := handler.NewConsoleHandler([]slog.Level{level})
+	// 	h.SetFormatter(logFormatter)
+	// 	l.AddHandler(h)
 	case "file":
 		var h *handler.SyncCloseHandler
 		var err error
