@@ -19,14 +19,16 @@ type Config struct {
 	LogTarget         string `json:"log_target"`
 	LogLevel          string `json:"log_level"`
 	LogSyslogServer   string `json:"log_syslog_server"`
-	LogSysTag         string `json:"log_sys_tag"`
+	LogSyslogTag      string `json:"log_syslog_tag"`
 	LogPath           string `json:"log_path"`
 	LogMaxSize        int    `json:"log_max_size"`
 	LogRotateInterval string `json:"log_rotate_interval"`
-	LogBufferSize     int    `json:"log_buffer_size"` // 指定缓冲区的大小，注意：默认为 8 * 1024。当为 0 时将会即时写入日志文件
-	LogMaxBackups     int    `json:"log_max_backups"`
-	LogTimeFormat     string `json:"log_time_format"`
-	LogWithCompress   bool   `json:"log_with_compress"` // 是否开启 gzip 压缩
+	// Buffer size defaults to (8 * 1024).
+	// Write to log file immediately if size is 0.
+	LogBufferSize int    `json:"log_buffer_size"`
+	LogMaxBackups int    `json:"log_max_backups"`
+	LogTimeFormat string `json:"log_time_format"`
+	LogCompress   bool   `json:"log_compress"` // compress rotated log file
 }
 
 func New(c *Config) (*Logger, error) {
@@ -79,7 +81,7 @@ func New(c *Config) (*Logger, error) {
 		l.AddHandler(h)
 	case "syslog":
 		if strings.HasPrefix(c.LogSyslogServer, "/") {
-			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.LogSysTag)
+			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.LogSyslogTag)
 			if err != nil {
 				return nil, err
 			}
@@ -89,7 +91,7 @@ func New(c *Config) (*Logger, error) {
 			break
 		}
 
-		w, err := syslog.Dial("tcp", c.LogSyslogServer, syslogLevel|syslog.LOG_MAIL, c.LogSysTag)
+		w, err := syslog.Dial("tcp", c.LogSyslogServer, syslogLevel|syslog.LOG_MAIL, c.LogSyslogTag)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +111,7 @@ func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 		c.LogPath,
 		c.LogMaxSize,
 		handler.WithBuffSize(c.LogBufferSize),
-		handler.WithCompress(c.LogWithCompress),
+		handler.WithCompress(c.LogCompress),
 		handler.WithLogLevels(slog.AllLevels),
 	)
 }
@@ -136,7 +138,7 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 		c.LogPath,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
 		handler.WithBuffSize(c.LogBufferSize),
-		handler.WithCompress(c.LogWithCompress),
+		handler.WithCompress(c.LogCompress),
 		handler.WithLogLevels(slog.AllLevels),
 	)
 }
