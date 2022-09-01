@@ -38,9 +38,7 @@ func LookupUser(username string) (uid, gid int, gids []int, err error) {
 	for _, i := range gs {
 		id, err := strconv.Atoi(i)
 		if err != nil {
-			err = fmt.Errorf("failed in converting gid %s to int: %v", i, err)
-
-			return
+			return 0, 0, nil, fmt.Errorf("failed in converting gid %s to int: %v", i, err)
 		}
 
 		gids = append(gids, id)
