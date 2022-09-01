@@ -20,7 +20,7 @@ type Config struct {
 	LogLevel          string `json:"log_level"`
 	LogSyslogServer   string `json:"log_syslog_server"`
 	LogSyslogTag      string `json:"log_syslog_tag"`
-	LogPath           string `json:"log_path"`
+	LogFile           string `json:"log_file"`
 	LogMaxSize        int    `json:"log_max_size"`
 	LogRotateInterval string `json:"log_rotate_interval"`
 	// Buffer size defaults to (8 * 1024).
@@ -117,7 +117,7 @@ func New(c *Config) (*Logger, error) {
 
 func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 	return handler.NewSizeRotateFileHandler(
-		c.LogPath,
+		c.LogFile,
 		c.LogMaxSize,
 		handler.WithBuffSize(c.LogBufferSize),
 		handler.WithCompress(c.LogCompress),
@@ -144,7 +144,7 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 	}
 
 	return handler.NewTimeRotateFileHandler(
-		c.LogPath,
+		c.LogFile,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
 		handler.WithBuffSize(c.LogBufferSize),
 		handler.WithCompress(c.LogCompress),
