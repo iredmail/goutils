@@ -41,7 +41,9 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 		}
 
 		return os.ErrExist
-	} else if os.IsNotExist(err) {
+	}
+
+	if os.IsNotExist(err) {
 		// Check and create (if not exist) parent directory
 		dir := filepath.Dir(pth)
 		if err := CreateDirIfNotExist(dir, 0700); err != nil {
