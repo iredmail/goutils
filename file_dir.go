@@ -40,7 +40,7 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 			return fmt.Errorf("%s is a directory (which should be a regular file)", pth)
 		}
 
-		return os.ErrExist
+		return nil
 	}
 
 	if os.IsNotExist(err) {
