@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"math/big"
 	mRand "math/rand"
+	"strings"
 	"time"
 )
 
@@ -39,4 +40,15 @@ func GenRandomString(length int) string {
 	}
 
 	return string(ret)
+}
+
+func SplitLines(s string) (lines []string) {
+	newLines := strings.Split(s, "\n")
+
+	for _, i := range newLines {
+		i := i
+		lines = append(lines, strings.TrimSpace(i))
+	}
+
+	return
 }
