@@ -16,3 +16,11 @@ func IsCIDR(s string) bool {
 
 	return false
 }
+
+func IsNetworkPort(num int) (ok bool) {
+	if num > 0 && num <= 65535 {
+		return true
+	}
+
+	return
+}
