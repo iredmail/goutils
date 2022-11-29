@@ -13,7 +13,7 @@ import (
 
 var (
 	regexEmail     = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
-	regexDomain    = regexp.MustCompile(`^(([a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[0-9]{1})|([0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z0-9]{2,10}|[a-zA-Z0-9-]{1,40}\.[a-zA-Z0-9]{2,15})$`)
+	regexDomain    = regexp.MustCompile(`^(([a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9]{1}[0-9]{1})|([0-9]{1}[a-zA-Z0-9]{1})|([a-zA-Z0-9][a-zA-Z0-9-_]{1,61}[a-zA-Z0-9]))\.([a-zA-Z0-9]{2,6}|[a-zA-Z0-9-]{2,30}\.[a-zA-Z0-9]{2,3})$`)
 	regexTLDDomain = regexp.MustCompile("[a-z0-9\\-]{2,25}")
 )
 
