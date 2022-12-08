@@ -8,7 +8,7 @@ import (
 )
 
 func TestGatherOSInfo(t *testing.T) {
-	info, err := GatherOSInfo()
+	osInfo, err := GatherOSInfo()
 	assert.Nil(t, err)
-	fmt.Println(info)
+	fmt.Println(osInfo.ToMap())
 }

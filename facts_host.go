@@ -2,6 +2,7 @@ package goutils
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -9,38 +10,60 @@ import (
 	"strings"
 )
 
-type osRelease struct {
-	ID              string `json:"id"` // ID. OS name in lower case. "ubuntu"
-	Name            string `json:"name"`
-	VersionID       string `json:"version_id"`       // VERSION_ID. "20.04"
-	VersionCodename string `json:"version_codename"` // VERSION_CODENAME. "focal"
+type OsInfo struct {
+	System                   string `json:"system,omitempty"`       // linux, darwin, freebsd, openbsd, windows
+	OsFamily                 string `json:"os_family,omitempty"`    // Note: on Linux, it will be overwritten.
+	Architecture             string `json:"architecture,omitempty"` // 386, amd64, arm, arm64
+	Arch                     string `json:"arch,omitempty"`         // alias of `ansible_architecture`
+	CronFileOwner            string `json:"cron_file_owner,omitempty"`
+	CronFileGroup            string `json:"cron_file_group,omitempty"`
+	CronSpoolDir             string `json:"cron_spool_dir,omitempty"`
+	Distribution             string `json:"distribution,omitempty"`
+	DistributionRelease      string `json:"distribution_release,omitempty"`
+	DistributionVersion      string `json:"distribution_version,omitempty"`
+	DistributionMajorVersion string `json:"distribution_major_version,omitempty"`
+	PkgMgr                   string `json:"pkg_mgr,omitempty"`
 }
 
-func GatherOSInfo() (m map[string]any, err error) {
-	m = make(map[string]any)
+func (oi OsInfo) ToMap() (map[string]any, error) {
+	marshal, err := json.Marshal(oi)
+	if err != nil {
+		return nil, err
+	}
 
+	var m map[string]any
+	err = json.Unmarshal(marshal, &m)
+
+	return m, err
+}
+
+func GatherOSInfo() (oi OsInfo, err error) {
 	// OS
-	m["system"] = runtime.GOOS         // linux, darwin, freebsd, openbsd, windows
-	m["os_family"] = runtime.GOOS      // Note: on Linux, it will be overwritten.
-	m["architecture"] = runtime.GOARCH // 386, amd64, arm, arm64
-	m["arch"] = runtime.GOARCH         // alias of `ansible_architecture`
+	oi.System = runtime.GOOS         // linux, darwin, freebsd, openbsd, windows
+	oi.OsFamily = runtime.GOOS       // Note: on Linux, it will be overwritten.
+	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
+	oi.Arch = runtime.GOARCH         // alias of `ansible_architecture`
 
 	// cron
-	m["cron_file_owner"] = "root"
-	m["cron_file_group"] = "root"
+	oi.CronFileOwner = "root"
+	oi.CronFileGroup = "root"
 
-	if runtime.GOOS == "linux" {
+	if oi.System == "linux" {
 		// Check file `/etc/os-release` to get distribution and release
 		// https://www.freedesktop.org/software/systemd/man/os-release.html
 		fpth := "/etc/os-release"
 
 		if _, err = os.Stat(fpth); os.IsNotExist(err) {
-			return nil, fmt.Errorf("file %s does not exist on linux machine", fpth)
+			err = fmt.Errorf("file %s does not exist on linux machine", fpth)
+
+			return
 		}
 
-		contentBytes, err := os.ReadFile(fpth)
-		if err != nil {
-			return nil, fmt.Errorf("failed read content of file %s", fpth)
+		contentBytes, err1 := os.ReadFile(fpth)
+		if err1 != nil {
+			err = fmt.Errorf("failed read content of file %s", fpth)
+
+			return
 		}
 
 		tmpm := make(map[string]string)
@@ -56,28 +79,21 @@ func GatherOSInfo() (m map[string]any, err error) {
 			}
 		}
 
-		var osm osRelease
+		var name string
 		if val, ok := tmpm["name"]; ok {
-			osm.Name = val
+			name = val
 		}
 		if val, ok := tmpm["id"]; ok {
-			osm.ID = val
+			oi.Distribution = val // "ubuntu"
+			oi.OsFamily = val
 		}
 		if val, ok := tmpm["version_id"]; ok {
-			osm.VersionID = val
+			oi.DistributionVersion = val                             // "20.04"
+			oi.DistributionMajorVersion = strings.Split(val, ".")[0] // "20"
 		}
 		if val, ok := tmpm["version_codename"]; ok {
-			osm.VersionCodename = val
+			oi.DistributionRelease = val // "focal"
 		}
-
-		m["distribution"] = osm.ID // "ubuntu"
-		m["os_family"] = osm.ID
-		m["distribution_release"] = osm.VersionCodename                        // "focal"
-		m["distribution_version"] = osm.VersionID                              // "20.04"
-		m["distribution_major_version"] = strings.Split(osm.VersionID, ".")[0] // "20"
-
-		// Default value, will be overwritten later.
-		m["cron_spool_dir"] = ""
 
 		// FYI: https://github.com/ansible/ansible/blob/devel/lib/ansible/module_utils/facts/system/distribution.py#L470
 		//	'RedHat': ['RedHat', 'Fedora', 'CentOS', 'Scientific', 'SLC',
@@ -100,48 +116,50 @@ func GatherOSInfo() (m map[string]any, err error) {
 		//  'ClearLinux': ['Clear Linux OS', 'Clear Linux Mix'],
 		//  'DragonFly': ['DragonflyBSD', 'DragonFlyBSD', 'Gentoo/DragonflyBSD', 'Gentoo/DragonFlyBSD'],
 		//  'NetBSD': ['NetBSD'], }
-		switch osm.ID {
+		switch oi.Distribution {
 		case "debian":
-			m["pkg_mgr"] = "apt"
+			oi.CronSpoolDir = "/var/spool/cron/crontabs"
+			oi.CronFileGroup = "crontab"
+			oi.PkgMgr = "apt"
 		case "ubuntu":
-			m["pkg_mgr"] = "apt"
+			oi.PkgMgr = "apt"
 		case "redhat":
-			m["pkg_mgr"] = "dnf"
+			oi.CronSpoolDir = "/var/spool/cron"
+			oi.PkgMgr = "dnf"
 		case "centos":
-			m["pkg_mgr"] = "dnf"
-
-			if strings.Contains(osm.Name, "CentOS Stream") {
-				m["distribution_release"] = osm.Name
+			oi.PkgMgr = "dnf"
+			if strings.Contains(name, "CentOS Stream") {
+				oi.DistributionRelease = name
 			}
 		case "rocky":
-			m["pkg_mgr"] = "dnf"
+			oi.PkgMgr = "dnf"
 		case "almalinux":
-			m["pkg_mgr"] = "dnf"
+			oi.PkgMgr = "dnf"
 		}
 
-		switch m["os_family"] {
-		case "redhat":
-			m["cron_spool_dir"] = "/var/spool/cron"
-		case "debian":
-			m["cron_spool_dir"] = "/var/spool/cron/crontabs"
-			m["cron_file_group"] = "crontab"
-		}
-	} else if runtime.GOOS == "openbsd" {
+		return
+	}
+
+	if runtime.GOOS == "openbsd" {
 		var stdout bytes.Buffer
 		command := exec.Command("uname", "-r")
 		command.Stdout = &stdout
 		if err = command.Run(); err != nil {
-			return nil, err
+			return
 		}
 
-		m["distribution_version"] = strings.TrimSpace(stdout.String())
-		m["pkg_mgr"] = "openbsd_pkg"
-		m["cron_spool_dir"] = "/var/cron/tabs"
-		m["cron_file_group"] = "crontab"
-	} else if runtime.GOOS == "freebsd" {
-		m["pkg_mgr"] = "freebsd_pkg"
-		m["cron_spool_dir"] = "/var/cron/tabs"
-		m["cron_file_group"] = "crontab"
+		oi.DistributionVersion = strings.TrimSpace(stdout.String())
+		oi.PkgMgr = "openbsd_pkg"
+		oi.CronSpoolDir = "/var/cron/tabs"
+		oi.CronFileGroup = "crontab"
+
+		return
+	}
+
+	if runtime.GOOS == "freebsd" {
+		oi.PkgMgr = "freebsd_pkg"
+		oi.CronSpoolDir = "/var/cron/tabs"
+		oi.CronFileGroup = "crontab"
 	}
 
 	return
