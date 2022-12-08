@@ -43,12 +43,12 @@ func (oi OSInfo) ToMap() (m map[string]string, err error) {
 }
 
 func GatherOSInfo() (oi OSInfo, err error) {
-	oi.System = runtime.GOOS // linux, darwin, freebsd, openbsd, windows
-	oi.OSFamily = runtime.GOOS
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
 	oi.Arch = runtime.GOARCH
 
-	if oi.System == "linux" {
+	if runtime.GOOS == "linux" {
+		oi.System = "Linux"
+
 		// Check file `/etc/os-release` to get distribution and release
 		// https://www.freedesktop.org/software/systemd/man/os-release.html
 		fpth := "/etc/os-release"
@@ -59,9 +59,9 @@ func GatherOSInfo() (oi OSInfo, err error) {
 			return
 		}
 
-		content, err1 := os.ReadFile(fpth)
-		if err1 != nil {
-			err = fmt.Errorf("failed read content of file %s", fpth)
+		content, err := os.ReadFile(fpth)
+		if err != nil {
+			err = fmt.Errorf("failed in reading file: %s, %v", fpth, err)
 
 			return
 		}
@@ -79,14 +79,28 @@ func GatherOSInfo() (oi OSInfo, err error) {
 			}
 		}
 
-		if v, ok := m["id"]; ok {
-			oi.Distribution = v
-
-			switch v {
-			case "centos", "rocky", "almalinux":
-				oi.OSFamily = "RedHat"
-			case "debian", "ubuntu":
+		if id, ok := m["id"]; ok {
+			switch id {
+			case "debian":
+				oi.Distribution = "Debian"
 				oi.OSFamily = "Debian"
+			case "ubuntu":
+				oi.Distribution = "Ubuntu"
+				oi.OSFamily = "Debian"
+			case "redhat":
+				oi.Distribution = "RedHat"
+				oi.OSFamily = "RedHat"
+			case "centos":
+				oi.Distribution = "CentOS"
+				oi.OSFamily = "RedHat"
+			case "rocky":
+				oi.Distribution = "Rocky"
+				oi.OSFamily = "RedHat"
+				oi.DistributionRelease = "Rocky"
+			case "almalinux":
+				oi.Distribution = "AlmaLinux"
+				oi.OSFamily = "RedHat"
+				oi.DistributionRelease = "AlmaLinux"
 			}
 		}
 
@@ -95,19 +109,17 @@ func GatherOSInfo() (oi OSInfo, err error) {
 			oi.DistributionMajorVersion = strings.Split(v, ".")[0] // "20"
 		}
 
-		if v, ok := m["version_codename"]; ok {
-			// mostly used in Debian family
-			oi.DistributionRelease = v // "focal"
-		}
-
-		if v, ok := m["name"]; ok {
-			if v == "CentOS Stream" {
-				oi.DistributionRelease = "Stream"
+		if oi.OSFamily == "Debian" {
+			if v, ok := m["version_codename"]; ok {
+				oi.DistributionRelease = v // "focal"
 			}
 		}
 
 		return
 	} else if runtime.GOOS == "openbsd" {
+		oi.System = "OpenBSD"
+		oi.OSFamily = "OpenBSD"
+
 		var stdout bytes.Buffer
 		cmd := exec.Command("uname", "-r")
 		cmd.Stdout = &stdout
