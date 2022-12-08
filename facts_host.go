@@ -29,6 +29,9 @@ type OSInfo struct {
 	DistributionRelease      string `json:"distribution_release"`
 	DistributionVersion      string `json:"distribution_version"`
 	DistributionMajorVersion string `json:"distribution_major_version"`
+
+	// Package manager
+	PkgMgr string `json:"pkg_mgr"`
 }
 
 func (oi OSInfo) ToMap() (m map[string]string, err error) {
@@ -84,23 +87,29 @@ func GatherOSInfo() (oi OSInfo, err error) {
 			case "debian":
 				oi.Distribution = "Debian"
 				oi.OSFamily = "Debian"
+				oi.PkgMgr = "apt"
 			case "ubuntu":
 				oi.Distribution = "Ubuntu"
 				oi.OSFamily = "Debian"
+				oi.PkgMgr = "apt"
 			case "redhat":
 				oi.Distribution = "RedHat"
 				oi.OSFamily = "RedHat"
+				oi.PkgMgr = "dnf"
 			case "centos":
 				oi.Distribution = "CentOS"
 				oi.OSFamily = "RedHat"
+				oi.PkgMgr = "dnf"
 			case "rocky":
 				oi.Distribution = "Rocky"
 				oi.OSFamily = "RedHat"
 				oi.DistributionRelease = "Rocky"
+				oi.PkgMgr = "dnf"
 			case "almalinux":
 				oi.Distribution = "AlmaLinux"
 				oi.OSFamily = "RedHat"
 				oi.DistributionRelease = "AlmaLinux"
+				oi.PkgMgr = "dnf"
 			}
 		}
 
@@ -119,6 +128,7 @@ func GatherOSInfo() (oi OSInfo, err error) {
 	} else if runtime.GOOS == "openbsd" {
 		oi.System = "OpenBSD"
 		oi.OSFamily = "OpenBSD"
+		oi.PkgMgr = "openbsd_pkg"
 
 		var stdout bytes.Buffer
 		cmd := exec.Command("uname", "-r")
