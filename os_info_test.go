@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGatherOSInfo(t *testing.T) {
-	oi, err := GatherOSInfo()
+func TestGetOSInfo(t *testing.T) {
+	oi, err := GetOSInfo()
 	assert.Nil(t, err)
 	// fmt.Println(osInfo.JSON())
 

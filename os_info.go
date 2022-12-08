@@ -45,7 +45,7 @@ func (oi OSInfo) ToMap() (m map[string]string, err error) {
 	return
 }
 
-func GatherOSInfo() (oi OSInfo, err error) {
+func GetOSInfo() (oi OSInfo, err error) {
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
 	oi.Arch = runtime.GOARCH
 
