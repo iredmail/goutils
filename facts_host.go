@@ -12,7 +12,7 @@ import (
 
 type OSInfo struct {
 	System       string `json:"system"` // linux, darwin, freebsd, openbsd, windows
-	OsFamily     string `json:"os_family"`
+	OSFamily     string `json:"os_family"`
 	Architecture string `json:"architecture"` // 386, amd64, arm, arm64
 	Arch         string `json:"arch"`
 
@@ -43,8 +43,8 @@ func (oi OSInfo) ToMap() (m map[string]string, err error) {
 }
 
 func GatherOSInfo() (oi OSInfo, err error) {
-	oi.System = runtime.GOOS         // linux, darwin, freebsd, openbsd, windows
-	oi.OsFamily = runtime.GOOS       // Note: on Linux, it will be overwritten.
+	oi.System = runtime.GOOS // linux, darwin, freebsd, openbsd, windows
+	oi.OSFamily = runtime.GOOS
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
 	oi.Arch = runtime.GOARCH
 
@@ -81,7 +81,13 @@ func GatherOSInfo() (oi OSInfo, err error) {
 
 		if v, ok := m["id"]; ok {
 			oi.Distribution = v
-			oi.OsFamily = v
+
+			switch v {
+			case "centos", "rocky", "almalinux":
+				oi.OSFamily = "RedHat"
+			case "debian", "ubuntu":
+				oi.OSFamily = "Debian"
+			}
 		}
 
 		if v, ok := m["version_id"]; ok {
@@ -90,10 +96,13 @@ func GatherOSInfo() (oi OSInfo, err error) {
 		}
 
 		if v, ok := m["version_codename"]; ok {
+			// mostly used in Debian family
 			oi.DistributionRelease = v // "focal"
+		}
 
-			if strings.Contains(oi.DistributionRelease, "CentOS Stream") {
-				oi.DistributionRlease = "Stream"
+		if v, ok := m["name"]; ok {
+			if v == "CentOS Stream" {
+				oi.DistributionRelease = "Stream"
 			}
 		}
 
