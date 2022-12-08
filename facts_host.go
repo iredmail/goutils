@@ -62,7 +62,8 @@ func GatherOSInfo() (oi OSInfo, err error) {
 			return
 		}
 
-		content, err := os.ReadFile(fpth)
+		var content []byte
+		content, err = os.ReadFile(fpth)
 		if err != nil {
 			err = fmt.Errorf("failed in reading file: %s, %v", fpth, err)
 
