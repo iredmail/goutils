@@ -91,6 +91,10 @@ func GatherOSInfo() (oi OSInfo, err error) {
 
 		if v, ok := m["version_codename"]; ok {
 			oi.DistributionRelease = v // "focal"
+
+			if strings.Contains(oi.DistributionRelease, "CentOS Stream") {
+				oi.DistributionRlease = "Stream"
+			}
 		}
 
 		return
