@@ -14,7 +14,6 @@ type OSInfo struct {
 	System       string `json:"system"` // linux, darwin, freebsd, openbsd, windows
 	OSFamily     string `json:"os_family"`
 	Architecture string `json:"architecture"` // 386, amd64, arm, arm64
-	Arch         string `json:"arch"`
 
 	// Distribution
 	// - Debian, Ubuntu
@@ -47,7 +46,6 @@ func (oi OSInfo) ToMap() (m map[string]string, err error) {
 
 func GetOSInfo() (oi OSInfo, err error) {
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
-	oi.Arch = runtime.GOARCH
 
 	if runtime.GOOS == "linux" {
 		oi.System = "Linux"
