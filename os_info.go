@@ -129,6 +129,7 @@ func GetOSInfo() (oi OSInfo, err error) {
 	} else if runtime.GOOS == "openbsd" {
 		oi.System = "OpenBSD"
 		oi.OSFamily = "OpenBSD"
+		oi.Distribution = "OpenBSD"
 		oi.PkgMgr = "openbsd_pkg"
 
 		var stdout bytes.Buffer
