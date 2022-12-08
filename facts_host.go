@@ -31,8 +31,7 @@ type OSInfo struct {
 	DistributionMajorVersion string `json:"distribution_major_version"`
 }
 
-func (oi OSInfo) JSON() (m map[string]string, err error) {
-	m = make(map[string]string)
+func (oi OSInfo) ToMap() (m map[string]string, err error) {
 	jb, err := json.Marshal(oi)
 	if err != nil {
 		return nil, err

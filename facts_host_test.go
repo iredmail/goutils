@@ -7,7 +7,11 @@ import (
 )
 
 func TestGatherOSInfo(t *testing.T) {
-	_, err := GatherOSInfo()
+	oi, err := GatherOSInfo()
 	assert.Nil(t, err)
 	// fmt.Println(osInfo.JSON())
+
+	m, err := oi.ToMap()
+	assert.Nil(t, err)
+	assert.NotNil(t, m)
 }
