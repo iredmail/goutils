@@ -135,6 +135,8 @@ func GatherOSInfo() (oi OSInfo, err error) {
 		cmd := exec.Command("uname", "-r")
 		cmd.Stdout = &stdout
 		if err = cmd.Run(); err != nil {
+			err = fmt.Errorf("error getting system info with command 'uname -r': %v", err)
+
 			return
 		}
 
