@@ -11,7 +11,7 @@ func hasSystemTable(gdb *goqu.Database, dbName string) (bool, error) {
 	dialect := gdb.Dialect()
 	var sd *goqu.SelectDataset
 	switch dialect {
-	case dialectSQLite:
+	case dialectSQLite, dialectSQLite3:
 		sd = gdb.From("sqlite_master").
 			Select("name").
 			Where(goqu.Ex{
@@ -24,6 +24,8 @@ func hasSystemTable(gdb *goqu.Database, dbName string) (bool, error) {
 	case dialectPostgres:
 		sd = gdb.From("pg_class").
 			Where(goqu.Ex{"relname": tableSystem})
+	default:
+		return false, fmt.Errorf("unsupported dialect type: %s", dialect)
 	}
 
 	count, err := sd.Count()

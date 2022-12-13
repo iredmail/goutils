@@ -8,7 +8,8 @@ const (
 	keySQLSchemaVersion = "sql_schema_version"
 
 	// https://github.com/doug-martin/goqu/blob/master/docs/dialect.md#dialect
-	dialectSQLite   = "sqlite3"
+	dialectSQLite   = "sqlite"
+	dialectSQLite3  = "sqlite3"
 	dialectMysql    = "mysql"
 	dialectPostgres = "postgres"
 
