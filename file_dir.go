@@ -6,6 +6,16 @@ import (
 	"path/filepath"
 )
 
+// DestExists 检查目标对象（文件、目录、符号链接，等）是否存在。
+func DestExists(pth string) bool {
+	_, err := os.Stat(pth)
+	if err != nil {
+		return os.IsExist(err)
+	}
+
+	return true
+}
+
 // CreateDirIfNotExist creates target directory with mode `0700` if it
 // does not exist.
 func CreateDirIfNotExist(pth string, mode os.FileMode) error {

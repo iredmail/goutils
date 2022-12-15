@@ -2,7 +2,6 @@ package goutils
 
 import (
 	"net"
-	"os"
 	"reflect"
 
 	"github.com/google/uuid"
@@ -83,14 +82,4 @@ func Intersect[T comparable](s1, s2 []T) []T {
 	}
 
 	return set
-}
-
-// DestExists 检查目标对象（文件、目录、符号链接，等）是否存在。
-func DestExists(pth string) bool {
-	_, err := os.Stat(pth)
-	if err != nil {
-		return os.IsExist(err)
-	}
-
-	return true
 }
