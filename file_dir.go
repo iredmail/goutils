@@ -1,6 +1,7 @@
 package goutils
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -70,4 +71,28 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 		// 其它错误
 		return fmt.Errorf("failed in checking stat of file %s: %v", pth, err)
 	}
+}
+
+// ReadFullFileContent 读取指定文件的所有内容，并去除首尾的空白字符。
+func ReadFullFileContent(pth string) (content []byte, err error) {
+	content, err = os.ReadFile(pth)
+	if err != nil {
+		return
+	}
+
+	content = bytes.TrimSpace(content)
+
+	return
+}
+
+// ReadFullFileContentInString 读取指定文件的所有内容，并去除首尾的空白字符，以 string 类型返回文件内容。
+func ReadFullFileContentInString(pth string) (content string, err error) {
+	b, err := os.ReadFile(pth)
+	if err != nil {
+		return
+	}
+
+	b = bytes.TrimSpace(b)
+
+	return string(b), nil
 }
