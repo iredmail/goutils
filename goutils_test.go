@@ -1,6 +1,8 @@
 package goutils
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,4 +33,15 @@ func TestGoUtils(t *testing.T) {
 
 	assert.True(t, IsIPv4("192.168.2.4"))
 	assert.False(t, IsIPv4("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
+
+	t.Run("Test DestExists Func", func(t *testing.T) {
+		tmpPth1 := filepath.Join(os.TempDir(), "abc.txt")
+		tmpPth2 := filepath.Join(os.TempDir(), "def.txt")
+		_ = os.Remove(tmpPth1)
+		_ = os.Remove(tmpPth2)
+		assert.False(t, DestExists(tmpPth1))
+		_ = os.WriteFile(tmpPth2, []byte("test"), 0700)
+		assert.True(t, DestExists(tmpPth2))
+		_ = os.Remove(tmpPth2)
+	})
 }
