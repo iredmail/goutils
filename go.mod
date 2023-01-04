@@ -3,12 +3,14 @@ module github.com/iredmail/goutils
 go 1.19
 
 require (
+	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/gofiber/fiber/v2 v2.40.1
 	github.com/google/uuid v1.3.0
 	github.com/gookit/slog v0.3.4
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
+	rsc.io/qr v0.2.0
 )
 
 require (
