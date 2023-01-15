@@ -21,13 +21,29 @@ func JSONErrorString(ctx *fiber.Ctx, ecode string) error {
 }
 
 // JSONSuccess 返回表示 http 请求成功的 JSON 数据：
-// {"_success": true, fiber.Map{...}}
+// {"_success": true, "_msg": ""}
 func JSONSuccess(ctx *fiber.Ctx) error {
-	m := fiber.Map{"_success": true, "_msg": ""}
+	m := fiber.Map{
+		"_success": true,
+		"_msg":     "",
+	}
 
 	return ctx.JSON(m)
 }
 
+// JSONSuccess 返回表示 http 请求成功的 JSON 数据。
+// {"_success": true, "_msg": msg}
+func JSONSuccessMsg(ctx *fiber.Ctx, msg string) error {
+	m := fiber.Map{
+		"_success": true,
+		"_msg":     msg,
+	}
+
+	return ctx.JSON(m)
+}
+
+// JSONSuccess 返回表示 http 请求成功的 JSON 数据：
+// {"_success": true, fiber.Map{...}}
 func JSONSuccessMap(ctx *fiber.Ctx, dataMap fiber.Map) error {
 	dataMap["_success"] = true
 
