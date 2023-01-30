@@ -43,7 +43,7 @@ func YMDToday() (ymd int) {
 func YMDYesterday() (ymd int) {
 	now := time.Now().UTC()
 	yt := strings.ReplaceAll(now.AddDate(0, 0, -1).Format(time.DateOnly), "-", "")
-	ymd, _ := strconv.Atoi(yt)
+	ymd, _ = strconv.Atoi(yt)
 
 	return
 }
