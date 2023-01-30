@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.19
+go 1.20
 
 require (
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
