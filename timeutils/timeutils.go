@@ -38,3 +38,12 @@ func YMDToday() (ymd int) {
 
 	return
 }
+
+// YMDYesterday 以 int 类型返回（UTC 时间）昨天的 `年月日`，例如 `20230129`。
+func YMDYesterday() (ymd int) {
+	now := time.Now().UTC()
+	yt := strings.ReplaceAll(now.AddDate(0, 0, -1).Format(time.DateOnly), "-", "")
+	ymd, _ := strconv.Atoi(yt)
+
+	return
+}
