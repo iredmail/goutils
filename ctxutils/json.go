@@ -44,8 +44,9 @@ func JSONSuccessMsg(ctx *fiber.Ctx, msg string) error {
 
 // JSONSuccess 返回表示 http 请求成功的 JSON 数据：
 // {"_success": true, fiber.Map{...}}
-func JSONSuccessMap(ctx *fiber.Ctx, dataMap fiber.Map) error {
-	dataMap["_success"] = true
+func JSONSuccessMap(ctx *fiber.Ctx, m fiber.Map) error {
+	m["_success"] = true
+	m["_msg"] = ""
 
-	return ctx.JSON(dataMap)
+	return ctx.JSON(m)
 }
