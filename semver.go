@@ -1,11 +1,17 @@
 package goutils
 
 import (
-	"github.com/Masterminds/semver/v3"
+	"golang.org/x/mod/semver"
 )
 
 func IsValidSemVerion(s string) bool {
-	_, err := semver.NewVersion(s)
+	return semver.IsValid(s)
+}
 
-	return err == nil
+func HasNewVersion(old, latest string) bool {
+	// Result of semver.Compare(current, latest string):
+	//	- 0 if current == latest
+	//	-1 if current  < latest
+	//	+1 if current  > latest
+	return semver.Compare(old, latest) < 0
 }

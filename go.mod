@@ -3,7 +3,6 @@ module github.com/iredmail/goutils
 go 1.20
 
 require (
-	github.com/Masterminds/semver/v3 v3.2.0
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/gofiber/fiber/v2 v2.42.0
@@ -11,6 +10,7 @@ require (
 	github.com/gookit/slog v0.4.0
 	github.com/stretchr/testify v1.8.1
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
+	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 	rsc.io/qr v0.2.0
 )
 
