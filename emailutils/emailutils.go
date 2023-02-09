@@ -15,6 +15,7 @@ var (
 	regexEmail     = regexp.MustCompile(`[a-zA-Z0-9\-\#\.\+\=\/\&]+@[a-zA-Z0-9\-][a-zA-Z0-9\-\.]*\.[a-zA-Z0-9\-]{2,25}`)
 	regexDomain    = regexp.MustCompile(`^[a-zA-Z0-9\.\-]+\.[a-z]{2,25}$`)
 	regexTLDDomain = regexp.MustCompile("[a-z0-9\\-]{2,25}")
+	regexFQDN = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
 )
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
@@ -24,6 +25,10 @@ func IsEmail(s string) bool {
 	}
 
 	return regexEmail.MatchString(s)
+}
+
+func IsFQDN(s string) bool {
+	return regexFQDN.MatchString(s)
 }
 
 // IsDomain 校验给定字符串是否为格式正确的邮件域名。
