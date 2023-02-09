@@ -13,6 +13,13 @@ func JSONError(ctx *fiber.Ctx, err error) error {
 	})
 }
 
+func JSONError500(ctx *fiber.Ctx) error {
+	return ctx.JSON(fiber.Map{
+		"_success": false,
+		"_msg":     "INTERNAL_SERVER_ERROR",
+	})
+}
+
 func JSONErrorString(ctx *fiber.Ctx, ecode string) error {
 	return ctx.JSON(fiber.Map{
 		"_success": false,
@@ -21,15 +28,41 @@ func JSONErrorString(ctx *fiber.Ctx, ecode string) error {
 }
 
 // JSONSuccess 返回表示 http 请求成功的 JSON 数据：
-// {"_success": true, fiber.Map{...}}
+// {"_success": true, "_msg": ""}
 func JSONSuccess(ctx *fiber.Ctx) error {
-	m := fiber.Map{"_success": true, "_msg": ""}
+	m := fiber.Map{
+		"_success": true,
+		"_msg":     "",
+	}
 
 	return ctx.JSON(m)
 }
 
-func JSONSuccessMap(ctx *fiber.Ctx, dataMap fiber.Map) error {
-	dataMap["_success"] = true
+// JSONSuccessMsg 返回表示 http 请求成功的 JSON 数据。
+//
+//	{
+//		"_success": true,
+//		"_msg": msg,
+//	}
+func JSONSuccessMsg(ctx *fiber.Ctx, msg string) error {
+	m := fiber.Map{
+		"_success": true,
+		"_msg":     msg,
+	}
 
-	return ctx.JSON(dataMap)
+	return ctx.JSON(m)
+}
+
+// JSONSuccessMap 返回表示 http 请求成功的 JSON 数据，m 的内容也将包含在 JSON 中。
+//
+//	{
+//		"_success": true,
+//		"_msg": "",
+//		...
+//	}
+func JSONSuccessMap(ctx *fiber.Ctx, m fiber.Map) error {
+	m["_success"] = true
+	m["_msg"] = ""
+
+	return ctx.JSON(m)
 }
