@@ -47,9 +47,14 @@ func QueryBool(ctx *fiber.Ctx, key string) bool {
 }
 
 // QueryPage 用于查询 URL query parameters（`/?page=x`）里 `page` 参数的值。
-// 如果没有指定则默认为 1。
+// 如果没有指定或小于 1 则设置为 1。
 func QueryPage(ctx *fiber.Ctx) (page int) {
-	return QueryInt(ctx, "page", 1)
+	page = QueryInt(ctx, "page", 1)
+	if page < 1 {
+		page = 1
+	}
+
+	return
 }
 
 // QueryLimit 用于查询 URL query parameters（`/?limit=x`）里 `limit` 参数的值。
