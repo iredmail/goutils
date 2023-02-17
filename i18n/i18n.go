@@ -7,32 +7,32 @@ import (
 	"path/filepath"
 )
 
-func New(embedLocales embed.FS) (Locales, error) {
+var locales Locales
+
+func New(embedLocales embed.FS) (err error) {
 	paths, err := fs.Glob(embedLocales, "*/*_*")
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	locales := Locales{}
 	for _, pth := range paths {
 		lang := filepath.Base(pth)
 		l := NewFSLocale(embedLocales, pth, lang)
 
-		err = l.AddDomain("messages")
-		if err != nil {
-			return nil, err
+		if err = l.AddDomain("messages"); err != nil {
+			return
 		}
 
 		locales[lang] = l
 	}
 
-	return locales, nil
+	return
 }
 
 type Locales map[string]*Locale
 
-func (l Locales) Translate(lang, s string, args ...any) string {
-	locale, ok := l[lang]
+func Translate(lang, s string, args ...any) string {
+	locale, ok := locales[lang]
 	if !ok {
 		return fmt.Sprintf(s, args...)
 	}
