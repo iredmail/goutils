@@ -11,11 +11,11 @@ import (
 var embedLocales embed.FS
 
 func TestTranslate(t *testing.T) {
-	locales, err := New(embedLocales)
+	err := Init(embedLocales)
 	assert.Nil(t, err)
 
-	assert.Equal(t, locales.Translate(DefaultLanguage, "title"), "Hello World!")
-	assert.Equal(t, locales.Translate(DefaultLanguage, "Hello %s %s", "John", "Smith"), "Hello John Smith")
+	assert.Equal(t, Translate(DefaultLanguage, "title"), "Hello World!")
+	assert.Equal(t, Translate(DefaultLanguage, "Hello %s %s", "John", "Smith"), "Hello John Smith")
 
-	assert.Equal(t, locales.Translate("zh_CN", "title"), "你好 世界！")
+	assert.Equal(t, Translate("zh_CN", "title"), "你好 世界！")
 }
