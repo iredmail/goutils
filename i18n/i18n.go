@@ -9,12 +9,17 @@ import (
 
 var locales Locales
 
-func New(embedLocales embed.FS) (err error) {
+func Init(embedLocales embed.FS) (err error) {
+	if locales != nil {
+		return
+	}
+
 	paths, err := fs.Glob(embedLocales, "*/*_*")
 	if err != nil {
 		return
 	}
 
+	locales = make(map[string]*Locale)
 	for _, pth := range paths {
 		lang := filepath.Base(pth)
 		l := NewFSLocale(embedLocales, pth, lang)
