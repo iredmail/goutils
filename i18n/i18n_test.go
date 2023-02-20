@@ -14,6 +14,8 @@ func TestTranslate(t *testing.T) {
 	err := Init(embedLocales)
 	assert.Nil(t, err)
 
+	assert.True(t, len(Languages()) == 2)
+
 	assert.Equal(t, Translate(DefaultLanguage, "title"), "Hello World!")
 	assert.Equal(t, Translate(DefaultLanguage, "Hello %s %s", "John", "Smith"), "Hello John Smith")
 

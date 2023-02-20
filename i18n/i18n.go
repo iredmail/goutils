@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/fs"
 	"path/filepath"
+
+	"golang.org/x/exp/maps"
 )
 
 var locales Locales
@@ -35,6 +37,10 @@ func Init(embedLocales embed.FS) (err error) {
 }
 
 type Locales map[string]*Locale
+
+func Languages() []string {
+	return maps.Keys(locales)
+}
 
 func Translate(lang, s string, args ...any) string {
 	locale, ok := locales[lang]
