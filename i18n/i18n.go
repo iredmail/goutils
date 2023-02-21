@@ -20,8 +20,13 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 	return err
 }
 
-func Languages() []language.Tag {
-	return bundle.SupportedLanguages()
+func IsLanguageSupported(lang string) bool {
+	tag, _, err := language.ParseAcceptLanguage(lang)
+	if err != nil {
+		return false
+	}
+
+	return bundle.IsLanguageSupported(tag[0])
 }
 
 func Translate(lang string, s string) string {

@@ -19,7 +19,7 @@ func TestTranslate(t *testing.T) {
 	err = Init(fsys, language.English, language.Chinese)
 	assert.Nil(t, err)
 
-	assert.True(t, len(Languages()) == 2)
+	assert.True(t, IsLanguageSupported(language.Chinese.String()))
 
 	assert.Equal(t, Translate("en_US", "Change world."), "Change world.")
 	assert.Equal(t, Translate("en_US", "title"), "Hello World!")
