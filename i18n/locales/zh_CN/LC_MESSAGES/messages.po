@@ -1,3 +1,0 @@
-msgid "title"
-msgstr "你好 世界！"
-

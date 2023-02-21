@@ -1,52 +1,38 @@
 package i18n
 
 import (
-	"embed"
-	"fmt"
 	"io/fs"
-	"path/filepath"
 
-	"golang.org/x/exp/maps"
+	"github.com/vorlif/spreak"
+	"golang.org/x/text/language"
 )
 
-var locales Locales
+var (
+	bundle *spreak.Bundle
+)
 
-func Init(embedLocales embed.FS) (err error) {
-	if locales != nil {
-		return
-	}
+func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
+	bundle, err = spreak.NewBundle(
+		spreak.WithSourceLanguage(language.English),
+		spreak.WithDomainFs(spreak.NoDomain, fsLocales),
+		spreak.WithLanguage(supportedLanguages...),
+	)
 
-	paths, err := fs.Glob(embedLocales, "*/*_*")
-	if err != nil {
-		return
-	}
-
-	locales = make(map[string]*Locale)
-	for _, pth := range paths {
-		lang := filepath.Base(pth)
-		l := NewFSLocale(embedLocales, pth, lang)
-
-		if err = l.AddDomain("messages"); err != nil {
-			return
-		}
-
-		locales[lang] = l
-	}
-
-	return
+	return err
 }
 
-type Locales map[string]*Locale
-
-func Languages() []string {
-	return maps.Keys(locales)
+func Languages() []language.Tag {
+	return bundle.SupportedLanguages()
 }
 
-func Translate(lang, s string, args ...any) string {
-	locale, ok := locales[lang]
-	if !ok {
-		return fmt.Sprintf(s, args...)
-	}
+func Translate(lang language.Tag, s string) string {
+	t := spreak.NewKeyLocalizer(bundle, lang)
 
-	return locale.Get(s, args...)
+	return t.Get(s)
+}
+
+func TranslateF(lang language.Tag, s string, args ...any) string {
+	t := spreak.NewKeyLocalizer(bundle, lang)
+
+	return t.Getf(s, args...)
 }
