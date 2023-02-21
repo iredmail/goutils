@@ -24,13 +24,13 @@ func Languages() []language.Tag {
 	return bundle.SupportedLanguages()
 }
 
-func Translate(lang language.Tag, s string) string {
+func Translate(lang string, s string) string {
 	t := spreak.NewKeyLocalizer(bundle, lang)
 
 	return t.Get(s)
 }
 
-func TranslateF(lang language.Tag, s string, args ...any) string {
+func TranslateF(lang string, s string, args ...any) string {
 	t := spreak.NewKeyLocalizer(bundle, lang)
 
 	return t.Getf(s, args...)

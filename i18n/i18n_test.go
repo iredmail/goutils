@@ -21,9 +21,9 @@ func TestTranslate(t *testing.T) {
 
 	assert.True(t, len(Languages()) == 2)
 
-	assert.Equal(t, Translate(language.English, "Change world."), "Change world.")
-	assert.Equal(t, Translate(language.English, "title"), "Hello World!")
-	assert.Equal(t, TranslateF(language.English, "Hello %s %s", "John", "Smith"), "Hello John Smith")
+	assert.Equal(t, Translate("en_US", "Change world."), "Change world.")
+	assert.Equal(t, Translate("en_US", "title"), "Hello World!")
+	assert.Equal(t, TranslateF("en_US", "Hello %s %s", "John", "Smith"), "Hello John Smith")
 
-	assert.Equal(t, TranslateF(language.Chinese, "title"), "你好 世界！")
+	assert.Equal(t, TranslateF("zh_CN", "title"), "你好 世界！")
 }
