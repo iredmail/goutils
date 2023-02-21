@@ -13,7 +13,6 @@ var (
 
 func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 	bundle, err = spreak.NewBundle(
-		spreak.WithSourceLanguage(language.English),
 		spreak.WithDomainFs(spreak.NoDomain, fsLocales),
 		spreak.WithLanguage(supportedLanguages...),
 	)
