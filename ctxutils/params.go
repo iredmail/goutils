@@ -26,3 +26,14 @@ func ParamEmail(ctx *fiber.Ctx) (addr string, err error) {
 
 	return addr, nil
 }
+
+// ParamPage 用于查询 URL parameters（`/xxx/:page`）的 `page` 参数的值。
+// 如果没有指定则默认为 1。
+func ParamPage(ctx *fiber.Ctx) (page int) {
+	page, _ = ctx.ParamsInt("page", 1)
+	if page < 1 {
+		page = 1
+	}
+
+	return
+}
