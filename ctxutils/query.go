@@ -59,11 +59,9 @@ func QueryPage(ctx *fiber.Ctx) uint {
 
 // QueryLimit 用于查询 URL query parameters（`/?limit=x`）里 `limit` 参数的值。
 // 如果没有指定则默认为 cfg.WebPageSize。
-func QueryLimit(ctx *fiber.Ctx, defaultValue ...uint) (limit uint) {
-	v := QueryInt(ctx, "limit", 0)
-	if v > 0 {
-		limit = uint(v)
-	} else if v == 0 {
+func QueryLimit(ctx *fiber.Ctx, defaultValue ...int) (limit int) {
+	limit = QueryInt(ctx, "limit", 0)
+	if limit <= 0 {
 		if len(defaultValue) == 1 {
 			limit = defaultValue[0]
 		} else {
