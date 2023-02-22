@@ -2,20 +2,28 @@ package i18n
 
 import (
 	"embed"
+	"io/fs"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/text/language"
 )
 
-//go:embed locales
+//go:embed locale/*
 var embedLocales embed.FS
 
 func TestTranslate(t *testing.T) {
-	locales, err := New(embedLocales)
+	fsys, err := fs.Sub(embedLocales, "locale")
 	assert.Nil(t, err)
 
-	assert.Equal(t, locales.Translate(DefaultLanguage, "title"), "Hello World!")
-	assert.Equal(t, locales.Translate(DefaultLanguage, "Hello %s %s", "John", "Smith"), "Hello John Smith")
+	err = Init(fsys, language.English, language.Chinese)
+	assert.Nil(t, err)
 
-	assert.Equal(t, locales.Translate("zh_CN", "title"), "你好 世界！")
+	assert.True(t, IsLanguageSupported(language.Chinese.String()))
+
+	assert.Equal(t, Translate("en_US", "Change world."), "Change world.")
+	assert.Equal(t, Translate("en_US", "title"), "Hello World!")
+	assert.Equal(t, TranslateF("en_US", "Hello %s %s", "John", "Smith"), "Hello John Smith")
+
+	assert.Equal(t, TranslateF("zh_CN", "title"), "你好 世界！")
 }
