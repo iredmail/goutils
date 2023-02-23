@@ -9,21 +9,24 @@ import (
 	"golang.org/x/text/language"
 )
 
-//go:embed locale/*
-var embedLocales embed.FS
+//go:embed locales/*.json
+var fsEmbedLocales embed.FS
 
 func TestTranslate(t *testing.T) {
-	fsys, err := fs.Sub(embedLocales, "locale")
+	fsLocales, err := fs.Sub(fsEmbedLocales, "locales")
 	assert.Nil(t, err)
 
-	err = Init(fsys, language.English, language.Chinese)
+	err = Init(fsLocales, language.English, language.English, language.SimplifiedChinese)
 	assert.Nil(t, err)
 
-	assert.True(t, IsLanguageSupported(language.Chinese.String()))
+	assert.True(t, IsLanguageSupported(language.SimplifiedChinese.String()))
+	assert.True(t, IsLanguageSupported(language.English.String()))
+	assert.False(t, IsLanguageSupported(language.Slovenian.String()))
 
 	assert.Equal(t, Translate("en_US", "Change world."), "Change world.")
-	assert.Equal(t, Translate("en_US", "title"), "Hello World!")
+	assert.Equal(t, Translate("en_US", "hello"), "Hello")
 	assert.Equal(t, TranslateF("en_US", "Hello %s %s", "John", "Smith"), "Hello John Smith")
 
-	assert.Equal(t, TranslateF("zh_CN", "title"), "你好 世界！")
+	assert.Equal(t, TranslateF("zh_CN", "hello"), "你好")
+	assert.Equal(t, TranslateF("zh", "hello"), "你好")
 }
