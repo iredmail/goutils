@@ -33,7 +33,7 @@ type Config struct {
 	LogCompress   bool   `json:"log_compress"` // compress rotated log file
 }
 
-func New(c *Config) error {
+func Init(c *Config) error {
 	var logTemplate string
 	var syslogLevel syslog.Priority
 
