@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultPageSizeLimit = 100
+	defaultPageSizeLimit = 50
 )
 
 func QueryInt(ctx *fiber.Ctx, key string, defaultValue int) (num int) {
@@ -48,19 +48,28 @@ func QueryBool(ctx *fiber.Ctx, key string) bool {
 
 // QueryPage 用于查询 URL query parameters（`/?page=x`）里 `page` 参数的值。
 // 如果没有指定或小于 1 则设置为 1。
-func QueryPage(ctx *fiber.Ctx) uint {
-	page := QueryInt(ctx, "page", 1)
+func QueryPage(ctx *fiber.Ctx) (page int) {
+	page = QueryInt(ctx, "page", 1)
 	if page < 1 {
 		page = 1
 	}
 
-	return uint(page)
+	return
 }
 
 // QueryLimit 用于查询 URL query parameters（`/?limit=x`）里 `limit` 参数的值。
 // 如果没有指定则默认为 cfg.WebPageSize。
-func QueryLimit(ctx *fiber.Ctx) (page int) {
-	return QueryInt(ctx, "limit", defaultPageSizeLimit)
+func QueryLimit(ctx *fiber.Ctx, defaultValue ...int) (limit int) {
+	limit = QueryInt(ctx, "limit", 0)
+	if limit <= 0 {
+		if len(defaultValue) == 1 {
+			limit = defaultValue[0]
+		} else {
+			limit = defaultPageSizeLimit
+		}
+	}
+
+	return
 }
 
 func QueryDomain(ctx *fiber.Ctx) (domain string, err error) {
