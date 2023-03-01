@@ -13,10 +13,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-var instance *Logger
-
-type Logger slog.SugaredLogger
-
 type Config struct {
 	LogTarget         string `json:"log_target"`
 	LogLevel          string `json:"log_level"`
@@ -33,7 +29,7 @@ type Config struct {
 	LogCompress   bool   `json:"log_compress"` // compress rotated log file
 }
 
-func Init(c *Config) error {
+func New(c *Config) (logger slog.SLogger, err error) {
 	var logTemplate string
 	var syslogLevel syslog.Priority
 
@@ -70,16 +66,15 @@ func Init(c *Config) error {
 	// 	l.AddHandler(h)
 	case "file":
 		var h *handler.SyncCloseHandler
-		var err error
 		if c.LogMaxSize > 0 {
 			h, err = handlerRotateFile(c)
 			if err != nil {
-				return err
+				return
 			}
 		} else {
 			h, err = handlerRotateTime(c)
 			if err != nil {
-				return err
+				return
 			}
 		}
 
@@ -94,7 +89,7 @@ func Init(c *Config) error {
 		if strings.HasPrefix(c.LogSyslogServer, "/") {
 			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.LogSyslogTag)
 			if err != nil {
-				return err
+				return
 			}
 			h.SetFormatter(logFormatter)
 			l.AddHandler(h)
@@ -104,7 +99,7 @@ func Init(c *Config) error {
 
 		w, err := syslog.Dial("tcp", c.LogSyslogServer, syslogLevel|syslog.LOG_MAIL, c.LogSyslogTag)
 		if err != nil {
-			return err
+			return
 		}
 		h := handler.NewBufferedHandler(w, c.LogBufferSize, level)
 		h.SetFormatter(logFormatter)
@@ -113,9 +108,9 @@ func Init(c *Config) error {
 
 	l.Level = level
 	l.DoNothingOnPanicFatal()
-	instance = (*Logger)(l)
+	logger = l
 
-	return nil
+	return
 }
 
 func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
@@ -153,20 +148,4 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 		handler.WithCompress(c.LogCompress),
 		handler.WithLogLevels(slog.AllLevels),
 	)
-}
-
-func Info(format string, args ...interface{}) {
-	instance.Infof(format, args...)
-}
-
-func Warn(format string, args ...interface{}) {
-	instance.Warnf(format, args...)
-}
-
-func Error(format string, args ...interface{}) {
-	instance.Errorf(format, args...)
-}
-
-func Debug(format string, args ...interface{}) {
-	instance.Debugf(format, args...)
 }
