@@ -147,16 +147,19 @@ func GetOSInfo() (oi OSInfo, err error) {
 	return
 }
 
-func GetHostFQDN() string {
-	var arg, fqdn string
+// GetHostFQDN returns the FQDN returned by shell command `hostname -f` (linux/darwin) or `hostname` (openbsd).
+func GetHostFQDN() (fqdn string) {
+	var arg string
+	var stdout bytes.Buffer
+
 	switch runtime.GOOS {
 	case "linux", "darwin":
 		arg = "-f"
 	}
 
-	var stdout bytes.Buffer
 	cmd := exec.Command("hostname", arg)
 	cmd.Stdout = &stdout
+
 	if err := cmd.Run(); err == nil {
 		fqdn = stdout.String()
 	}
