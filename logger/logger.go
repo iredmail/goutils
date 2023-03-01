@@ -89,7 +89,7 @@ func New(c *Config) (logger slog.SLogger, err error) {
 		if strings.HasPrefix(c.LogSyslogServer, "/") {
 			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.LogSyslogTag)
 			if err != nil {
-				return
+				return nil, err
 			}
 			h.SetFormatter(logFormatter)
 			l.AddHandler(h)
@@ -99,7 +99,7 @@ func New(c *Config) (logger slog.SLogger, err error) {
 
 		w, err := syslog.Dial("tcp", c.LogSyslogServer, syslogLevel|syslog.LOG_MAIL, c.LogSyslogTag)
 		if err != nil {
-			return
+			return nil, err
 		}
 		h := handler.NewBufferedHandler(w, c.LogBufferSize, level)
 		h.SetFormatter(logFormatter)
