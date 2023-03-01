@@ -69,12 +69,12 @@ func New(c *Config) (logger slog.SLogger, err error) {
 		if c.LogMaxSize > 0 {
 			h, err = handlerRotateFile(c)
 			if err != nil {
-				return
+				return nil, err
 			}
 		} else {
 			h, err = handlerRotateTime(c)
 			if err != nil {
-				return
+				return nil, err
 			}
 		}
 
