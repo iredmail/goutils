@@ -13,22 +13,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type Config struct {
-	LogTarget         string `json:"log_target"`
-	LogLevel          string `json:"log_level"`
-	LogSyslogServer   string `json:"log_syslog_server"`
-	LogSyslogTag      string `json:"log_syslog_tag"`
-	LogFile           string `json:"log_file"`
-	LogMaxSize        int    `json:"log_max_size"`
-	LogRotateInterval string `json:"log_rotate_interval"`
-	// Buffer size defaults to (8 * 1024).
-	// Write to log file immediately if size is 0.
-	LogBufferSize int    `json:"log_buffer_size"`
-	LogMaxBackups int    `json:"log_max_backups"`
-	LogTimeFormat string `json:"log_time_format"`
-	LogCompress   bool   `json:"log_compress"` // compress rotated log file
-}
-
 func New(c *Config) (logger slog.SLogger, err error) {
 	var logTemplate string
 	var syslogLevel syslog.Priority
