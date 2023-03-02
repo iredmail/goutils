@@ -65,21 +65,25 @@ func New(c *Config) (logger slog.SLogger, err error) {
 	// 	h.SetFormatter(logFormatter)
 	// 	l.AddHandler(h)
 	case "file":
-		var h *handler.SyncCloseHandler
 		if c.LogMaxSize > 0 {
-			h, err = handlerRotateFile(c)
+			h, err := handlerRotateFile(c)
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			h, err = handlerRotateTime(c)
-			if err != nil {
-				return nil, err
-			}
+
+			h.SetFormatter(logFormatter)
+			l.AddHandler(h)
 		}
 
-		h.SetFormatter(logFormatter)
-		l.AddHandler(h)
+		if c.LogRotateInterval != "" {
+			h, err := handlerRotateTime(c)
+			if err != nil {
+				return nil, err
+			}
+
+			h.SetFormatter(logFormatter)
+			l.AddHandler(h)
+		}
 	case "syslog":
 		if len(c.LogSyslogServer) == 0 {
 			// Use local syslog socket by default.
