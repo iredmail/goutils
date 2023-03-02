@@ -44,10 +44,10 @@ func New(c *Config) (logger slog.SLogger, err error) {
 	})
 
 	switch c.LogTarget {
-	// case "stdout":
-	// 	h := handler.NewConsoleHandler([]slog.Level{level})
-	// 	h.SetFormatter(logFormatter)
-	// 	l.AddHandler(h)
+	case "stdout":
+		h := handler.NewConsoleHandler([]slog.Level{level})
+		h.SetFormatter(logFormatter)
+		l.AddHandler(h)
 	case "file":
 		if c.LogMaxSize > 0 {
 			h, err := handlerRotateFile(c)

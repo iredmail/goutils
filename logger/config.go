@@ -32,30 +32,50 @@ type Config struct {
 	LogCompress   bool   `json:"log_compress"` // compress rotated log file
 }
 
-func (c *Config) SetLevel(level string) {
+func (c *Config) SetTarget(target string) *Config {
+	c.LogTarget = target
+
+	return c
+}
+
+func (c *Config) SetLevel(level string) *Config {
 	c.LogLevel = level
+
+	return c
 }
 
-func (c *Config) SetMaxSize(maxSize int) {
+func (c *Config) SetMaxSize(maxSize int) *Config {
 	c.LogMaxSize = maxSize
+
+	return c
 }
 
-func (c *Config) SetRotateInterval(rotateInterval string) {
+func (c *Config) SetRotateInterval(rotateInterval string) *Config {
 	c.LogRotateInterval = rotateInterval
+
+	return c
 }
 
-func (c *Config) SetBufferSize(bufferSize int) {
+func (c *Config) SetBufferSize(bufferSize int) *Config {
 	c.LogBufferSize = bufferSize
+
+	return c
 }
 
-func (c *Config) SetMaxBackups(maxBackups int) {
+func (c *Config) SetMaxBackups(maxBackups int) *Config {
 	c.LogMaxBackups = maxBackups
+
+	return c
 }
 
-func (c *Config) SetCompress(compress bool) {
+func (c *Config) SetCompress(compress bool) *Config {
 	c.LogCompress = compress
+
+	return c
 }
 
-func (c *Config) SetTimeFormat(timeFormat string) {
+func (c *Config) SetTimeFormat(timeFormat string) *Config {
 	c.LogTimeFormat = timeFormat
+
+	return c
 }
