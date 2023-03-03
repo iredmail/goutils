@@ -26,23 +26,17 @@ func New(c *Config) (logger slog.SLogger, err error) {
 		syslogLevel = syslog.LOG_INFO
 		// logTemplate = "{{datetime}} {{level}} {{message}}\n"
 	}
-	logTemplate = "{{datetime}} {{level}} {{message}}\n"
 
+	logTemplate = "{{datetime}} {{level}} {{message}}\n"
 	// custom log format
 	logFormatter := slog.NewTextFormatter(logTemplate)
+	logFormatter.EnableColor = false
+	logFormatter.FullDisplay = true
 	logFormatter.TimeFormat = c.timeFormat
 
-	l := slog.NewStdLogger()
+	l := slog.New()
 	l.ReportCaller = true
 	l.CallerSkip = 6
-
-	l.Config(func(sl *slog.SugaredLogger) {
-		f := sl.Formatter.(*slog.TextFormatter)
-		f.TimeFormat = c.timeFormat
-		f.SetTemplate(logTemplate)
-		f.FullDisplay = true
-		f.EnableColor = false
-	})
 
 	switch c.target {
 	case "stdout":
@@ -95,7 +89,6 @@ func New(c *Config) (logger slog.SLogger, err error) {
 		l.AddHandler(h)
 	}
 
-	l.Level = level
 	l.DoNothingOnPanicFatal()
 	logger = l
 
@@ -106,6 +99,7 @@ func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 	return handler.NewSizeRotateFileHandler(
 		c.logFile,
 		c.maxSize,
+		handler.WithLogLevel(slog.LevelByName(c.level)),
 		handler.WithBuffSize(c.bufferSize),
 		handler.WithBackupNum(c.maxBackups),
 		handler.WithCompress(c.compress),
@@ -152,6 +146,7 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 	return handler.NewTimeRotateFileHandler(
 		c.logFile,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
+		handler.WithLogLevel(slog.LevelByName(c.level)),
 		handler.WithBuffSize(c.bufferSize),
 		handler.WithBackupNum(c.maxBackups),
 		handler.WithCompress(c.compress),
