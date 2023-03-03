@@ -107,6 +107,7 @@ func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 		c.logFile,
 		c.maxSize,
 		handler.WithBuffSize(c.bufferSize),
+		handler.WithBackupNum(c.maxBackups),
 		handler.WithCompress(c.compress),
 		handler.WithLogLevels(slog.AllLevels),
 	)
@@ -134,6 +135,7 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 		c.logFile,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
 		handler.WithBuffSize(c.bufferSize),
+		handler.WithBackupNum(c.maxBackups),
 		handler.WithCompress(c.compress),
 		handler.WithLogLevels(slog.AllLevels),
 	)

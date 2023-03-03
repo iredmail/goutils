@@ -5,10 +5,11 @@ func ConfigWithFile(logFilePath string) *Config {
 		target:     "file",
 		logFile:    logFilePath,
 		bufferSize: 0,
+		compress:   true,
 	}
 }
 
-func ConfigWithSys(logSyslogServer, logSyslogTag string) *Config {
+func ConfigWithSyslog(logSyslogServer, logSyslogTag string) *Config {
 	return &Config{
 		target:       "syslog",
 		syslogServer: logSyslogServer,
@@ -24,7 +25,7 @@ type Config struct {
 	logFile        string
 	maxSize        int
 	rotateInterval string // rotate interval. e.g. `12h` (12 hours), `1d` (1 day), `1w` (1 week), `1m` (1 month)
-	maxBackups     int
+	maxBackups     uint
 	timeFormat     string
 	compress       bool // compress rotated log file
 
@@ -91,7 +92,7 @@ func (c *Config) SetBufferSize(bufferSize int) *Config {
 }
 
 // SetMaxBackups 设置 rotate 后的 log 文件数量。
-func (c *Config) SetMaxBackups(maxBackups int) *Config {
+func (c *Config) SetMaxBackups(maxBackups uint) *Config {
 	c.maxBackups = maxBackups
 
 	return c
