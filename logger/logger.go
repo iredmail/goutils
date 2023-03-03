@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"log/syslog"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gookit/slog"
 	"github.com/gookit/slog/handler"
 	"github.com/gookit/slog/rotatefile"
-	"golang.org/x/exp/slices"
 )
 
 func New(c *Config) (logger slog.SLogger, err error) {
@@ -120,9 +120,27 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 		return nil, errors.New("empty rotate interval")
 	}
 
+	if len(c.rotateInterval) < 2 {
+		return nil, fmt.Errorf("invalid rotate interval: %s", c.rotateInterval)
+	}
+
 	lastChar := c.rotateInterval[len(c.rotateInterval)-1]
 	lowerLastChar := strings.ToLower(string(lastChar))
-	if !slices.Contains([]string{"w", "d", "h", "m", "s"}, lowerLastChar) {
+	switch lowerLastChar {
+	case "w", "d":
+		prefix, err := strconv.Atoi(c.rotateInterval[:len(c.rotateInterval)])
+		if err != nil {
+			return nil, err
+		}
+
+		if lowerLastChar == "w" {
+			c.rotateInterval = fmt.Sprintf("%dh", prefix*7*24)
+		} else {
+			c.rotateInterval = fmt.Sprintf("%dh", prefix*24)
+		}
+	case "h", "m", "s":
+		break
+	default:
 		return nil, fmt.Errorf("unsuppored rotate interval type: %s", lowerLastChar)
 	}
 
