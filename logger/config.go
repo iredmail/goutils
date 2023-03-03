@@ -35,10 +35,10 @@ type Config struct {
 }
 
 // SetTarget 控制将 log 记录到哪里。
-// 允许的值：file, syslog。其余值按 `file` 处理。
+// 允许的值：stdout, file, syslog。其余值按 `file` 处理。
 func (c *Config) SetTarget(target string) *Config {
 	switch target {
-	case "file", "syslog":
+	case "stdout", "file", "syslog":
 		c.target = target
 	default:
 		c.target = "file"
