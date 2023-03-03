@@ -128,7 +128,7 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 	lowerLastChar := strings.ToLower(string(lastChar))
 	switch lowerLastChar {
 	case "w", "d":
-		prefix, err := strconv.Atoi(c.rotateInterval[:len(c.rotateInterval)])
+		prefix, err := strconv.Atoi(c.rotateInterval[:len(c.rotateInterval)-1])
 		if err != nil {
 			return nil, err
 		}
