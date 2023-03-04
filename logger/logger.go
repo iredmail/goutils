@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"errors"
 	"fmt"
 	"log/syslog"
 	"strconv"
@@ -109,18 +108,16 @@ func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 // handlerRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
 func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
-	if len(c.rotateInterval) == 0 {
-		return nil, errors.New("empty rotate interval")
-	}
-
 	if len(c.rotateInterval) < 2 {
 		return nil, fmt.Errorf("invalid rotate interval: %s", c.rotateInterval)
 	}
 
 	lastChar := c.rotateInterval[len(c.rotateInterval)-1]
 	lowerLastChar := strings.ToLower(string(lastChar))
+
 	switch lowerLastChar {
 	case "w", "d":
+		// time.ParseDuration() 不支持 w、d，因此需要转换成 h。
 		prefix, err := strconv.Atoi(c.rotateInterval[:len(c.rotateInterval)-1])
 		if err != nil {
 			return nil, err
