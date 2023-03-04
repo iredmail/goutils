@@ -1,11 +1,16 @@
 package logger
 
+import (
+	"time"
+)
+
 func ConfigWithFile(logFilePath string) *Config {
 	return &Config{
 		target:     "file",
 		logFile:    logFilePath,
 		level:      "info",
 		bufferSize: 0,
+		timeFormat: time.DateTime,
 		compress:   true,
 	}
 }
@@ -16,6 +21,7 @@ func ConfigWithSyslog(logSyslogServer, logSyslogTag string) *Config {
 		level:        "info",
 		syslogServer: logSyslogServer,
 		syslogTag:    logSyslogTag,
+		timeFormat:   time.DateTime,
 	}
 }
 
