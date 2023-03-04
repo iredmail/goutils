@@ -4,6 +4,7 @@ func ConfigWithFile(logFilePath string) *Config {
 	return &Config{
 		target:     "file",
 		logFile:    logFilePath,
+		level:      "info",
 		bufferSize: 0,
 		compress:   true,
 	}
@@ -12,6 +13,7 @@ func ConfigWithFile(logFilePath string) *Config {
 func ConfigWithSyslog(logSyslogServer, logSyslogTag string) *Config {
 	return &Config{
 		target:       "syslog",
+		level:        "info",
 		syslogServer: logSyslogServer,
 		syslogTag:    logSyslogTag,
 	}
