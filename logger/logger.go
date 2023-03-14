@@ -44,7 +44,7 @@ func New(c *Config) (logger slog.SLogger, err error) {
 		l.AddHandler(h)
 	case "file":
 		if c.maxSize > 0 {
-			h, err := handlerRotateFile(c, level)
+			h, err := handlerRotateFile(c)
 			if err != nil {
 				return nil, err
 			}
@@ -54,7 +54,7 @@ func New(c *Config) (logger slog.SLogger, err error) {
 		}
 
 		if c.rotateInterval != "" {
-			h, err := handlerRotateTime(c, level)
+			h, err := handlerRotateTime(c)
 			if err != nil {
 				return nil, err
 			}
@@ -94,11 +94,11 @@ func New(c *Config) (logger slog.SLogger, err error) {
 	return
 }
 
-func handlerRotateFile(c *Config, level slog.Level) (*handler.SyncCloseHandler, error) {
+func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
 	return handler.NewSizeRotateFileHandler(
 		c.logFile,
 		c.maxSize,
-		handler.WithLevelMode(uint8(level)),
+		handler.WithLogLevels(parseLevels(c.level)),
 		handler.WithBuffSize(c.bufferSize),
 		handler.WithBackupNum(c.maxBackups),
 		handler.WithCompress(c.compress),
@@ -107,7 +107,7 @@ func handlerRotateFile(c *Config, level slog.Level) (*handler.SyncCloseHandler, 
 
 // handlerRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
-func handlerRotateTime(c *Config, level slog.Level) (*handler.SyncCloseHandler, error) {
+func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 	if len(c.rotateInterval) < 2 {
 		return nil, fmt.Errorf("invalid rotate interval: %s", c.rotateInterval)
 	}
@@ -142,9 +142,25 @@ func handlerRotateTime(c *Config, level slog.Level) (*handler.SyncCloseHandler, 
 	return handler.NewTimeRotateFileHandler(
 		c.logFile,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
-		handler.WithLevelMode(uint8(level)),
+		handler.WithLogLevels(parseLevels(c.level)),
 		handler.WithBuffSize(c.bufferSize),
 		handler.WithBackupNum(c.maxBackups),
 		handler.WithCompress(c.compress),
 	)
+}
+
+func parseLevels(level string) []slog.Level {
+	var levels []slog.Level
+	switch strings.ToLower(level) {
+	case "warn":
+		levels = append(levels, slog.InfoLevel, slog.WarnLevel)
+	case "error":
+		levels = append(levels, slog.InfoLevel, slog.WarnLevel, slog.ErrorLevel)
+	case "debug":
+		levels = append(levels, slog.InfoLevel, slog.WarnLevel, slog.ErrorLevel, slog.DebugLevel)
+	default:
+		levels = append(levels, slog.InfoLevel)
+	}
+
+	return levels
 }
