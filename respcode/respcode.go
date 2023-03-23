@@ -52,4 +52,5 @@ var (
 	ErrPasswordTooShort     = errors.New(PasswordTooShort)
 	ErrPasswordTooLong      = errors.New("PASSWORD_TOO_LONG")
 	ErrPermissionDenied     = errors.New(PermissionDenied)
+	ErrDomainExists         = errors.New("DOMAIN_EXISTS")
 )
