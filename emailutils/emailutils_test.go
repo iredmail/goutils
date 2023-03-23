@@ -71,8 +71,13 @@ func TestEmail(t *testing.T) {
 		}
 	*/
 
+	emails := []string{"a", "b.io", "user@c.io", "d@", "e@f.com", "g+ext@h.com"}
+	valid, invalid := FilterValidEmails(emails)
+	assert.Equal(t, []string{"user@c.io", "e@f.com", "g+ext@h.com"}, valid)
+	assert.Equal(t, []string{"a", "b.io", "d@"}, invalid)
+
 	domains := []string{"a", "b.io", "test.com", "b"}
-	valid, invalid := FilterValidDomains(domains)
+	valid, invalid = FilterValidDomains(domains)
 	assert.Equal(t, []string{"b.io", "test.com"}, valid)
 	assert.Equal(t, []string{"a", "b"}, invalid)
 }

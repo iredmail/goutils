@@ -194,6 +194,18 @@ func IsValidASCIIHeaderName(name string) bool {
 	return true
 }
 
+func FilterValidEmails(addrs []string) (valid []string, invalid []string) {
+	for _, addr := range addrs {
+		if IsEmail(addr) {
+			valid = append(valid, addr)
+		} else {
+			invalid = append(invalid, addr)
+		}
+	}
+
+	return
+}
+
 func FilterValidDomains(domains []string) (valid []string, invalid []string) {
 	for _, d := range domains {
 		if IsDomain(d) {
