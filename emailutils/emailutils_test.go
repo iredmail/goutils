@@ -70,6 +70,11 @@ func TestEmail(t *testing.T) {
 			assert.Equal(t, expected, addr.String())
 		}
 	*/
+
+	domains := []string{"a", "b.io", "test.com", "b"}
+	valid, invalid := FilterValidDomains(domains)
+	assert.Equal(t, []string{"b.io", "test.com"}, valid)
+	assert.Equal(t, []string{"a", "b"}, invalid)
 }
 
 func TestNetwork(t *testing.T) {

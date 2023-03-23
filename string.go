@@ -52,3 +52,10 @@ func SplitLines(s string) (lines []string) {
 
 	return
 }
+
+// StringSliceToLower 将 slice 里的元素都转换为小写。
+func StringSliceToLower(ss []string) {
+	for i := 0; i < len(ss); i++ {
+		ss[i] = strings.ToLower(ss[i])
+	}
+}
