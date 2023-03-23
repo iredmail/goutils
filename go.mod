@@ -12,7 +12,7 @@ require (
 	github.com/stretchr/testify v1.8.2
 	github.com/vorlif/spreak v0.4.0
 	golang.org/x/exp v0.0.0-20220909182711-5c715a9e8561
-	golang.org/x/text v0.7.0
+	golang.org/x/text v0.8.0
 	rsc.io/qr v0.2.0
 )
 
