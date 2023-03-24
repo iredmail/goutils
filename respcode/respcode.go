@@ -40,6 +40,7 @@ var (
 	ErrInvalidEmailAddress  = errors.New("INVALID_EMAIL_ADDRESS")
 	ErrInvalidProduct       = errors.New(InvalidProduct)
 	ErrInvalidDomain        = errors.New(InvalidDomain)
+	ErrInvalidParam         = errors.New(InvalidParam)
 	ErrInvalidSignupToken   = errors.New("INVALID_SIGNUP_TOKEN")
 	ErrInvalidVersionNumber = errors.New("INVALID_VERSION_NUMBER")
 	ErrInvalidReleaseDay    = errors.New("INVALID_RELEASE_DAY")
