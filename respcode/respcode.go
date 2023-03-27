@@ -49,6 +49,7 @@ var (
 	ErrInvalidCustomer      = errors.New("INVALID_CUSTOMER")
 	ErrEmptyPassword        = errors.New("EMPTY_PASSWORD")
 	ErrInvalidAccount       = errors.New("INVALID_ACCOUNT")
+	ErrInvalidAPIKey        = errors.New("INVALID_API_KEY")
 	ErrPasswordMismatch     = errors.New(PasswordMismatch)
 	ErrPasswordTooShort     = errors.New(PasswordTooShort)
 	ErrPasswordTooLong      = errors.New("PASSWORD_TOO_LONG")
