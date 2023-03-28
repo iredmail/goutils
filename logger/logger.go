@@ -152,14 +152,10 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 func parseLevels(level string) []slog.Level {
 	var levels []slog.Level
 	switch strings.ToLower(level) {
-	case "warn":
-		levels = append(levels, slog.InfoLevel, slog.WarnLevel)
-	case "error":
-		levels = append(levels, slog.InfoLevel, slog.WarnLevel, slog.ErrorLevel)
 	case "debug":
 		levels = append(levels, slog.InfoLevel, slog.WarnLevel, slog.ErrorLevel, slog.DebugLevel)
 	default:
-		levels = append(levels, slog.InfoLevel)
+		levels = append(levels, slog.InfoLevel, slog.WarnLevel, slog.ErrorLevel)
 	}
 
 	return levels
