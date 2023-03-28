@@ -197,9 +197,9 @@ func IsValidASCIIHeaderName(name string) bool {
 func FilterValidEmails(addrs []string) (valid []string, invalid []string) {
 	for _, addr := range addrs {
 		if IsEmail(addr) {
-			valid = append(valid, addr)
+			valid = append(valid, strings.ToLower(addr))
 		} else {
-			invalid = append(invalid, addr)
+			invalid = append(invalid, strings.ToLower(addr))
 		}
 	}
 
@@ -209,9 +209,9 @@ func FilterValidEmails(addrs []string) (valid []string, invalid []string) {
 func FilterValidDomains(domains []string) (valid []string, invalid []string) {
 	for _, d := range domains {
 		if IsDomain(d) {
-			valid = append(valid, d)
+			valid = append(valid, strings.ToLower(d))
 		} else {
-			invalid = append(invalid, d)
+			invalid = append(invalid, strings.ToLower(d))
 		}
 	}
 
