@@ -1,0 +1,97 @@
+# https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
+run:
+  # default concurrency is a available CPU number
+  #concurrency: 4
+
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  #timeout: 1m
+
+  # exit code when at least one issue was found, default is 1
+  issues-exit-code: 4
+
+  # include test files or not, default is true
+  tests: true
+
+  allow-parallel-runners: true
+
+  skip-dirs:
+    - external/
+
+  #skip-files:
+  #  - ".*\\.my\\.go$"
+  #  - lib/bad.go
+
+output:
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
+  max-same-issues: 100
+  sort-results: true
+
+linters:
+  #disable-all: true
+  #enable:
+  #  - megacheck
+  enable-all: true
+  disable:
+    - cyclop
+    - dogsled
+    - dupword
+    - errorlint
+    - exhaustivestruct
+    - forbidigo
+    - funlen
+    - forcetypeassert
+    - gci
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    #- gocritic
+    - goconst
+    - gocyclo
+    - godox
+    - godot
+    - goerr113
+    - gofumpt
+    - golint
+    - gomnd
+    - gomoddirectives
+    - goprintffuncname
+    - gosec
+    #- govet
+    - ifshort
+    - interfacebloat
+    - interfacer
+    - ineffassign
+    - lll
+    #- maintidx
+    - maligned
+    - nakedret
+    - nestif
+    - nonamedreturns
+    - nosnakecase
+    - nosprintfhostport
+    - paralleltest
+    - prealloc
+    - scopelint
+    - tagliatelle
+    - testpackage
+    - wastedassign
+    - wrapcheck
+    - wsl
+  fast: true
+
+linters-settings:
+  staticcheck:
+    checks: ["all", "-SA*"]
+  govet:
+    check-shadowing: false
+    enable:
+      - atomicalign
+
+issues:
+  exclude-rules:
+    # Exclude some staticcheck messages
+    - linters:
+        - staticcheck
+      text: "SA1016:"

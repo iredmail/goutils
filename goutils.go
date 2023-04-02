@@ -27,6 +27,7 @@ func IsEmpty(v any) bool {
 		return len(v.(string)) == 0
 	case reflect.Slice:
 		rv := reflect.ValueOf(v)
+
 		return rv.Len() == 0
 	case reflect.Map:
 		rv := reflect.ValueOf(v)
@@ -37,6 +38,7 @@ func IsEmpty(v any) bool {
 		return rv.Len() == 0
 	case reflect.Pointer:
 		rv := reflect.ValueOf(v)
+
 		return rv.IsNil()
 	}
 
@@ -52,6 +54,7 @@ func NotEmpty(v any) bool {
 		return len(v.(string)) > 0
 	case reflect.Slice:
 		rv := reflect.ValueOf(v)
+
 		return rv.Len() > 0
 	case reflect.Map:
 		rv := reflect.ValueOf(v)

@@ -10,11 +10,8 @@ func IsIP(s string) bool {
 
 func IsCIDR(s string) bool {
 	_, _, err := net.ParseCIDR(s)
-	if err == nil {
-		return true
-	}
 
-	return false
+	return err == nil
 }
 
 func IsNetworkPort(num int) (ok bool) {

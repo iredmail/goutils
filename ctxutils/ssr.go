@@ -12,6 +12,7 @@ func SSRError(ctx *fiber.Ctx, err error) error {
 
 func SSRHXRedirect(ctx *fiber.Ctx, location, msg string) error {
 	ctx.Set("HX-Redirect", location+"?msg="+msg)
+
 	return ctx.SendString(msg)
 }
 

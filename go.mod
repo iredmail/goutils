@@ -9,6 +9,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.43.0
 	github.com/google/uuid v1.3.0
 	github.com/gookit/slog v0.4.1-0.20230215081624-cd8226f5bb79
+	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/stretchr/testify v1.8.2
 	github.com/vorlif/spreak v0.4.0
 	golang.org/x/exp v0.0.0-20220909182711-5c715a9e8561
