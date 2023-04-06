@@ -1,12 +1,5 @@
 name: Run unittests.
-
 on: [push]
-#on:
-#  schedule:
-#    # A complete cython build takes about 14 minutes, let's run it every Monday
-#    # and not waste too much GitHub free resource.
-#    - cron:  '1 1 * * 1'
-
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -43,16 +36,15 @@ jobs:
 
       - run: make testv
 
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v2
-      with:
-        #version: v2.5.2
-        version: latest
-        args: --print-issued-lines -c $GITHUB_WORKSPACE/.golangci.yml
-        #only-new-issues: false
-        skip-go-installation: true
-        skip-pkg-cache: false
-        skip-build-cache: false
+      - uses: golangci/golangci-lint-action@v2
+        with:
+          #version: v2.5.2
+          version: latest
+          args: --print-issued-lines -c $GITHUB_WORKSPACE/.golangci.yml
+          #only-new-issues: false
+          skip-go-installation: true
+          skip-pkg-cache: false
+          skip-build-cache: false
 
     #- name: Gosec
     #  uses: securego/gosec@master
