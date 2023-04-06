@@ -12,7 +12,11 @@ import (
 	"github.com/gookit/slog/rotatefile"
 )
 
-func New(c *Config) (logger slog.SLogger, err error) {
+type log struct {
+	sl *slog.Logger
+}
+
+func New(c *Config) (logger Logger, err error) {
 	var logTemplate string
 	var syslogLevel syslog.Priority
 
@@ -89,7 +93,7 @@ func New(c *Config) (logger slog.SLogger, err error) {
 	}
 
 	l.DoNothingOnPanicFatal()
-	logger = l
+	logger = log{sl: l}
 
 	return
 }
@@ -159,4 +163,24 @@ func parseLevels(level string) []slog.Level {
 	}
 
 	return levels
+}
+
+//
+// 实现 Logger 接口。
+//
+
+func (l log) Info(msg string, args ...interface{}) {
+	l.sl.Infof(msg, args...)
+}
+
+func (l log) Error(msg string, args ...interface{}) {
+	l.sl.Errorf(msg, args...)
+}
+
+func (l log) Warn(msg string, args ...interface{}) {
+	l.sl.Warnf(msg, args...)
+}
+
+func (l log) Debug(msg string, args ...interface{}) {
+	l.sl.Debugf(msg, args...)
 }
