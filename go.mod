@@ -8,7 +8,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/gofiber/fiber/v2 v2.43.0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/slog v0.4.1-0.20230215081624-cd8226f5bb79
+	github.com/gookit/slog v0.5.0
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/stretchr/testify v1.8.2
 	github.com/vorlif/spreak v0.4.0
@@ -20,8 +20,8 @@ require (
 require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/gookit/color v1.5.2 // indirect
-	github.com/gookit/goutil v0.6.6 // indirect
+	github.com/gookit/color v1.5.3 // indirect
+	github.com/gookit/goutil v0.6.8 // indirect
 	github.com/gookit/gsr v0.0.8 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
