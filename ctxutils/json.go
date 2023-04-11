@@ -13,6 +13,14 @@ func JSONError(ctx *fiber.Ctx, err error) error {
 	})
 }
 
+func JSONErrorInvalidParamValue(ctx *fiber.Ctx, param string, err error) error {
+	return ctx.JSON(fiber.Map{
+		"_success":   false,
+		"_parameter": param,
+		"_msg":       err.Error(),
+	})
+}
+
 func JSONError500(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{
 		"_success": false,
