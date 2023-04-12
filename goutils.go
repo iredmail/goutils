@@ -3,6 +3,7 @@ package goutils
 import (
 	"net"
 	"reflect"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/exp/slices"
@@ -85,4 +86,24 @@ func Intersect[T comparable](s1, s2 []T) []T {
 	}
 
 	return set
+}
+
+func GetStructSONTags(v any) (tags []string) {
+	rv := reflect.ValueOf(v)
+	for i := 0; i < rv.NumField(); i++ {
+		field := rv.Field(i)
+		if field.Kind() == reflect.Struct {
+			tags = append(tags, GetStructSONTags(field.Interface())...)
+		}
+
+		jsonTag := rv.Type().Field(i).Tag.Get("json")
+		tag := strings.Split(jsonTag, ",")[0]
+		if tag == "" || tag == "-" {
+			continue
+		}
+
+		tags = append(tags, tag)
+	}
+
+	return
 }
