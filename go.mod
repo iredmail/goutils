@@ -8,7 +8,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/gofiber/fiber/v2 v2.43.0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/slog v0.5.0
+	github.com/gookit/slog v0.5.1
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/stretchr/testify v1.8.2
 	github.com/vorlif/spreak v0.4.0

@@ -98,12 +98,13 @@ func ExtractDomain(e string) string {
 	return domain
 }
 
+// ExtractDomains 从多个邮件地址里提取邮件域名并转换为小写。
 func ExtractDomains(emails []string) (domains []string) {
 	for _, addr := range emails {
 		d := ExtractDomain(addr)
 
 		if !slices.Contains(domains, d) {
-			domains = append(domains, d)
+			domains = append(domains, strings.ToLower(d))
 		}
 	}
 
