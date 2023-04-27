@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net"
 	"os"
 	"os/exec"
 	"runtime"
 	"strings"
+
+	"github.com/shirou/gopsutil/host"
 )
 
 type OSInfo struct {
@@ -31,6 +34,15 @@ type OSInfo struct {
 
 	// Package manager
 	PkgMgr string `json:"pkg_mgr"`
+
+	// Uptime
+	UptimeDays    uint64 `json:"uptime_days"`
+	UptimeHours   uint64 `json:"uptime_hours"`
+	UptimeMinutes uint64 `json:"uptime_minutes"`
+
+	// Net
+	IPAddresses []string `json:"ip_addresses"`
+	Mac         string   `json:"mac"`
 }
 
 func (oi OSInfo) ToMap() (m map[string]string, err error) {
@@ -122,8 +134,6 @@ func GetOSInfo() (oi OSInfo, err error) {
 				oi.DistributionRelease = v // "focal"
 			}
 		}
-
-		return
 	} else if runtime.GOOS == "openbsd" {
 		oi.System = "OpenBSD"
 		oi.OSFamily = "OpenBSD"
@@ -140,9 +150,37 @@ func GetOSInfo() (oi OSInfo, err error) {
 		}
 
 		oi.DistributionVersion = strings.TrimSpace(stdout.String())
+	}
 
+	// Network
+	interfaces, err := net.Interfaces()
+	if err != nil {
 		return
 	}
+
+	for _, iface := range interfaces {
+		if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagLoopback == 0 {
+			addrs, err := iface.Addrs()
+			if err != nil {
+
+			}
+			for _, addr := range addrs {
+				if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+					oi.IPAddresses = append(oi.IPAddresses, ipNet.IP.String())
+					oi.Mac = iface.HardwareAddr.String()
+					break
+				}
+			}
+		}
+	}
+
+	uptime, err := host.Uptime()
+	if err != nil {
+		return
+	}
+	oi.UptimeDays = uptime / (60 * 60 * 24)
+	oi.UptimeHours = (uptime - (oi.UptimeDays * 60 * 60 * 24)) / (60 * 60)
+	oi.UptimeMinutes = ((uptime - (oi.UptimeDays * 60 * 60 * 24)) - (oi.UptimeHours * 60 * 60)) / 60
 
 	return
 }
