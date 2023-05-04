@@ -10,7 +10,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/shirou/gopsutil/host"
+	"github.com/iredmail/goutils/pp"
+	"github.com/shirou/gopsutil/v3/host"
 	"golang.org/x/exp/slices"
 )
 
@@ -48,13 +49,16 @@ type OSInfo struct {
 	MacAddresses []string `json:"mac_addresses"`
 }
 
-func (oi OSInfo) ToMap() (m map[string]string, err error) {
+func (oi OSInfo) ToMap() (m map[string]any, err error) {
 	jb, err := json.Marshal(oi)
 	if err != nil {
 		return nil, err
 	}
 
+	pp.Println(string(jb))
+	m = make(map[string]any)
 	err = json.Unmarshal(jb, &m)
+	pp.Println(err)
 
 	return
 }
