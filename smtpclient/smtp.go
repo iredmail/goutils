@@ -246,7 +246,6 @@ func getEmlBody(emailBytes []byte) (body []byte, err error) {
 		} else {
 			headersLength += len(s)
 		}
-
 	}
 
 	body = emailBytes[headersLength:]
