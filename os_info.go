@@ -11,9 +11,12 @@ import (
 	"strings"
 
 	"github.com/shirou/gopsutil/host"
+	"golang.org/x/exp/slices"
 )
 
 type OSInfo struct {
+	Hostname string `json:"hostname"`
+
 	System       string `json:"system"` // linux, darwin, freebsd, openbsd, windows
 	OSFamily     string `json:"os_family"`
 	Architecture string `json:"architecture"` // 386, amd64, arm, arm64
@@ -41,8 +44,8 @@ type OSInfo struct {
 	UptimeMinutes uint64 `json:"uptime_minutes"`
 
 	// Net
-	IPAddresses []string `json:"ip_addresses"`
-	Mac         string   `json:"mac"`
+	IPAddresses  []string `json:"ip_addresses"`
+	MacAddresses []string `json:"mac_addresses"`
 }
 
 func (oi OSInfo) ToMap() (m map[string]string, err error) {
@@ -58,6 +61,11 @@ func (oi OSInfo) ToMap() (m map[string]string, err error) {
 
 func GetOSInfo() (oi OSInfo, err error) {
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
+
+	hi, _ := host.Info()
+	if hi != nil {
+		oi.Hostname = hi.Hostname
+	}
 
 	if runtime.GOOS == "linux" {
 		oi.System = "Linux"
@@ -166,8 +174,16 @@ func GetOSInfo() (oi OSInfo, err error) {
 			}
 			for _, addr := range addrs {
 				if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-					oi.IPAddresses = append(oi.IPAddresses, ipNet.IP.String())
-					oi.Mac = iface.HardwareAddr.String()
+					ip := ipNet.IP.String()
+					if !slices.Contains(oi.IPAddresses, ip) {
+						oi.IPAddresses = append(oi.IPAddresses, ip)
+					}
+
+					maddr := iface.HardwareAddr.String()
+					if !slices.Contains(oi.MacAddresses, maddr) {
+						oi.MacAddresses = append(oi.MacAddresses, maddr)
+					}
+
 					break
 				}
 			}
