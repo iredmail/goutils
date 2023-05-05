@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/iredmail/goutils/pp"
 	"github.com/shirou/gopsutil/v3/host"
 	"golang.org/x/exp/slices"
 )
@@ -55,10 +54,8 @@ func (oi OSInfo) ToMap() (m map[string]any, err error) {
 		return nil, err
 	}
 
-	pp.Println(string(jb))
 	m = make(map[string]any)
 	err = json.Unmarshal(jb, &m)
-	pp.Println(err)
 
 	return
 }
