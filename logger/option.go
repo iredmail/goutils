@@ -57,7 +57,7 @@ func WithMaxSize(maxSize int) Option {
 	}
 }
 
-func WithSetRotateInterval(interval string) Option {
+func WithRotateInterval(interval string) Option {
 	return func(l *logger) {
 		l.rotateInterval = interval
 	}
