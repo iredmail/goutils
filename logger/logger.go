@@ -12,15 +12,38 @@ import (
 	"github.com/gookit/slog/rotatefile"
 )
 
-type log struct {
+type logger struct {
 	sl *slog.Logger
+
+	target         Target // log target: file, syslog
+	level          string // log level: info, warn, error, debug
+	syslogServer   string
+	syslogTag      string
+	logFile        string
+	maxSize        int
+	rotateInterval string // rotate interval. e.g. `12h` (12 hours), `1d` (1 day), `1w` (1 week), `1m` (1 month)
+	maxBackups     uint
+	timeFormat     string
+	compress       bool // compress rotated log file
+
+	// Buffer size defaults to (8 * 1024).
+	// Write to log file immediately if size is 0.
+	bufferSize int
 }
 
-func New(c *Config) (logger Logger, err error) {
+func New(options ...Option) (v Logger, err error) {
 	var logTemplate string
 	var syslogLevel syslog.Priority
 
-	level := slog.LevelByName(c.level)
+	l := slog.New()
+	l.ReportCaller = true
+	l.CallerSkip = 6
+	log := logger{sl: l}
+	for _, option := range options {
+		option(&log)
+	}
+
+	level := slog.LevelByName(log.level)
 	if level == slog.DebugLevel {
 		syslogLevel = syslog.LOG_DEBUG
 		// 当 log level 为 debug 时开启 caller，方便快速定位打印日志位置
@@ -35,20 +58,16 @@ func New(c *Config) (logger Logger, err error) {
 	logFormatter := slog.NewTextFormatter(logTemplate)
 	logFormatter.EnableColor = false
 	logFormatter.FullDisplay = true
-	logFormatter.TimeFormat = c.timeFormat
+	logFormatter.TimeFormat = log.timeFormat
 
-	l := slog.New()
-	l.ReportCaller = true
-	l.CallerSkip = 6
-
-	switch c.target {
-	case "stdout":
+	switch log.target {
+	case TargetStdout:
 		h := handler.NewConsoleHandler([]slog.Level{level})
 		h.SetFormatter(logFormatter)
 		l.AddHandler(h)
-	case "file":
-		if c.maxSize > 0 {
-			h, err := handlerRotateFile(c)
+	case TargetFile:
+		if log.maxSize > 0 {
+			h, err := handlerRotateFile(log)
 			if err != nil {
 				return nil, err
 			}
@@ -57,8 +76,8 @@ func New(c *Config) (logger Logger, err error) {
 			l.AddHandler(h)
 		}
 
-		if c.rotateInterval != "" {
-			h, err := handlerRotateTime(c)
+		if log.rotateInterval != "" {
+			h, err := handlerRotateTime(log)
 			if err != nil {
 				return nil, err
 			}
@@ -66,14 +85,14 @@ func New(c *Config) (logger Logger, err error) {
 			h.SetFormatter(logFormatter)
 			l.AddHandler(h)
 		}
-	case "syslog":
-		if len(c.syslogServer) == 0 {
+	case TargetSyslog:
+		if len(log.syslogServer) == 0 {
 			// Use local syslog socket by default.
-			c.syslogServer = "/dev/log"
+			log.syslogServer = "/dev/log"
 		}
 
-		if strings.HasPrefix(c.syslogServer, "/") {
-			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, c.syslogTag)
+		if strings.HasPrefix(log.syslogServer, "/") {
+			h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, log.syslogTag)
 			if err != nil {
 				return nil, err
 			}
@@ -83,54 +102,54 @@ func New(c *Config) (logger Logger, err error) {
 			break
 		}
 
-		w, err := syslog.Dial("tcp", c.syslogServer, syslogLevel|syslog.LOG_MAIL, c.syslogTag)
+		w, err := syslog.Dial("tcp", log.syslogServer, syslogLevel|syslog.LOG_MAIL, log.syslogTag)
 		if err != nil {
 			return nil, err
 		}
-		h := handler.NewBufferedHandler(w, c.bufferSize, level)
+		h := handler.NewBufferedHandler(w, log.bufferSize, level)
 		h.SetFormatter(logFormatter)
 		l.AddHandler(h)
 	}
 
 	l.DoNothingOnPanicFatal()
-	logger = log{sl: l}
+	v = log
 
 	return
 }
 
-func handlerRotateFile(c *Config) (*handler.SyncCloseHandler, error) {
+func handlerRotateFile(log logger) (*handler.SyncCloseHandler, error) {
 	return handler.NewSizeRotateFileHandler(
-		c.logFile,
-		c.maxSize,
-		handler.WithLogLevels(parseLevels(c.level)),
-		handler.WithBuffSize(c.bufferSize),
-		handler.WithBackupNum(c.maxBackups),
-		handler.WithCompress(c.compress),
+		log.logFile,
+		log.maxSize,
+		handler.WithLogLevels(parseLevels(log.level)),
+		handler.WithBuffSize(log.bufferSize),
+		handler.WithBackupNum(log.maxBackups),
+		handler.WithCompress(log.compress),
 	)
 }
 
 // handlerRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
-func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
-	if len(c.rotateInterval) < 2 {
-		return nil, fmt.Errorf("invalid rotate interval: %s", c.rotateInterval)
+func handlerRotateTime(log logger) (*handler.SyncCloseHandler, error) {
+	if len(log.rotateInterval) < 2 {
+		return nil, fmt.Errorf("invalid rotate interval: %s", log.rotateInterval)
 	}
 
-	lastChar := c.rotateInterval[len(c.rotateInterval)-1]
+	lastChar := log.rotateInterval[len(log.rotateInterval)-1]
 	lowerLastChar := strings.ToLower(string(lastChar))
 
 	switch lowerLastChar {
 	case "w", "d":
 		// time.ParseDuration() 不支持 w、d，因此需要转换成 h。
-		prefix, err := strconv.Atoi(c.rotateInterval[:len(c.rotateInterval)-1])
+		prefix, err := strconv.Atoi(log.rotateInterval[:len(log.rotateInterval)-1])
 		if err != nil {
 			return nil, err
 		}
 
 		if lowerLastChar == "w" {
-			c.rotateInterval = fmt.Sprintf("%dh", prefix*7*24)
+			log.rotateInterval = fmt.Sprintf("%dh", prefix*7*24)
 		} else {
-			c.rotateInterval = fmt.Sprintf("%dh", prefix*24)
+			log.rotateInterval = fmt.Sprintf("%dh", prefix*24)
 		}
 	case "h", "m", "s":
 		break
@@ -138,18 +157,18 @@ func handlerRotateTime(c *Config) (*handler.SyncCloseHandler, error) {
 		return nil, fmt.Errorf("unsuppored rotate interval type: %s", lowerLastChar)
 	}
 
-	rotateIntervalDuration, err := time.ParseDuration(c.rotateInterval)
+	rotateIntervalDuration, err := time.ParseDuration(log.rotateInterval)
 	if err != nil {
 		return nil, err
 	}
 
 	return handler.NewTimeRotateFileHandler(
-		c.logFile,
+		log.logFile,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
-		handler.WithLogLevels(parseLevels(c.level)),
-		handler.WithBuffSize(c.bufferSize),
-		handler.WithBackupNum(c.maxBackups),
-		handler.WithCompress(c.compress),
+		handler.WithLogLevels(parseLevels(log.level)),
+		handler.WithBuffSize(log.bufferSize),
+		handler.WithBackupNum(log.maxBackups),
+		handler.WithCompress(log.compress),
 	)
 }
 
@@ -169,18 +188,18 @@ func parseLevels(level string) []slog.Level {
 // 实现 Logger 接口。
 //
 
-func (l log) Info(msg string, args ...interface{}) {
+func (l logger) Info(msg string, args ...interface{}) {
 	l.sl.Infof(msg, args...)
 }
 
-func (l log) Error(msg string, args ...interface{}) {
+func (l logger) Error(msg string, args ...interface{}) {
 	l.sl.Errorf(msg, args...)
 }
 
-func (l log) Warn(msg string, args ...interface{}) {
+func (l logger) Warn(msg string, args ...interface{}) {
 	l.sl.Warnf(msg, args...)
 }
 
-func (l log) Debug(msg string, args ...interface{}) {
+func (l logger) Debug(msg string, args ...interface{}) {
 	l.sl.Debugf(msg, args...)
 }
