@@ -16,6 +16,24 @@ func WithTarget(target Target) Option {
 	}
 }
 
+func WithLogFile(pth string) Option {
+	return func(l *logger) {
+		l.logFile = pth
+	}
+}
+
+func WithSyslogServer(s string) Option {
+	return func(l *logger) {
+		l.syslogServer = s
+	}
+}
+
+func WithSyslogTag(tag string) Option {
+	return func(l *logger) {
+		l.syslogTag = tag
+	}
+}
+
 func WithLevel(level string) Option {
 	switch level {
 	case "info", "warn", "error", "debug":
