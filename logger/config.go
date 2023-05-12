@@ -4,9 +4,15 @@ import (
 	"time"
 )
 
+const (
+	TargetFile   string = "file"
+	TargetStdout string = "stdout"
+	TargetSyslog string = "syslog"
+)
+
 func ConfigWithFile(logFilePath string) *Config {
 	return &Config{
-		target:     "file",
+		target:     TargetFile,
 		logFile:    logFilePath,
 		level:      "info",
 		bufferSize: 0,
@@ -17,7 +23,7 @@ func ConfigWithFile(logFilePath string) *Config {
 
 func ConfigWithSyslog(logSyslogServer, logSyslogTag string) *Config {
 	return &Config{
-		target:       "syslog",
+		target:       TargetSyslog,
 		level:        "info",
 		syslogServer: logSyslogServer,
 		syslogTag:    logSyslogTag,
@@ -46,10 +52,10 @@ type Config struct {
 // 允许的值：stdout, file, syslog。其余值按 `file` 处理。
 func (c *Config) SetTarget(target string) *Config {
 	switch target {
-	case "stdout", "file", "syslog":
+	case TargetStdout, TargetSyslog, TargetFile:
 		c.target = target
 	default:
-		c.target = "file"
+		c.target = TargetFile
 	}
 
 	return c
