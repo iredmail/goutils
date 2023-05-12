@@ -62,7 +62,7 @@ func New(options ...Option) (v Logger, err error) {
 
 	switch log.target {
 	case TargetStdout:
-		h := handler.NewConsoleHandler([]slog.Level{level})
+		h := handler.NewConsoleHandler(parseLevels(log.level))
 		h.SetFormatter(logFormatter)
 		l.AddHandler(h)
 	case TargetFile:
