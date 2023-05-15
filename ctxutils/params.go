@@ -40,8 +40,8 @@ func ParamPage(ctx *fiber.Ctx) (page int) {
 	return
 }
 
-func ParamInt64(ctx *fiber.Ctx) (i int64) {
-	s := ctx.Params("id", "0")
+func ParamInt64(ctx *fiber.Ctx, key string) (i int64) {
+	s := ctx.Params(key, "0")
 
 	i, _ = strconv.ParseInt(s, 10, 64)
 
