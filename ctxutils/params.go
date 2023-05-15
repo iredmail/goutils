@@ -2,8 +2,10 @@ package ctxutils
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+
 	"github.com/iredmail/goutils/emailutils"
 )
 
@@ -34,6 +36,14 @@ func ParamPage(ctx *fiber.Ctx) (page int) {
 	if page < 1 {
 		page = 1
 	}
+
+	return
+}
+
+func ParamInt64(ctx *fiber.Ctx) (i int64) {
+	s := ctx.Params("id", "0")
+
+	i, _ = strconv.ParseInt(s, 10, 64)
 
 	return
 }
