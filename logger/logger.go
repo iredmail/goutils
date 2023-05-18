@@ -36,13 +36,14 @@ func (l *logger) applyOptions(opts ...Option) {
 func newLogger(opts ...Option) logger {
 	sl := slog.New()
 	l := logger{
-		sl:         sl,
-		timeFormat: "",
+		sl:             sl,
+		level:          "info",
+		timeFormat:     time.DateTime,
+		rotateInterval: "1w",
+		compress:       true,
 	}
 
-	for _, opt := range opts {
-		opt(&l)
-	}
+	l.applyOptions(opts...)
 
 	return l
 }
@@ -108,8 +109,7 @@ func NewSyslogLogger(server, tag string, options ...Option) (logger Logger, err 
 
 func NewFileLogger(pth string, opts ...Option) (logger Logger, err error) {
 	// enable compress by default
-	l := newLogger(WithCompress())
-	l.applyOptions(opts...)
+	l := newLogger(opts...)
 
 	logFormatter := genLogFormatter(l.timeFormat)
 
