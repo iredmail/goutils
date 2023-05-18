@@ -27,8 +27,8 @@ type logger struct {
 	bufferSize int
 }
 
-func NewStdoutLogger(options ...Option) (v Logger, err error) {
-	l := newLog(options...)
+func NewStdoutLogger(opts ...Option) (Logger, error) {
+	l := newLogger(opts...)
 
 	// custom log format
 	logFormatter := genLogFormatter(l.timeFormat)
@@ -43,7 +43,7 @@ func NewStdoutLogger(options ...Option) (v Logger, err error) {
 }
 
 func NewSyslogLogger(server, tag string, options ...Option) (logger Logger, err error) {
-	l := newLog(options...)
+	l := newLogger(options...)
 	var syslogLevel syslog.Priority
 
 	level := slog.LevelByName(l.level)
@@ -88,7 +88,7 @@ func NewSyslogLogger(server, tag string, options ...Option) (logger Logger, err 
 
 func NewFileLogger(pth string, options ...Option) (logger Logger, err error) {
 	// enable compress
-	l := newLog(WithCompress())
+	l := newLogger(WithCompress())
 	for _, option := range options {
 		option(&l)
 	}
@@ -121,16 +121,14 @@ func NewFileLogger(pth string, options ...Option) (logger Logger, err error) {
 	return l, nil
 }
 
-func newLog(options ...Option) logger {
+func newLogger(opts ...Option) logger {
 	sl := slog.New()
-	sl.ReportCaller = true
-	sl.CallerSkip = 6
 	l := logger{
 		sl: sl,
 	}
 
-	for _, option := range options {
-		option(&l)
+	for _, opt := range opts {
+		opt(&l)
 	}
 
 	return l
