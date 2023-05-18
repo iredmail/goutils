@@ -27,6 +27,26 @@ type logger struct {
 	bufferSize int
 }
 
+func (l *logger) applyOptions(opts ...Option) {
+	for _, opt := range opts {
+		opt(l)
+	}
+}
+
+func newLogger(opts ...Option) logger {
+	sl := slog.New()
+	l := logger{
+		sl:         sl,
+		timeFormat: "",
+	}
+
+	for _, opt := range opts {
+		opt(&l)
+	}
+
+	return l
+}
+
 func NewStdoutLogger(opts ...Option) (Logger, error) {
 	l := newLogger(opts...)
 
@@ -86,14 +106,11 @@ func NewSyslogLogger(server, tag string, options ...Option) (logger Logger, err 
 	return l, nil
 }
 
-func NewFileLogger(pth string, options ...Option) (logger Logger, err error) {
-	// enable compress
+func NewFileLogger(pth string, opts ...Option) (logger Logger, err error) {
+	// enable compress by default
 	l := newLogger(WithCompress())
-	for _, option := range options {
-		option(&l)
-	}
+	l.applyOptions(opts...)
 
-	// custom log format
 	logFormatter := genLogFormatter(l.timeFormat)
 
 	if l.maxSize > 0 {
@@ -119,19 +136,6 @@ func NewFileLogger(pth string, options ...Option) (logger Logger, err error) {
 	l.sl.DoNothingOnPanicFatal()
 
 	return l, nil
-}
-
-func newLogger(opts ...Option) logger {
-	sl := slog.New()
-	l := logger{
-		sl: sl,
-	}
-
-	for _, opt := range opts {
-		opt(&l)
-	}
-
-	return l
 }
 
 func genLogFormatter(timeFormat string) *slog.TextFormatter {

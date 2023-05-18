@@ -1,5 +1,7 @@
 package logger
 
+import "time"
+
 type Option func(l *logger)
 
 func WithLevel(level string) Option {
@@ -17,7 +19,7 @@ func WithLevel(level string) Option {
 
 func WithMaxSize(maxSize int) Option {
 	if maxSize == 0 {
-		maxSize = 500 * 1024 * 1024 // 500 MB
+		maxSize = 100 * 1024 * 1024 // 100 MB
 	}
 
 	return func(l *logger) {
@@ -26,9 +28,14 @@ func WithMaxSize(maxSize int) Option {
 }
 
 func WithRotateInterval(interval string) Option {
-	return func(l *logger) {
-		l.rotateInterval = interval
+	_, err := time.ParseDuration(interval)
+	if err != nil {
+		return func(l *logger) {
+			l.rotateInterval = interval
+		}
 	}
+
+	return func(l *logger) {}
 }
 
 func WithBufferSize(bufferSize int) Option {
