@@ -6,13 +6,13 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/gofiber/fiber/v2 v2.45.0
+	github.com/gofiber/fiber/v2 v2.46.0
 	github.com/google/uuid v1.3.0
 	github.com/gookit/slog v0.5.1
 	github.com/jhillyerd/enmime v0.11.1
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/shirou/gopsutil/v3 v3.23.4
-	github.com/stretchr/testify v1.8.2
+	github.com/stretchr/testify v1.8.3
 	github.com/vorlif/spreak v0.4.0
 	golang.org/x/exp v0.0.0-20220909182711-5c715a9e8561
 	golang.org/x/text v0.9.0
