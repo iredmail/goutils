@@ -33,4 +33,9 @@ func TestGoUtils(t *testing.T) {
 	assert.False(t, IsIPv4("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
 
 	assert.True(t, IsUUID("DA14F3A5-AAEB-44C1-8A14-5146FA60B7DD"))
+
+	assert.True(t, CalculateTotalPages(10, 50) == 1)
+	assert.True(t, CalculateTotalPages(50, 50) == 1)
+	assert.True(t, CalculateTotalPages(52, 50) == 2)
+	assert.True(t, CalculateTotalPages(200, 50) == 4)
 }

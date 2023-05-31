@@ -109,6 +109,6 @@ func GetStructJSONTags(v any) (tags []string) {
 	return
 }
 
-func CalcTotalPages(total, pageSize float64) int {
-	return int(math.Ceil(total) / pageSize)
+func CalculateTotalPages(total, pageSize float64) int {
+	return int(math.Ceil(total / pageSize))
 }
