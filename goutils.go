@@ -1,6 +1,7 @@
 package goutils
 
 import (
+	"math"
 	"net"
 	"reflect"
 	"strings"
@@ -106,4 +107,8 @@ func GetStructJSONTags(v any) (tags []string) {
 	}
 
 	return
+}
+
+func CalcTotalPages(total, pageSize float64) int {
+	return int(math.Ceil(total) / pageSize)
 }
