@@ -39,7 +39,6 @@ linters:
     - dupword
     - errorlint
     - exhaustivestruct
-    - depguard
     - forbidigo
     - funlen
     - forcetypeassert
