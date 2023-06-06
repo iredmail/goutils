@@ -115,7 +115,7 @@ func NewFileLogger(pth string, opts ...Option) (logger LoggerWithWriter, err err
 	// enable compress by default
 	l := newLogger(opts...)
 	if l.maxBackups == 0 {
-		l.maxBackups = 20
+		l.maxBackups = 12
 	}
 
 	logFormatter := genLogFormatter(l.timeFormat)
