@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"log/syslog"
 	"strconv"
 	"strings"
@@ -25,6 +26,8 @@ type logger struct {
 	// Buffer size defaults to (8 * 1024).
 	// Write to log file immediately if size is 0.
 	bufferSize int
+
+	rotateWriter io.Writer
 }
 
 func (l *logger) applyOptions(opts ...Option) {
@@ -57,6 +60,7 @@ func NewStdoutLogger(opts ...Option) (Logger, error) {
 	h := handler.NewConsoleHandler(parseLevels(l.level))
 	h.SetFormatter(logFormatter)
 	l.sl.AddHandler(h)
+	l.rotateWriter = h.Output
 
 	l.sl.DoNothingOnPanicFatal()
 
@@ -110,6 +114,9 @@ func NewSyslogLogger(server, tag string, options ...Option) (logger Logger, err 
 func NewFileLogger(pth string, opts ...Option) (logger Logger, err error) {
 	// enable compress by default
 	l := newLogger(opts...)
+	if l.maxBackups == 0 {
+		l.maxBackups = 20
+	}
 
 	logFormatter := genLogFormatter(l.timeFormat)
 
@@ -121,6 +128,7 @@ func NewFileLogger(pth string, opts ...Option) (logger Logger, err error) {
 
 		h.SetFormatter(logFormatter)
 		l.sl.AddHandler(h)
+		l.rotateWriter = h.Writer()
 	}
 
 	if l.rotateInterval != "" {
@@ -131,6 +139,7 @@ func NewFileLogger(pth string, opts ...Option) (logger Logger, err error) {
 
 		h.SetFormatter(logFormatter)
 		l.sl.AddHandler(h)
+		l.rotateWriter = h.Writer()
 	}
 
 	l.sl.DoNothingOnPanicFatal()
@@ -234,4 +243,14 @@ func (l logger) Warn(msg string, args ...interface{}) {
 
 func (l logger) Debug(msg string, args ...interface{}) {
 	l.sl.Debugf(msg, args...)
+
+}
+
+// Write Only supported file target mode.
+func (l logger) Write(p []byte) (int, error) {
+	if l.rotateWriter == nil {
+		return 0, nil
+	}
+
+	return l.rotateWriter.Write(p)
 }

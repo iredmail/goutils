@@ -5,4 +5,5 @@ type Logger interface {
 	Error(msg string, args ...interface{})
 	Warn(msg string, args ...interface{})
 	Debug(msg string, args ...interface{})
+	Write(p []byte) (int, error)
 }
