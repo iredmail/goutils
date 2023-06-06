@@ -51,7 +51,7 @@ func newLogger(opts ...Option) logger {
 	return l
 }
 
-func NewStdoutLogger(opts ...Option) (Logger, error) {
+func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 	l := newLogger(opts...)
 
 	// custom log format
@@ -111,7 +111,7 @@ func NewSyslogLogger(server, tag string, options ...Option) (logger Logger, err 
 	return l, nil
 }
 
-func NewFileLogger(pth string, opts ...Option) (logger Logger, err error) {
+func NewFileLogger(pth string, opts ...Option) (logger LoggerWithWriter, err error) {
 	// enable compress by default
 	l := newLogger(opts...)
 	if l.maxBackups == 0 {
