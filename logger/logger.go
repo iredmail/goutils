@@ -203,6 +203,9 @@ func handlerRotateTime(log logger, logFile string) (*handler.SyncCloseHandler, e
 		return nil, err
 	}
 
+	// Set file permission to 0700 instead of default 0664.
+	rotatefile.DefaultFilePerm = 0700
+
 	return handler.NewTimeRotateFileHandler(
 		logFile,
 		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
