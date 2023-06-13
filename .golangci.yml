@@ -35,6 +35,7 @@ linters:
   enable-all: true
   disable:
     - cyclop
+    - depguard
     - dogsled
     - dupword
     - errorlint

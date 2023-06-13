@@ -246,7 +246,6 @@ func (l logger) Warn(msg string, args ...interface{}) {
 
 func (l logger) Debug(msg string, args ...interface{}) {
 	l.sl.Debugf(msg, args...)
-
 }
 
 // Write Only supported file target mode.
