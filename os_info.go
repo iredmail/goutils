@@ -21,6 +21,9 @@ type OSInfo struct {
 	OSFamily     string `json:"os_family"`
 	Architecture string `json:"architecture"` // 386, amd64, arm, arm64
 
+	// Host is a docker container.
+	IsContainer bool `json:"is_container"`
+
 	// Distribution
 	// - Debian, Ubuntu
 	// - RedHat, CentOS, Rocky, AlmaLinux
@@ -159,6 +162,11 @@ func GetOSInfo() (oi OSInfo, err error) {
 		}
 
 		oi.DistributionVersion = strings.TrimSpace(stdout.String())
+	}
+
+	// Docker container.
+	if DestExists("/.dockerenv") {
+		oi.IsContainer = true
 	}
 
 	// Network
