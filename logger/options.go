@@ -1,5 +1,9 @@
 package logger
 
+import (
+	"os"
+)
+
 type Option func(l *logger)
 
 func WithLevel(level string) Option {
@@ -52,5 +56,11 @@ func WithCompress() Option {
 func WithTimeFormat(timeFormat string) Option {
 	return func(l *logger) {
 		l.timeFormat = timeFormat
+	}
+}
+
+func WithFilePerm(perm os.FileMode) Option {
+	return func(l *logger) {
+		l.filePerm = perm
 	}
 }

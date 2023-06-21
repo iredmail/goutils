@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log/syslog"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,7 @@ type logger struct {
 	maxBackups     uint
 	timeFormat     string
 	compress       bool // compress rotated log file
+	filePerm       os.FileMode
 
 	// Buffer size defaults to (8 * 1024).
 	// Write to log file immediately if size is 0.
@@ -44,6 +46,7 @@ func newLogger(opts ...Option) logger {
 		timeFormat:     time.DateTime,
 		rotateInterval: "1w",
 		compress:       true,
+		filePerm:       0700,
 	}
 
 	l.applyOptions(opts...)
@@ -166,6 +169,7 @@ func handlerRotateFile(log logger, logFile string) (*handler.SyncCloseHandler, e
 		handler.WithBuffSize(log.bufferSize),
 		handler.WithBackupNum(log.maxBackups),
 		handler.WithCompress(log.compress),
+		handler.WithFilePerm(log.filePerm),
 	)
 }
 
@@ -213,6 +217,7 @@ func handlerRotateTime(log logger, logFile string) (*handler.SyncCloseHandler, e
 		handler.WithBuffSize(log.bufferSize),
 		handler.WithBackupNum(log.maxBackups),
 		handler.WithCompress(log.compress),
+		handler.WithFilePerm(log.filePerm),
 	)
 }
 
