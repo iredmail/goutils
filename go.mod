@@ -8,7 +8,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/gofiber/fiber/v2 v2.46.0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/slog v0.5.1
+	github.com/gookit/slog v0.5.2
 	github.com/jhillyerd/enmime v0.11.1
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/shirou/gopsutil/v3 v3.23.5
@@ -26,7 +26,7 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28 // indirect
 	github.com/gookit/color v1.5.3 // indirect
-	github.com/gookit/goutil v0.6.8 // indirect
+	github.com/gookit/goutil v0.6.10 // indirect
 	github.com/gookit/gsr v0.0.8 // indirect
 	github.com/jaytaylor/html2text v0.0.0-20200412013138-3577fbdbcff7 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
@@ -53,6 +53,7 @@ require (
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yusufpapurcu/wmi v1.2.3 // indirect
 	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/sys v0.8.0 // indirect
+	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sys v0.9.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
