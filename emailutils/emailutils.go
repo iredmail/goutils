@@ -2,6 +2,7 @@ package emailutils
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"net/mail"
 	"regexp"
@@ -96,6 +97,33 @@ func ExtractDomain(e string) string {
 	}
 
 	return domain
+}
+
+// ExtractEmailLocalPart 返回邮件地址里的 local part 部分。
+func ExtractEmailLocalPart(e string) (string, error) {
+	parts := strings.Split(e, "@")
+	if len(parts) != 2 {
+		return "", fmt.Errorf("invalid archiving address: %s", e)
+	}
+
+	return parts[0], nil
+}
+
+// ExtractDomainFromEmail 返回邮件地址里的（转换为小写字母的）域名部分。
+// 如果域名是 IP 地址（如：`[192.168.1.1]`），则返回（不含中括号的）IP 地址。
+func ExtractDomainFromEmail(e string) string {
+	parts := strings.Split(e, "@")
+	domain := parts[len(parts)-1]
+
+	if strings.HasPrefix(domain, "[") {
+		// IP address.
+		d1 := strings.TrimPrefix(domain, "[")
+		d2 := strings.TrimSuffix(d1, "]")
+
+		return d2
+	}
+
+	return strings.ToLower(domain)
 }
 
 // ExtractDomains 从多个邮件地址里提取邮件域名并转换为小写。
