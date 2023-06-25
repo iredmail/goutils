@@ -7,6 +7,27 @@ import (
 	"strings"
 )
 
+func GeneratePassword(scheme, password string) (hash string, err error) {
+	stdout := new(bytes.Buffer)
+	stderr := new(bytes.Buffer)
+
+	cmd := exec.Command("doveadm", "pw", "-s", scheme, "-p", password)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err = cmd.Run()
+	if err != nil {
+		err = fmt.Errorf("stdout: %s, stderr: %s, err: %w", stdout.String(), stderr.String(), err)
+
+		return
+	}
+
+	// output: {SSHA}DVRj4taRESdmMKQ5oaCs69t7D3ZkHtMk
+	hash = stdout.String()
+	hash = strings.TrimRight(hash, "\n")
+
+	return
+}
+
 func VerifyPassword(hash, plain string) (matched bool, err error) {
 	stdout := new(bytes.Buffer)
 	stderr := new(bytes.Buffer)
