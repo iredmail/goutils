@@ -5,17 +5,17 @@ import (
 )
 
 const (
-	SchemaPlain       = "PLAIN"
-	SchemaCrypt       = "CRYPT"
-	SchemaMD5         = "MD5"
-	SchemaPlainMD5    = "PLAIN-MD5"
-	SchemaSHA         = "SHA"
-	SchemaSHA512      = "SHA512"
-	SchemaSSHA512     = "SSHA512"
-	SchemaSHA512Crypt = "SHA512-CRYPT"
-	SchemaBcrypt      = "BCRYPT"
-	SchemaCramMD5     = "CRAM-MD5"
-	SchemaNTLM        = "NTLM"
+	SchemePlain       = "PLAIN"
+	SchemeCrypt       = "CRYPT"
+	SchemeMD5         = "MD5"
+	SchemePlainMD5    = "PLAIN-MD5"
+	SchemeSHA         = "SHA"
+	SchemeSHA512      = "SHA512"
+	SchemeSSHA512     = "SSHA512"
+	SchemeSHA512Crypt = "SHA512-CRYPT"
+	SchemeBcrypt      = "BCRYPT"
+	SchemeCramMD5     = "CRAM-MD5"
+	SchemeNTLM        = "NTLM"
 )
 
 type Scheme string
@@ -30,17 +30,17 @@ func IsSupportedPasswordScheme(pwHash string) bool {
 	scheme = strings.ToUpper(scheme)
 
 	supportedSchemes := []string{
-		SchemaPlain,
-		SchemaCrypt,
-		SchemaMD5,
-		SchemaPlainMD5,
-		SchemaSHA,
-		SchemaSHA512,
-		SchemaSSHA512,
-		SchemaSHA512Crypt,
-		SchemaBcrypt,
-		SchemaCramMD5,
-		SchemaNTLM,
+		SchemePlain,
+		SchemeCrypt,
+		SchemeMD5,
+		SchemePlainMD5,
+		SchemeSHA,
+		SchemeSHA512,
+		SchemeSSHA512,
+		SchemeSHA512Crypt,
+		SchemeBcrypt,
+		SchemeCramMD5,
+		SchemeNTLM,
 	}
 
 	for _, supportedScheme := range supportedSchemes {
@@ -56,7 +56,7 @@ func GeneratePasswordHash(scheme Scheme, password string) (challenge string, err
 	// TODO
 
 	switch scheme {
-	case SchemaPlain:
+	case SchemePlain:
 
 	}
 
