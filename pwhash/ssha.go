@@ -26,10 +26,10 @@ func GenerateSSHAPassword(password string) (hashStr string, err error) {
 	return
 }
 
-func VerifySSHAPassword(challengePassword, plainPassword string) (verify bool, err error) {
+func VerifySSHAPassword(challengePassword, plainPassword string) bool {
 	index := strings.LastIndex(challengePassword, "}")
 	if index < 0 {
-		return false, nil
+		return false
 	}
 
 	if strings.Index(challengePassword, "{SSHA}") == 0 ||
@@ -42,7 +42,7 @@ func VerifySSHAPassword(challengePassword, plainPassword string) (verify bool, e
 
 	challengeBytes, err := base64.StdEncoding.DecodeString(challengePassword)
 	if err != nil {
-		return
+		return false
 	}
 
 	digest := challengeBytes[:20]
@@ -51,7 +51,6 @@ func VerifySSHAPassword(challengePassword, plainPassword string) (verify bool, e
 	hash.Write([]byte(plainPassword))
 	hash.Write(salt)
 	hashedPassword := hash.Sum(nil)
-	verify = bytes.Equal(digest, hashedPassword)
 
-	return
+	return bytes.Equal(digest, hashedPassword)
 }

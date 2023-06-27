@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSSHA(t *testing.T) {
+func TestNTLM(t *testing.T) {
 	plainPassword := goutils.GenRandomString(12)
-	challengePassword, err := GenerateSSHAPassword(plainPassword)
+	challengePassword, err := GenerateNTLMPassword(plainPassword)
 	assert.Nil(t, err)
-	matched := VerifySSHAPassword(challengePassword, plainPassword)
+	matched := VerifyNTLMPassword(challengePassword, plainPassword)
 	assert.True(t, matched)
 }
