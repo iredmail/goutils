@@ -139,9 +139,11 @@ func ExtractDomains(emails []string) (domains []string) {
 	return domains
 }
 
-// StripExtension 移除邮件地址里的 `+extension` 扩展，并将邮件地址转换为小写。
-// 如果 `email` 不是有效的邮件地址格式，则原样返回。
+// StripExtension 移除邮件地址里的 `+extension` 扩展。
+// 注意：始终将 `email` 转换为小写再返回。
 func StripExtension(email string) string {
+	email = strings.ToLower(email)
+
 	if !IsEmail(email) {
 		return email
 	}
