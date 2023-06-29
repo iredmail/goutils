@@ -57,7 +57,6 @@ func GeneratePasswordHash(scheme Scheme, password string) (challenge string, err
 
 	switch scheme {
 	case SchemePlain:
-
 	}
 
 	return
