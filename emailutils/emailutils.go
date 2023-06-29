@@ -139,24 +139,28 @@ func ExtractDomains(emails []string) (domains []string) {
 	return domains
 }
 
-// StripExtension removes '+extension' in email address.
+// StripExtension 移除邮件地址里的 `+extension` 扩展，并将邮件地址转换为小写。
+// 如果 `email` 不是有效的邮件地址格式，则原样返回。
 func StripExtension(email string) string {
 	if !IsEmail(email) {
 		return email
 	}
 
-	addrParts := strings.Split(email, "@")
-	username := addrParts[0]
-	domain := addrParts[1]
+	username, domain, found := strings.Cut(email, "@")
+	if !found {
+		return email
+	}
 
-	userParts := strings.Split(username, "+")
-	user := userParts[0]
+	username, _, found = strings.Cut(username, "+")
+	if !found {
+		return email
+	}
 
-	return strings.ToLower(user + "@" + domain)
+	return strings.ToLower(username + "@" + domain)
 }
 
 // ParseAddress 是 `mail.ParseAddress()` 的简单封装：
-// - 去除首位的引号
+// - 去除首尾的引号
 // - 将邮件地址转换为小写
 // FIXME Go 官方的 `mail.ParseAddress()` 不支持一些不规范的地址，如 `Name <user@[172.16.1.1]>`。
 //
