@@ -11,7 +11,7 @@ require (
 	github.com/gookit/slog v0.5.2
 	github.com/jhillyerd/enmime v1.0.0
 	github.com/k0kubun/pp/v3 v3.2.0
-	github.com/shirou/gopsutil/v3 v3.23.5
+	github.com/shirou/gopsutil/v3 v3.23.6
 	github.com/stretchr/testify v1.8.4
 	github.com/vorlif/spreak v0.4.0
 	golang.org/x/crypto v0.10.0
