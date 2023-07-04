@@ -8,7 +8,10 @@ import (
 	"github.com/iredmail/goutils/respcode"
 )
 
+// TODO 支持 argon2
+
 const (
+	SchemeBcrypt      = "BCRYPT"
 	SchemePlain       = "PLAIN"
 	SchemeCrypt       = "CRYPT"
 	SchemeMD5         = "MD5"
@@ -18,9 +21,8 @@ const (
 	SchemeSHA512      = "SHA512"
 	SchemeSSHA512     = "SSHA512"
 	SchemeSHA512Crypt = "SHA512-CRYPT"
-	SchemeBcrypt      = "BCRYPT"
-	SchemeCramMD5     = "CRAM-MD5"
-	SchemeNTLM        = "NTLM"
+	// SchemeCramMD5     = "CRAM-MD5"
+	// SchemeNTLM        = "NTLM"
 )
 
 var (
@@ -35,8 +37,8 @@ var (
 		SchemeSSHA512,
 		SchemeSHA512Crypt,
 		SchemeBcrypt,
-		SchemeCramMD5,
-		SchemeNTLM,
+		// SchemeCramMD5,
+		// SchemeNTLM,
 	}
 )
 
@@ -77,9 +79,9 @@ func GeneratePassword(scheme string, plainPassword string) (hash string, err err
 		return
 	}
 
-	switch strings.ToUpper(scheme) {
+	switch scheme {
 	case SchemePlain:
-		hash = plainPassword
+		hash = "{PLAIN}" + plainPassword
 	case SchemeCrypt:
 		// TODO
 	case SchemeMD5:
@@ -98,9 +100,62 @@ func GeneratePassword(scheme string, plainPassword string) (hash string, err err
 		// TODO
 	case SchemeBcrypt:
 		hash, err = GenerateBcryptPassword(plainPassword)
-	case SchemeCramMD5:
+
+		// case SchemeCramMD5:
 		// TODO
-	case SchemeNTLM:
+		// case SchemeNTLM:
+		// TODO
+	}
+
+	return
+}
+
+func VerifyPassword(hashedPassword, plainPassword string) (matched bool, err error) {
+	if len(hashedPassword) == 0 || len(plainPassword) == 0 {
+		err = respcode.ErrEmptyPassword
+
+		return
+	}
+
+	// 明文密码不带 scheme。
+	if hashedPassword == plainPassword {
+		return true, nil
+	}
+
+	scheme := ExtractSchemeFromPasswordHash(hashedPassword)
+
+	if !slices.Contains(SupportedPasswordSchemes, scheme) {
+		err = respcode.ErrUnsupportedPasswordScheme
+
+		return
+	}
+
+	switch scheme {
+	case SchemePlain:
+		if hashedPassword == "{PLAIN}"+plainPassword || hashedPassword == "{plain}"+plainPassword {
+			matched = true
+		}
+	case SchemeCrypt:
+		// TODO
+	case SchemeMD5:
+		matched = VerifyMD5Password(hashedPassword, plainPassword)
+	case SchemePlainMD5:
+		matched = VerifyPlainMD5Password(hashedPassword, plainPassword)
+	case SchemeSHA:
+		// TODO
+	case SchemeSSHA:
+		matched = VerifySSHAPassword(hashedPassword, plainPassword)
+	case SchemeSHA512:
+		matched = VerifySHA512Password(hashedPassword, plainPassword)
+	case SchemeSSHA512:
+		matched = VerifySSHAPassword(hashedPassword, plainPassword)
+	case SchemeSHA512Crypt:
+		// TODO
+	case SchemeBcrypt:
+		matched = VerifyBcryptPassword(hashedPassword, plainPassword)
+		// case SchemeCramMD5:
+		// TODO
+		// case SchemeNTLM:
 		// TODO
 	}
 
