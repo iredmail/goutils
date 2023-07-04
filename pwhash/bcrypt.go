@@ -6,27 +6,48 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func GenerateBcryptPassword(password string) (hash string, err error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
-		return
-	}
+// Blowfish crypt (bcrypt) scheme.
+// It is generally considered to be very secure.
+// The encrypted password will start with $2y$ (other generators can generate
+// passwords that have other letters after $2, those should work too.)
+//
+// FYI
+//
+//	- https://en.wikipedia.org/wiki/Bcrypt
+//	- https://doc.dovecot.org/configuration_manual/authentication/password_schemes/
 
-	hash = "{CRYPT}" + string(hashedPassword)
+func IsBcryptHash(s string) (ok bool, hash string) {
+	scheme, hash := extractSchemeAndHash(s)
+
+	switch scheme {
+	case "BLF-CRYPT", "CRYPT":
+		// $2a$
+		// $2x$, $2y$ (June 2011)
+		// $2b$ (February 2014)
+		if strings.HasPrefix(hash, `$2a$`) ||
+			strings.HasPrefix(hash, `$2b$`) ||
+			strings.HasPrefix(hash, `$2x$`) ||
+			strings.HasPrefix(hash, `$2y$`) {
+			ok = true
+		}
+	}
 
 	return
 }
 
-func VerifyBcryptPassword(challengePassword, plainPassword string) bool {
-	if strings.HasPrefix(challengePassword, "{CRYPT}$2a$") ||
-		strings.HasPrefix(challengePassword, "{CRYPT}$2b$") ||
-		strings.HasPrefix(challengePassword, "{crypt}$2a$") ||
-		strings.HasPrefix(challengePassword, "{crypt}$2b$") {
-		challengePassword = challengePassword[7:]
-	} else if strings.HasPrefix(challengePassword, "{BLF-CRYPT}") ||
-		strings.HasPrefix(challengePassword, "{blf-crypt}") {
-		challengePassword = challengePassword[11:]
+func GenerateBcryptPassword(plain string) (hash string, err error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(plain), bcrypt.DefaultCost)
+	if err != nil {
+		return
 	}
 
-	return bcrypt.CompareHashAndPassword([]byte(challengePassword), []byte(plainPassword)) == nil
+	hash = "{BLF-CRYPT}" + string(hashed)
+
+	return
+}
+
+func VerifyBcryptPassword(challengePassword, plainPassword string) (matched bool) {
+	_, hash := extractSchemeAndHash(challengePassword)
+
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(plainPassword)) == nil
 }

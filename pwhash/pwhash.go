@@ -11,7 +11,6 @@ import (
 // TODO 支持 argon2
 
 const (
-	SchemeBcrypt      = "BCRYPT"
 	SchemePlain       = "PLAIN"
 	SchemeCrypt       = "CRYPT"
 	SchemeMD5         = "MD5"
@@ -23,6 +22,12 @@ const (
 	SchemeSHA512Crypt = "SHA512-CRYPT"
 	// SchemeCramMD5     = "CRAM-MD5"
 	// SchemeNTLM        = "NTLM"
+
+	// SchemeBcrypt Blowfish crypt.
+	// bcrypt is not available in libc `crypt()` on old Linux distributions.
+	// Since v2.3.0 this is provided by dovecot.
+	SchemeBcrypt  = "BLF-CRYPT"
+	SchemeBcrypt2 = "CRYPT"
 )
 
 var (
@@ -42,26 +47,35 @@ var (
 	}
 )
 
-// ExtractSchemeFromPasswordHash 从密码哈希中提取哈希算法名称。例如：`{SSHA}xxx` -> `SSHA`。
+// extractSchemeAndHash 从密码哈希中提取哈希算法名称及哈希字符串。例如：`{ssha}xxx` -> `SSHA`, `xxx`。
 // 注意：返回的 schema 名称是大写的。
-func ExtractSchemeFromPasswordHash(pwHash string) (scheme string) {
-	_, after, found := strings.Cut(pwHash, "{")
+func extractSchemeAndHash(s string) (scheme, hash string) {
+	_, after, found := strings.Cut(s, "{")
 	if !found {
 		// no password scheme name.
 		return
 	}
 
-	scheme, _, found = strings.Cut(after, "}")
+	scheme, hash, found = strings.Cut(after, "}")
 	if !found {
 		// no password scheme name.
 		return
 	}
 
-	return strings.ToUpper(scheme)
+	return strings.ToUpper(scheme), hash
 }
 
-func IsSupportedPasswordScheme(scheme string) bool {
+func isSupportedPasswordScheme(scheme string) bool {
 	return slices.Contains(SupportedPasswordSchemes, scheme)
+}
+
+func PasswordHasSupportedScheme(s string) bool {
+	scheme, _ := extractSchemeAndHash(s)
+	if isSupportedPasswordScheme(scheme) {
+		return true
+	}
+
+	return false
 }
 
 func GeneratePassword(scheme string, plainPassword string) (hash string, err error) {
@@ -122,7 +136,7 @@ func VerifyPassword(hashedPassword, plainPassword string) (matched bool, err err
 		return true, nil
 	}
 
-	scheme := ExtractSchemeFromPasswordHash(hashedPassword)
+	scheme, _ := extractSchemeAndHash(hashedPassword)
 
 	if !slices.Contains(SupportedPasswordSchemes, scheme) {
 		err = respcode.ErrUnsupportedPasswordScheme
