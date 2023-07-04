@@ -61,4 +61,5 @@ var (
 	ErrInvalidPasswordScheme      = errors.New("INVALID_PASSWORD_SCHEME")
 	ErrExceededDomainAccountLimit = errors.New("EXCEEDED_DOMAIN_ACCOUNT_LIMIT")
 	ErrExceededDomainQuotaSize    = errors.New("EXCEEDED_DOMAIN_QUOTA_SIZE")
+	ErrUnsupportedPasswordScheme  = errors.New("UNSUPPORTED_PASSWORD_SCHEME")
 )
