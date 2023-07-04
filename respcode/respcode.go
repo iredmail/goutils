@@ -31,6 +31,7 @@ const (
 	ApplyingSavedChanges  = "APPLYING_SAVED_CHANGES"
 	ApplyingUpgrade       = "APPLYING_UPGRADE"
 	NotDeploying          = "NOT_DEPLOYING"
+	AccountExists         = "ACCOUNT_EXISTS"
 )
 
 var (
@@ -55,7 +56,7 @@ var (
 	ErrPasswordTooLong            = errors.New("PASSWORD_TOO_LONG")
 	ErrPermissionDenied           = errors.New(PermissionDenied)
 	ErrDomainExists               = errors.New("DOMAIN_EXISTS")
-	ErrAccountExists              = errors.New("ACCOUNT_EXISTS")
+	ErrAccountExists              = errors.New(AccountExists)
 	ErrNotAllowed                 = errors.New("NOT_ALLOWED")
 	ErrInvalidPasswordScheme      = errors.New("INVALID_PASSWORD_SCHEME")
 	ErrExceededDomainAccountLimit = errors.New("EXCEEDED_DOMAIN_ACCOUNT_LIMIT")
