@@ -19,8 +19,14 @@ func ParamDomain(ctx *fiber.Ctx) (domain string, err error) {
 	return domain, nil
 }
 
-func ParamEmail(ctx *fiber.Ctx) (addr string, err error) {
-	addr = ctx.Params("email")
+func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
+	param := "email"
+
+	if len(name) > 0 {
+		param = name[0]
+	}
+
+	addr = ctx.Params(param)
 
 	if !emailutils.IsEmail(addr) {
 		return "", errors.New("INVALID_EMAIL")

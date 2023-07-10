@@ -65,19 +65,6 @@ func extractSchemeAndHash(s string) (scheme, hash string) {
 	return strings.ToUpper(scheme), hash
 }
 
-func isSupportedPasswordScheme(scheme string) bool {
-	return slices.Contains(SupportedPasswordSchemes, scheme)
-}
-
-func PasswordHasSupportedScheme(s string) bool {
-	scheme, _ := extractSchemeAndHash(s)
-	if isSupportedPasswordScheme(scheme) {
-		return true
-	}
-
-	return false
-}
-
 // GeneratePassword 加密密码。注意：带有哈希算法前缀，如 `{SSHA512}`。
 func GeneratePassword(scheme string, plainPassword string) (hash string, err error) {
 	if len(plainPassword) == 0 {
