@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/iredmail/goutils/emailutils"
@@ -79,7 +80,17 @@ func QueryDomain(ctx *fiber.Ctx) (domain string, err error) {
 		return "", errors.New("INVALID_EMAIL_DOMAIN")
 	}
 
-	return domain, nil
+	return strings.ToLower(domain), nil
+}
+
+func QueryEmail(ctx *fiber.Ctx) (addr string, err error) {
+	addr = ctx.Params("email")
+
+	if !emailutils.IsEmail(addr) {
+		return "", errors.New("INVALID_EMAIL")
+	}
+
+	return strings.ToLower(addr), nil
 }
 
 func QueryParticipant(ctx *fiber.Ctx) (addr string, err error) {

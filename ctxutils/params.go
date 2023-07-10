@@ -3,6 +3,7 @@ package ctxutils
 import (
 	"errors"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -16,7 +17,7 @@ func ParamDomain(ctx *fiber.Ctx) (domain string, err error) {
 		return "", errors.New("INVALID_EMAIL_DOMAIN")
 	}
 
-	return domain, nil
+	return strings.ToLower(domain), nil
 }
 
 func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
@@ -32,7 +33,7 @@ func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 		return "", errors.New("INVALID_EMAIL")
 	}
 
-	return addr, nil
+	return strings.ToLower(addr), nil
 }
 
 // ParamPage 用于查询 URL parameters（`/xxx/:page`）的 `page` 参数的值。
