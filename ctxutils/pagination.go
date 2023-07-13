@@ -8,6 +8,7 @@ type Pagination struct {
 	TotalItems  int64
 	TotalPages  int
 	CurrentPage int
+	Limit       int   // Page size limit
 	PageNumbers []int // 数字为 0 表示省略的范围，可以以省略号表示。
 }
 
@@ -17,6 +18,7 @@ func GenPagination(page int, total int64, limit int) (p Pagination) {
 		TotalItems:  total,
 		TotalPages:  int(math.Ceil(float64(total) / float64(limit))),
 		CurrentPage: page,
+		Limit:       limit,
 		PageNumbers: []int{},
 	}
 
