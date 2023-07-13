@@ -17,6 +17,7 @@ func GenPagination(page int, total int64, limit int) (p Pagination) {
 		TotalItems:  total,
 		TotalPages:  int(math.Ceil(float64(total) / float64(limit))),
 		CurrentPage: page,
+		PageNumbers: []int{},
 	}
 
 	var nums []int
