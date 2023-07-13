@@ -4,34 +4,37 @@ import (
 	"math"
 )
 
+// PageLink 表示一个分页链接。
 type PageLink struct {
 	Page   int
 	Active bool
 }
-type pagination struct {
-	Total int64
-	Page  int
-	Limit int
-	Pages int
-}
 
-// PageLink 将页数转化为结构体 PageLink。
-func (p pagination) pageLink(page int) PageLink {
+// pageLink 将页数转化为结构体 PageLink。
+func pageLink(currentPage, num int) PageLink {
 	return PageLink{
-		Page:   page,
-		Active: p.Page == page,
+		Page:   num,
+		Active: currentPage == num,
 	}
 }
 
-func (p pagination) pageLinks() (pl []PageLink) {
-	if p.Pages <= 1 {
+// GenPagination 根据当前页 `page`，总条目数 `total`，每页条目数 `limit` 生成分页链接。
+func GenPagination(page int, total int64, limit int) (pl []PageLink) {
+	if total == 0 {
 		return
 	}
 
-	if p.Pages <= 10 {
+	pages := int(math.Ceil(float64(total) / float64(limit)))
+
+	if pages <= 1 {
+		// 不需要分页
+		return
+	}
+
+	if pages <= 10 {
 		// 10 页以内直接全部显示
-		for i := 1; i <= p.Pages; i++ {
-			pl = append(pl, p.pageLink(i))
+		for i := 1; i <= pages; i++ {
+			pl = append(pl, pageLink(page, i))
 		}
 	} else {
 		//
@@ -39,35 +42,35 @@ func (p pagination) pageLinks() (pl []PageLink) {
 		//
 
 		// 第一页
-		pl = append(pl, p.pageLink(1))
+		pl = append(pl, pageLink(page, 1))
 
-		if p.Page <= 4 {
+		if page <= 4 {
 			// 前面几页全部显示
-			for i := 2; i <= p.Page; i++ {
-				pl = append(pl, p.pageLink(i))
+			for i := 2; i <= page; i++ {
+				pl = append(pl, pageLink(page, i))
 			}
 
 			// 后面3页及最后一页
 			pl = append(pl,
-				p.pageLink(p.Page+1),
-				p.pageLink(p.Page+2),
-				p.pageLink(p.Page+3),
-				PageLink{Page: 0},   // 省略号
-				p.pageLink(p.Pages), // 最后一页
+				pageLink(page, page+1),
+				pageLink(page, page+2),
+				pageLink(page, page+3),
+				PageLink{Page: 0},     // 省略号
+				pageLink(page, pages), // 最后一页
 			)
-		} else if p.Page > 4 && p.Page < p.Pages-4 {
+		} else if page > 4 && page < pages-4 {
 			// 添加当前页及其前后3页
 			pl = append(pl,
 				PageLink{Page: 0}, // 省略号
-				p.pageLink(p.Page-3),
-				p.pageLink(p.Page-2),
-				p.pageLink(p.Page-1),
-				p.pageLink(p.Page), // 当前页
-				p.pageLink(p.Page+1),
-				p.pageLink(p.Page+2),
-				p.pageLink(p.Page+3),
-				PageLink{Page: 0},   // 省略号
-				p.pageLink(p.Pages), // 最后一页
+				pageLink(page, page-3),
+				pageLink(page, page-2),
+				pageLink(page, page-1),
+				pageLink(page, page), // 当前页
+				pageLink(page, page+1),
+				pageLink(page, page+2),
+				pageLink(page, page+3),
+				PageLink{Page: 0},     // 省略号
+				pageLink(page, pages), // 最后一页
 			)
 		} else {
 			// 前面添加一个省略号（不带链接）
@@ -75,37 +78,18 @@ func (p pagination) pageLinks() (pl []PageLink) {
 			// 当前页及其前面3页
 			pl = append(pl,
 				PageLink{Page: 0},
-				p.pageLink(p.Page-3),
-				p.pageLink(p.Page-2),
-				p.pageLink(p.Page-1),
-				p.pageLink(p.Page), // 当前页
+				pageLink(page, page-3),
+				pageLink(page, page-2),
+				pageLink(page, page-1),
+				pageLink(page, page), // 当前页
 			)
 
 			// 最后几页全部显示
-			for i := p.Page + 1; i <= p.Pages; i++ {
-				pl = append(pl, p.pageLink(i))
+			for i := page + 1; i <= pages; i++ {
+				pl = append(pl, pageLink(page, i))
 			}
 		}
 	}
 
 	return
-}
-
-// GenPagination 根据当前页 `page`，总条目数 `total`，每页条目数 `limit` 生成分页链接。
-func GenPagination(page int, total int64, limit int) (pl []PageLink) {
-	var p pagination
-
-	if total == 0 {
-		return
-	}
-
-	if total > 0 {
-		p.Total = total
-		p.Page = page
-	}
-
-	p.Pages = int(math.Ceil(float64(p.Total) / float64(p.Limit)))
-	p.Limit = limit
-
-	return p.pageLinks()
 }
