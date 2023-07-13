@@ -8,7 +8,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.18.0
 	github.com/gofiber/fiber/v2 v2.47.0
 	github.com/google/uuid v1.3.0
-	github.com/gookit/slog v0.5.2
+	github.com/gookit/slog v0.5.3
 	github.com/jhillyerd/enmime v1.0.0
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/shirou/gopsutil/v3 v3.23.6
@@ -27,8 +27,8 @@ require (
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28 // indirect
 	github.com/gookit/color v1.5.3 // indirect
-	github.com/gookit/goutil v0.6.10 // indirect
-	github.com/gookit/gsr v0.0.8 // indirect
+	github.com/gookit/goutil v0.6.11 // indirect
+	github.com/gookit/gsr v0.1.0 // indirect
 	github.com/jaytaylor/html2text v0.0.0-20200412013138-3577fbdbcff7 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
