@@ -6,10 +6,9 @@ import (
 	"net"
 	"net/mail"
 	"regexp"
+	"slices"
 	"strings"
 	"unicode"
-
-	"golang.org/x/exp/slices"
 )
 
 var (

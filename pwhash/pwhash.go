@@ -1,9 +1,8 @@
 package pwhash
 
 import (
+	"slices"
 	"strings"
-
-	"golang.org/x/exp/slices"
 
 	"github.com/iredmail/goutils/respcode"
 )

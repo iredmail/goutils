@@ -8,10 +8,10 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/shirou/gopsutil/v3/host"
-	"golang.org/x/exp/slices"
 )
 
 type OSInfo struct {
