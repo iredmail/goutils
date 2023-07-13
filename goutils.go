@@ -4,10 +4,10 @@ import (
 	"math"
 	"net"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/google/uuid"
-	"golang.org/x/exp/slices"
 )
 
 func IsUUID(u string) bool {
