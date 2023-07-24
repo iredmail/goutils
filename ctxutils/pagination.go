@@ -8,22 +8,26 @@ type Pagination struct {
 	TotalItems  int64
 	TotalPages  int
 	CurrentPage int
-	Limit       int   // Page size limit
-	PageNumbers []int // 数字为 0 表示省略的范围，可以以省略号表示。
+	Limit       int    // Page size limit
+	PageNumbers []int  // 数字为 0 表示省略的范围，可以以省略号表示。
+	URIPrefix   string // 分页数字对应链接的前缀 URI。分页数字将以 `&page=<num>` 格式追加其后。参数在其后。
 
 	// 当前页第一条和最后一条项目的序号
 	PageBeginNum int
 	PageLastNum  int
 }
 
+const numNearbyLinks = 1
+
 // GenPagination 根据当前页 `page`，总条目数 `total`，每页条目数 `limit` 生成分页链接。
-func GenPagination(page int, total int64, limit int) (p Pagination) {
+func GenPagination(page int, URIPrefix string, total int64, limit int) (p Pagination) {
 	p = Pagination{
 		TotalItems:   total,
 		TotalPages:   int(math.Ceil(float64(total) / float64(limit))),
 		CurrentPage:  page,
 		Limit:        limit,
 		PageNumbers:  []int{},
+		URIPrefix:    URIPrefix,
 		PageBeginNum: (page-1)*limit + 1,
 		PageLastNum:  page * limit,
 	}

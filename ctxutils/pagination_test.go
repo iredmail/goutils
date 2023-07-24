@@ -14,12 +14,13 @@ func TestGenPagination(t *testing.T) {
 	limit = 10
 	page = 1
 
-	p := GenPagination(page, total, limit)
+	p := GenPagination(page, "/abc", total, limit)
 	assert.Equal(t, p.TotalItems, int64(0))
 	assert.Equal(t, p.TotalPages, 0)
 	assert.Equal(t, p.CurrentPage, 1)
 	assert.Equal(t, p.Limit, 10)
 	assert.Equal(t, p.PageNumbers, []int{})
+	assert.Equal(t, p.URIPrefix, "/abc")
 	assert.Equal(t, p.PageBeginNum, 0)
 	assert.Equal(t, p.PageLastNum, 0)
 
@@ -28,7 +29,7 @@ func TestGenPagination(t *testing.T) {
 	limit = 10
 	page = 2
 
-	p = GenPagination(page, total, limit)
+	p = GenPagination(page, "/", total, limit)
 	assert.Equal(t, p.TotalItems, int64(100))
 	assert.Equal(t, p.TotalPages, 10)
 	assert.Equal(t, p.CurrentPage, 2)
@@ -42,7 +43,7 @@ func TestGenPagination(t *testing.T) {
 	limit = 10
 	page = 5
 
-	p = GenPagination(page, total, limit)
+	p = GenPagination(page, "/", total, limit)
 	assert.Equal(t, p.TotalItems, int64(53))
 	assert.Equal(t, p.TotalPages, 6)
 	assert.Equal(t, p.CurrentPage, 5)
@@ -53,7 +54,7 @@ func TestGenPagination(t *testing.T) {
 
 	// 测试最后一页的最后一条和最后一条的序号
 	page = 6
-	p = GenPagination(page, total, limit)
+	p = GenPagination(page, "/", total, limit)
 	assert.Equal(t, p.PageBeginNum, 51)
 	assert.Equal(t, p.PageLastNum, 53)
 
@@ -62,7 +63,7 @@ func TestGenPagination(t *testing.T) {
 	limit = 10
 	page = 8
 
-	p = GenPagination(page, total, limit)
+	p = GenPagination(page, "/", total, limit)
 	assert.Equal(t, p.TotalItems, int64(120))
 	assert.Equal(t, p.TotalPages, 12)
 	assert.Equal(t, p.CurrentPage, 8)
@@ -74,7 +75,7 @@ func TestGenPagination(t *testing.T) {
 	limit = 10
 	page = 8
 
-	p = GenPagination(page, total, limit)
+	p = GenPagination(page, "/", total, limit)
 	assert.Equal(t, p.TotalItems, int64(130))
 	assert.Equal(t, p.TotalPages, 13)
 	assert.Equal(t, p.CurrentPage, 8)
