@@ -86,6 +86,21 @@ func updateSQLSchemaVersion(gdb *goqu.Database, version int) error {
 	return err
 }
 
+// InsertSQLSchemaVersion 插入当前的 SQL 表结构版本
+func InsertSQLSchemaVersion(gdb *goqu.Database, version int) (err error) {
+	_, err = gdb.
+		Insert(tableSystem).
+		Prepared(true).
+		Rows(goqu.Record{
+			"k": keySQLSchemaVersion,
+			"v": version,
+		}).
+		OnConflict(goqu.DoNothing()).
+		Executor().Exec()
+
+	return err
+}
+
 // UpgradeSQLSchema 升级 sql 表结构
 //
 // - `subFSSQLFiles` 是使用 fs.Sub 方法提取需要升级的 sql 文件所在的子目录。
