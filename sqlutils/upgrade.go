@@ -7,7 +7,7 @@ import (
 	"github.com/doug-martin/goqu/v9"
 )
 
-func hasSystemTable(gdb *goqu.Database, dbName string) (bool, error) {
+func HasSystemTable(gdb *goqu.Database, dbName string) (bool, error) {
 	dialect := gdb.Dialect()
 	var sd *goqu.SelectDataset
 	switch dialect {
@@ -105,7 +105,7 @@ func InsertSQLSchemaVersion(gdb *goqu.Database, version int) (err error) {
 //
 // - `subFSSQLFiles` 是使用 fs.Sub 方法提取需要升级的 sql 文件所在的子目录。
 func UpgradeSQLSchema(dbName string, gdb *goqu.Database, subFSSQLFiles fs.FS, latestVersion int) error {
-	hasTable, err := hasSystemTable(gdb, dbName)
+	hasTable, err := HasSystemTable(gdb, dbName)
 	if err != nil {
 		return err
 	}
