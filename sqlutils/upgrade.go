@@ -1,11 +1,15 @@
 package sqlutils
 
 import (
+	_ "embed"
 	"fmt"
 	"io/fs"
 
 	"github.com/doug-martin/goqu/v9"
 )
+
+//go:embed sql/system.sql
+var SchemaSystem string
 
 func HasSystemTable(dbName string, gdb *goqu.Database) (bool, error) {
 	dialect := gdb.Dialect()
