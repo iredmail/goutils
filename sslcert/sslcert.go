@@ -17,8 +17,8 @@ import (
 // New 初始化 ssl cert，一共分为两种模式：
 // - 使用固定文件（cfg.SSLKeyFile, cfg.SSLCertFile）
 // - autocert
-func New(options ...Option) (m *Manager, err error) {
-	m = &Manager{
+func New(options ...Option) (*Manager, error) {
+	m := &Manager{
 		// 不管是否有 cert/key 文件，确保 `autocertMgr` 指针不为 nil。否则会触发 panic。
 		autocertMgr: &autocert.Manager{
 			// Client: &acme.Client{
@@ -42,7 +42,7 @@ func New(options ...Option) (m *Manager, err error) {
 		if err != nil {
 			err = fmt.Errorf("failed in initializing ssl certificate: %v", err)
 
-			return
+			return m, err
 		}
 
 		m.FixedCert = &cert
@@ -50,37 +50,37 @@ func New(options ...Option) (m *Manager, err error) {
 		// 注意 tls.LoadX509KeyPair 方法返回的 Leaf 对象为空，需要手动加载证书信息
 		certRaw, err := os.ReadFile(m.sslCertFile)
 		if err != nil {
-			return
+			return m, err
 		}
 
 		block, _ := pem.Decode(certRaw)
 		certificate, err := x509.ParseCertificate(block.Bytes)
 		if err != nil {
-			return
+			return m, err
 		}
 
 		m.FixedCert.Leaf = certificate
 		m.certDomains = cert.Leaf.DNSNames
 
-		return
+		return m, err
 	}
 
 	// 尝试创建 cache 目录
-	if err = goutils.CreateDirIfNotExist(m.autoCertCacheDir, 0700); err != nil {
+	if err := goutils.CreateDirIfNotExist(m.autoCertCacheDir, 0700); err != nil {
 		err = fmt.Errorf("failed in creating autocert cache directory: %s, %v", m.autoCertCacheDir, err)
 
-		return
+		return m, err
 	}
 
 	// 不支持空域名使用 autocert
 	if len(m.certDomains) == 0 {
-		return
+		return m, nil
 	}
 
 	m.autocertMgr.HostPolicy = autocert.HostWhitelist(m.certDomains...)
 	m.IsAutocert = true
 
-	return
+	return m, nil
 }
 
 type Manager struct {
