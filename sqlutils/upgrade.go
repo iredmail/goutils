@@ -89,7 +89,7 @@ func updateSQLSchemaVersion(gdb *goqu.Database, version int) error {
 // UpgradeSQLSchema 升级 sql 表结构
 //
 // - `subFSSQLFiles` 是使用 fs.Sub 方法提取需要升级的 sql 文件所在的子目录。
-func UpgradeSQLSchema(gdb *goqu.Database, subFSSQLFiles fs.FS, dbName string, latestVersion int) error {
+func UpgradeSQLSchema(dbName string, gdb *goqu.Database, subFSSQLFiles fs.FS, latestVersion int) error {
 	hasTable, err := hasSystemTable(gdb, dbName)
 	if err != nil {
 		return err
