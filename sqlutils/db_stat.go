@@ -66,7 +66,7 @@ func GetDBStat(pth string, db *goqu.Database) (stat DBStat) {
 // GetTableStats 返回数据库中所有表的大小，包含索引。
 // FYI <https://www.sqlite.org/dbstat.html>
 // WARNING: Go 的 sqlite driver 必须支持 SQLITE_ENABLE_DBSTAT_VTAB 才能访问 `dbstat` 表。
-func GetTableStats(pth string, db *goqu.Database) (rows []TableStat) {
+func GetTableStats(db *goqu.Database) (rows []TableStat) {
 	_ = db.
 		Select("name", goqu.L("SUM(pgsize) table_size")).
 		From(goqu.L("dbstat")).
