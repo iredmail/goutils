@@ -1,8 +1,6 @@
 package smtpclient
 
 import (
-	"bufio"
-	"bytes"
 	"crypto/tls"
 	"errors"
 	"fmt"
@@ -14,7 +12,6 @@ import (
 	"strings"
 
 	"github.com/iredmail/goutils/emailutils"
-	"github.com/jhillyerd/enmime"
 )
 
 type Config struct {
@@ -117,56 +114,16 @@ func Sendmail(c Config) error {
 }
 
 func SendmailWithEml(c Config, emlPath string) error {
-	emlBytes, err := os.ReadFile(emlPath)
+	smtpServer := fmt.Sprintf("%s:%s", c.Host, c.Port)
+
+	// CONNECT
+	client, err := smtp.Dial(smtpServer)
 	if err != nil {
 		return err
 	}
+	defer func() { _ = client.Close() }()
 
-	headers, err := getEmlHeaders(emlBytes)
-	if err != nil {
-		return err
-	}
-
-	body, err := getEmlBody(emlBytes)
-	if err != nil {
-		return err
-	}
-
-	if len(c.Recipients) == 0 {
-		return errors.New("invalid recipients")
-	}
-
-	var toAddrs []string
-	for _, addr := range c.Recipients {
-		toAddrs = append(toAddrs, addr.String())
-	}
-	to := strings.Join(toAddrs, ",")
-
-	// reset headers
-	headers["From"] = c.From.String()
-	headers["To"] = to
-
-	if len(c.Bcc) > 0 {
-		var bccAddrs []string
-		for _, addr := range c.Bcc {
-			bccAddrs = append(bccAddrs, addr.String())
-		}
-		bcc := strings.Join(bccAddrs, ",")
-		headers["Bcc"] = bcc
-	}
-
-	// FIXME 组装邮件的方式不严谨
-	message := ""
-	for k, v := range headers {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	message += "\n\n" + string(body)
-
-	client, err := smtp.Dial(net.JoinHostPort(c.Host, c.Port))
-	if err != nil {
-		return err
-	}
-
+	// HELO
 	domain := emailutils.ExtractDomain(c.From.Address)
 	if domain == "" {
 		domain = "example.com"
@@ -175,38 +132,54 @@ func SendmailWithEml(c Config, emlPath string) error {
 		return err
 	}
 
-	auth := smtp.PlainAuth("", c.SMTPUser, c.SMTPPassword, c.Host)
-
+	// TLS
 	if c.StartTLS {
-		tc := &tls.Config{
+		tlsConfig := &tls.Config{
+			// ServerName:         utils.GetHostName(),
 			InsecureSkipVerify: true,
-			ServerName:         c.Host,
 		}
-
-		if err = client.StartTLS(tc); err != nil {
-			return err
+		err = client.StartTLS(tlsConfig)
+		if err != nil {
+			fmt.Printf("failed in STARTTLS directive: %v\n", err)
+			os.Exit(255)
 		}
 	}
 
+	auth := smtp.PlainAuth("", c.SMTPUser, c.SMTPPassword, c.Host)
 	if err = client.Auth(auth); err != nil {
 		return err
 	}
 
+	// `MAIL FROM:`
 	if err = client.Mail(c.From.Address); err != nil {
 		return err
 	}
 
+	// `RCPT TO:`
+	var toAddrs []string
+	for _, addr := range c.Recipients {
+		toAddrs = append(toAddrs, addr.String())
+	}
+	to := strings.Join(toAddrs, ",")
 	if err = client.Rcpt(to); err != nil {
 		return err
 	}
 
+	// `DATA`
 	w, err := client.Data()
 	if err != nil {
 		return err
 	}
 
-	if _, err = w.Write([]byte(message)); err != nil {
-		log.Fatalln(err)
+	// 读取邮件源码文件
+	rawEmail, err := os.ReadFile(emlPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(rawEmail)
+	if err != nil {
+		return err
 	}
 
 	err = w.Close()
@@ -215,49 +188,4 @@ func SendmailWithEml(c Config, emlPath string) error {
 	}
 
 	return client.Quit()
-}
-
-func getEmlHeaders(emailBytes []byte) (headers map[string]string, err error) {
-	headers = make(map[string]string)
-	envelope, err := enmime.NewParser().ReadEnvelope(bytes.NewReader(emailBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	for _, key := range envelope.GetHeaderKeys() {
-		headers[key] = envelope.GetHeader(key)
-	}
-
-	return
-}
-
-func getEmlBody(emailBytes []byte) (body []byte, err error) {
-	headersLength := 0
-	br := bufio.NewReader(bytes.NewReader(emailBytes))
-	for {
-		// Pull out each line of the headers as a temporary slice s
-		s, err := br.ReadSlice('\n')
-		if err != nil {
-			return nil, err
-		}
-
-		firstColon := bytes.IndexByte(s, ':')
-		firstSpace := bytes.IndexAny(s, " \t\n\r")
-
-		if firstSpace == 0 {
-			headersLength += len(s)
-
-			continue
-		}
-
-		if firstColon < 0 {
-			break
-		} else {
-			headersLength += len(s)
-		}
-	}
-
-	body = emailBytes[headersLength:]
-
-	return
 }
