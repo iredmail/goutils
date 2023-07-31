@@ -17,9 +17,8 @@ type DBStat struct {
 }
 
 type TableStat struct {
-	DBName string `db:"dbname"`     // Database name.
-	Name   string `db:"name"`       // Table name.
-	Size   int64  `db:"table_size"` // Table size in bytes
+	Name string `db:"name"`       // Table name.
+	Size int64  `db:"table_size"` // Table size in bytes
 }
 
 // GetDBStat 返回指定数据库的相关信息。
@@ -69,7 +68,7 @@ func GetDBStat(pth string, db *goqu.Database) (stat DBStat) {
 // WARNING: Go 的 sqlite driver 必须支持 SQLITE_ENABLE_DBSTAT_VTAB 才能访问 `dbstat` 表。
 func GetTableStats(pth string, db *goqu.Database) (rows []TableStat) {
 	_ = db.
-		Select(goqu.L("? dbname", pth), "name", goqu.L("SUM(pgsize) table_size")).
+		Select("name", goqu.L("SUM(pgsize) table_size")).
 		From(goqu.L("dbstat")).
 		GroupBy("name").
 		Order(goqu.C("table_size").Desc()).
