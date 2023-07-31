@@ -16,7 +16,8 @@ var (
 	// https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
 	SQLitePragmas = [][2]string{
 		{"busy_timeout", "10000"},
-		{"auto_vacuum", "full"},
+		{"synchronous", "NORMAL"},
+		{"auto_vacuum", "FULL"},
 		{"journal_mode", "WAL"},
 		// WAL mode is always consistent with synchronous=NORMAL, but WAL mode
 		// does lose durability. A transaction committed in WAL mode with
