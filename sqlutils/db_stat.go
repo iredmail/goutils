@@ -68,9 +68,8 @@ func GetDBStat(pth string, db *goqu.Database) (stat DBStat) {
 
 // GetTableStats 返回数据库中所有表的大小，包含索引。
 // FYI <https://www.sqlite.org/dbstat.html>
-func GetTableStats(db *goqu.Database) (rows []TableStat, err error) {
-	// SELECT name ,SUM(pgsize)/1024 table_size FROM "dbstat" GROUP BY name ORDER BY table_size desc;
-	err = db.
+func GetTableStats(db *goqu.Database) (rows []TableStat) {
+	_ = db.
 		Select("name", "SUM(pgsize) table_size").
 		From("dbstat").
 		GroupBy("name").
