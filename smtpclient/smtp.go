@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/iredmail/goutils/emailutils"
 	"github.com/jhillyerd/enmime"
 )
 
@@ -163,6 +164,14 @@ func SendmailWithEml(c Config, emlPath string) error {
 
 	client, err := smtp.Dial(net.JoinHostPort(c.Host, c.Port))
 	if err != nil {
+		return err
+	}
+
+	domain := emailutils.ExtractDomain(c.From.Address)
+	if domain == "" {
+		domain = "example.com"
+	}
+	if err = client.Hello(domain); err != nil {
 		return err
 	}
 
