@@ -17,11 +17,9 @@ type DBStat struct {
 }
 
 type TableStat struct {
-	// Table name.
-	Name string `db:"name"`
-
-	// Table size in bytes
-	Size int64 `db:"table_size"`
+	DBName string `db:"dbname"`     // Database name.
+	Name   string `db:"name"`       // Table name.
+	Size   int64  `db:"table_size"` // Table size in bytes
 }
 
 // GetDBStat 返回指定数据库的相关信息。
@@ -68,9 +66,9 @@ func GetDBStat(pth string, db *goqu.Database) (stat DBStat) {
 
 // GetTableStats 返回数据库中所有表的大小，包含索引。
 // FYI <https://www.sqlite.org/dbstat.html>
-func GetTableStats(db *goqu.Database) (rows []TableStat) {
+func GetTableStats(pth string, db *goqu.Database) (rows []TableStat) {
 	_ = db.
-		Select("name", "SUM(pgsize) table_size").
+		Select(goqu.L("? dbname", pth), "SUM(pgsize) table_size").
 		From("dbstat").
 		GroupBy("name").
 		Order(goqu.C("table_size").Desc()).
