@@ -10,7 +10,9 @@ import (
 	"net/smtp"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/iredmail/goutils"
 	"github.com/iredmail/goutils/emailutils"
 )
 
@@ -49,6 +51,12 @@ func Sendmail(c Config) error {
 	headers["From"] = c.From.String()
 	headers["To"] = to
 	headers["Subject"] = c.Subject
+	headers["Message-ID"] = fmt.Sprintf("<%s@%s>", goutils.GenRandomString(32), c.Host)
+	headers["Date"] = time.Now().UTC().Format(time.RFC1123Z)
+
+	if c.ReplyTo.Address != "" {
+		headers["Reply-To"] = c.ReplyTo.String()
+	}
 
 	if len(c.Bcc) > 0 {
 		var bccAddrs []string
