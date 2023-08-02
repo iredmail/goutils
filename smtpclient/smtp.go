@@ -125,7 +125,10 @@ func Sendmail(c Config, recipients, bcc []string, replyTo, subject, body string)
 }
 
 func SendmailInBackground(c Config, recipients, bcc []string, replyTo, subject, body string) {
-	go Sendmail(c, recipients, bcc, replyTo, subject, body)
+	go func() {
+		// TODO return error
+		_ = Sendmail(c, recipients, bcc, replyTo, subject, body)
+	}()
 }
 
 func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath string) error {
