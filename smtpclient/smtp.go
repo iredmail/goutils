@@ -20,9 +20,9 @@ type Config struct {
 	Host       string
 	Port       string
 	From       mail.Address
-	Recipients []mail.Address
-	Bcc        []mail.Address
-	ReplyTo    mail.Address
+	Recipients []string // email addresses
+	Bcc        []string // email addresses
+	ReplyTo    string   // email address
 
 	// smtp authentication
 	SMTPUser     string
@@ -36,50 +36,55 @@ type Config struct {
 }
 
 func Sendmail(c Config) error {
-	if len(c.Recipients) == 0 {
+	// 过滤出有效的邮件地址
+	var rcptAddrs []string
+	for _, rcpt := range c.Recipients {
+		if emailutils.IsEmail(rcpt) {
+			rcptAddrs = append(rcptAddrs, rcpt)
+		}
+	}
+
+	if len(rcptAddrs) == 0 {
 		return errors.New("invalid recipients")
 	}
 
-	var toAddrs []string
-	for _, addr := range c.Recipients {
-		toAddrs = append(toAddrs, addr.String())
+	rcpts := strings.Join(rcptAddrs, ",")
+
+	// 构造邮件头
+	headers := map[string]string{
+		"From":       c.From.String(),
+		"To":         rcpts,
+		"Subject":    c.Subject,
+		"Message-ID": fmt.Sprintf("<%s@%s>", goutils.GenRandomString(32), c.Host),
+		"Date":       time.Now().UTC().Format(time.RFC1123Z),
 	}
-	to := strings.Join(toAddrs, ",")
 
-	// Setup headers
-	headers := make(map[string]string)
-	headers["From"] = c.From.String()
-	headers["To"] = to
-	headers["Subject"] = c.Subject
-	headers["Message-ID"] = fmt.Sprintf("<%s@%s>", goutils.GenRandomString(32), c.Host)
-	headers["Date"] = time.Now().UTC().Format(time.RFC1123Z)
-
-	if c.ReplyTo.Address != "" {
-		headers["Reply-To"] = c.ReplyTo.String()
+	if emailutils.IsEmail(c.ReplyTo) {
+		headers["Reply-To"] = c.ReplyTo
 	}
 
 	if len(c.Bcc) > 0 {
 		var bccAddrs []string
+
 		for _, addr := range c.Bcc {
-			bccAddrs = append(bccAddrs, addr.String())
+			bccAddrs = append(bccAddrs, addr)
 		}
-		bcc := strings.Join(bccAddrs, ",")
-		headers["Bcc"] = bcc
+
+		headers["Bcc"] = strings.Join(bccAddrs, ",")
 	}
 
-	// FIXME 组装邮件的方式不严谨
 	message := ""
 	for k, v := range headers {
 		message += fmt.Sprintf("%s: %s\r\n", k, v)
 	}
-	message += c.Body
+
+	// 邮件 header 和 body 以第一个空白行作为分界
+	message += "\r\n" + c.Body
 
 	client, err := smtp.Dial(net.JoinHostPort(c.Host, c.Port))
 	if err != nil {
 		return err
 	}
-
-	auth := smtp.PlainAuth("", c.SMTPUser, c.SMTPPassword, c.Host)
 
 	if c.StartTLS {
 		tc := &tls.Config{
@@ -92,15 +97,19 @@ func Sendmail(c Config) error {
 		}
 	}
 
-	if err = client.Auth(auth); err != nil {
-		return err
+	if len(c.SMTPUser) > 0 && len(c.SMTPPassword) > 0 {
+		auth := smtp.PlainAuth("", c.SMTPUser, c.SMTPPassword, c.Host)
+
+		if err = client.Auth(auth); err != nil {
+			return err
+		}
 	}
 
 	if err = client.Mail(c.From.Address); err != nil {
 		return err
 	}
 
-	if err = client.Rcpt(to); err != nil {
+	if err = client.Rcpt(rcpts); err != nil {
 		return err
 	}
 
