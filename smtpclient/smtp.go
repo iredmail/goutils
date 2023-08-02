@@ -124,6 +124,10 @@ func Sendmail(c Config, recipients, bcc []string, replyTo, subject, body string)
 	return client.Quit()
 }
 
+func SendmailInBackground(c Config, recipients, bcc []string, replyTo, subject, body string) {
+	go Sendmail(c, recipients, bcc, replyTo, subject, body)
+}
+
 func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath string) error {
 	smtpServer := fmt.Sprintf("%s:%s", c.Host, c.Port)
 
