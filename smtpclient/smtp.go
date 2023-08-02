@@ -17,28 +17,19 @@ import (
 )
 
 type Config struct {
-	Host       string
-	Port       string
-	From       mail.Address
-	Recipients []string // email addresses
-	Bcc        []string // email addresses
-	ReplyTo    string   // email address
+	Host     string
+	Port     string
+	StartTLS bool
 
 	// smtp authentication
 	SMTPUser     string
 	SMTPPassword string
-
-	StartTLS bool
-
-	// mail subject / body
-	Subject string
-	Body    string
 }
 
-func Sendmail(c Config) error {
+func Sendmail(c Config, from mail.Address, recipients, bcc []string, replyTo, subject, body string) error {
 	// 过滤出有效的邮件地址
 	var rcptAddrs []string
-	for _, rcpt := range c.Recipients {
+	for _, rcpt := range recipients {
 		if emailutils.IsEmail(rcpt) {
 			rcptAddrs = append(rcptAddrs, rcpt)
 		}
@@ -52,21 +43,21 @@ func Sendmail(c Config) error {
 
 	// 构造邮件头
 	headers := map[string]string{
-		"From":       c.From.String(),
+		"From":       from.String(),
 		"To":         rcpts,
-		"Subject":    c.Subject,
+		"Subject":    subject,
 		"Message-ID": fmt.Sprintf("<%s@%s>", goutils.GenRandomString(32), c.Host),
 		"Date":       time.Now().UTC().Format(time.RFC1123Z),
 	}
 
-	if emailutils.IsEmail(c.ReplyTo) {
-		headers["Reply-To"] = c.ReplyTo
+	if emailutils.IsEmail(replyTo) {
+		headers["Reply-To"] = replyTo
 	}
 
-	if len(c.Bcc) > 0 {
+	if len(bcc) > 0 {
 		var bccAddrs []string
 
-		for _, addr := range c.Bcc {
+		for _, addr := range bcc {
 			bccAddrs = append(bccAddrs, addr)
 		}
 
@@ -79,7 +70,7 @@ func Sendmail(c Config) error {
 	}
 
 	// 邮件 header 和 body 以第一个空白行作为分界
-	message += "\r\n" + c.Body
+	message += "\r\n" + body
 
 	client, err := smtp.Dial(net.JoinHostPort(c.Host, c.Port))
 	if err != nil {
@@ -105,7 +96,7 @@ func Sendmail(c Config) error {
 		}
 	}
 
-	if err = client.Mail(c.From.Address); err != nil {
+	if err = client.Mail(from.Address); err != nil {
 		return err
 	}
 
@@ -130,7 +121,7 @@ func Sendmail(c Config) error {
 	return client.Quit()
 }
 
-func SendmailWithEml(c Config, emlPath string) error {
+func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath string) error {
 	smtpServer := fmt.Sprintf("%s:%s", c.Host, c.Port)
 
 	// CONNECT
@@ -141,7 +132,7 @@ func SendmailWithEml(c Config, emlPath string) error {
 	defer func() { _ = client.Close() }()
 
 	// HELO
-	domain := emailutils.ExtractDomain(c.From.Address)
+	domain := emailutils.ExtractDomain(from.Address)
 	if domain == "" {
 		domain = "example.com"
 	}
@@ -168,14 +159,14 @@ func SendmailWithEml(c Config, emlPath string) error {
 	}
 
 	// `MAIL FROM:`
-	if err = client.Mail(c.From.Address); err != nil {
+	if err = client.Mail(from.Address); err != nil {
 		return err
 	}
 
 	// `RCPT TO:`
 	var toAddrs []string
-	for _, addr := range c.Recipients {
-		toAddrs = append(toAddrs, addr.String())
+	for _, addr := range recipients {
+		toAddrs = append(toAddrs, addr)
 	}
 	to := strings.Join(toAddrs, ",")
 	if err = client.Rcpt(to); err != nil {
