@@ -21,12 +21,15 @@ type Config struct {
 	Port     string
 	StartTLS bool
 
+	// Sender
+	From mail.Address
+
 	// smtp authentication
 	SMTPUser     string
 	SMTPPassword string
 }
 
-func Sendmail(c Config, from mail.Address, recipients, bcc []string, replyTo, subject, body string) error {
+func Sendmail(c Config, recipients, bcc []string, replyTo, subject, body string) error {
 	// 过滤出有效的邮件地址
 	var rcptAddrs []string
 	for _, rcpt := range recipients {
@@ -43,7 +46,7 @@ func Sendmail(c Config, from mail.Address, recipients, bcc []string, replyTo, su
 
 	// 构造邮件头
 	headers := map[string]string{
-		"From":       from.String(),
+		"From":       c.From.String(),
 		"To":         rcpts,
 		"Subject":    subject,
 		"Message-ID": fmt.Sprintf("<%s@%s>", goutils.GenRandomString(32), c.Host),
@@ -96,7 +99,7 @@ func Sendmail(c Config, from mail.Address, recipients, bcc []string, replyTo, su
 		}
 	}
 
-	if err = client.Mail(from.Address); err != nil {
+	if err = client.Mail(c.From.Address); err != nil {
 		return err
 	}
 
