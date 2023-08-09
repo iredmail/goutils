@@ -250,3 +250,19 @@ func FilterValidDomains(domains []string) (valid []string, invalid []string) {
 
 	return
 }
+
+// ToLower 将邮件地址转换为小写，但保留地址扩展部分（+extension）的大小写。
+// 例如：UsEr+LoG@ExAmPlE.CoM -> user+LoG@example.com。
+func ToLower(s string) string {
+	if !IsEmail(s) {
+		return s
+	}
+
+	userExt, domain, _ := strings.Cut(s, "@")
+	username, ext, found := strings.Cut(userExt, "+")
+	if found {
+		return fmt.Sprintf("%s+%s@%s", strings.ToLower(username), ext, strings.ToLower(domain))
+	} else {
+		return strings.ToLower(s)
+	}
+}

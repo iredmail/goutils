@@ -95,3 +95,35 @@ func TestNetwork(t *testing.T) {
 	assert.False(t, IsWildcardIPv4("172.256.1.*"))
 	assert.False(t, IsWildcardIPv4("172.1.*"))
 }
+
+func TestToLower(t *testing.T) {
+	// Test with a valid email address
+	email := "UsEr+LoG@ExAmPlE.CoM"
+	expected := "user+LoG@example.com"
+	result := ToLower(email)
+	assert.Equal(t, expected, result)
+
+	// Test with an email address with no extension
+	email = "UsEr@ExAmple.CoM"
+	expected = "user@example.com"
+	result = ToLower(email)
+	assert.Equal(t, expected, result)
+
+	// Test with an invalid email address
+	email = "invalid email address"
+	expected = "invalid email address"
+	result = ToLower(email)
+	assert.Equal(t, expected, result)
+
+	// Test with an email address with no username
+	email = "example.com"
+	expected = "example.com"
+	result = ToLower(email)
+	assert.Equal(t, expected, result)
+
+	// Test with an email address with no domain
+	email = "user@example"
+	expected = "user@example"
+	result = ToLower(email)
+	assert.Equal(t, expected, result)
+}
