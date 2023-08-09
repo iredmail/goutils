@@ -53,14 +53,6 @@ func IsWildcardAddr(s string) bool {
 
 	return net.ParseIP(s) != nil
 }
-func IsStrictIP(s string) bool {
-	return net.ParseIP(s) != nil
-}
-func IsCIDRNetwork(s string) bool {
-	_, _, err := net.ParseCIDR(s)
-
-	return err == nil
-}
 func IsWildcardIPv4(s string) bool {
 	s = strings.ReplaceAll(s, "*", "1")
 	ip := net.ParseIP(s)
@@ -84,18 +76,17 @@ func ExtractUsername(s string) string {
 // ExtractDomain 返回邮件地址里的（转换为小写字母的）域名部分。
 // 如果域名是 IP 地址（如：`[192.168.1.1]`），则返回（不含中括号的）IP 地址。
 func ExtractDomain(e string) string {
-	parts := strings.Split(e, "@")
-	domain := strings.ToLower(parts[len(parts)-1])
-
-	if strings.HasPrefix(domain, "[") {
-		// IP address.
-		d1 := strings.TrimPrefix(domain, "[")
-		d2 := strings.TrimSuffix(d1, "]")
-
-		return d2
+	_, domain, found := strings.Cut(e, "@")
+	if !found {
+		return ""
 	}
 
-	return domain
+	// IP address.
+	if strings.HasPrefix(domain, "[") && strings.HasSuffix(domain, "]") {
+		domain = strings.Trim(domain, "[]")
+	}
+
+	return strings.ToLower(domain)
 }
 
 // ExtractUsernameAndDomain 从给定的 s 里提取用户名和域名。

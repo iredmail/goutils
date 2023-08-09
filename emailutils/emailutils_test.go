@@ -85,13 +85,6 @@ func TestEmail(t *testing.T) {
 }
 
 func TestNetwork(t *testing.T) {
-	assert.True(t, IsStrictIP("192.168.2.113"))
-	assert.False(t, IsStrictIP("192.168.2.1132"))
-	assert.False(t, IsStrictIP("192.2.1132"))
-
-	assert.True(t, IsCIDRNetwork("192.168.2.1/24"))
-	assert.False(t, IsCIDRNetwork("192.168.2.1"))
-
 	assert.True(t, IsWildcardAddr("172.13.1.*"))
 	assert.True(t, IsWildcardAddr("172.13.*.1"))
 	assert.True(t, IsWildcardAddr("172.*.1.1"))
