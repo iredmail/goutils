@@ -33,7 +33,7 @@ func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 		return "", errors.New("INVALID_EMAIL")
 	}
 
-	return strings.ToLower(addr), nil
+	return emailutils.ToLower(addr), nil
 }
 
 // ParamPage 用于查询 URL parameters（`/xxx/:page`）的 `page` 参数的值。
