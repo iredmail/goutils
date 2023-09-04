@@ -2,9 +2,9 @@ package sslcert
 
 type Option func(m *Manager)
 
-func WithCertDomain(domain string) Option {
+func WithCertDomain(domains ...string) Option {
 	return func(m *Manager) {
-		m.certDomains = append(m.certDomains, domain)
+		m.certDomains = domains
 	}
 }
 
