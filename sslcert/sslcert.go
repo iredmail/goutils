@@ -10,8 +10,9 @@ import (
 	"net"
 	"os"
 
-	"github.com/iredmail/goutils"
 	"golang.org/x/crypto/acme/autocert"
+
+	"github.com/iredmail/goutils"
 )
 
 // New 初始化 ssl cert，一共分为两种模式：
@@ -156,7 +157,7 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 		hello.ServerName = m.certDomains[0]
 	}
 
-	// 存在使用固定证书
+	// 使用固定证书
 	if m.FixedCert != nil {
 		return m.FixedCert, nil
 	}
