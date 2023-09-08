@@ -32,6 +32,8 @@ const (
 	ApplyingUpgrade       = "APPLYING_UPGRADE"
 	NotDeploying          = "NOT_DEPLOYING"
 	AccountExists         = "ACCOUNT_EXISTS"
+	NotAllowed            = "NOT_ALLOWED"
+	ExceededDomainMLLimit = "EXCEEDED_DOMAIN_ML_LIMIT"
 )
 
 var (
@@ -61,7 +63,7 @@ var (
 	ErrPermissionDenied           = errors.New(PermissionDenied)
 	ErrDomainExists               = errors.New("DOMAIN_EXISTS")
 	ErrAccountExists              = errors.New(AccountExists)
-	ErrNotAllowed                 = errors.New("NOT_ALLOWED")
+	ErrNotAllowed                 = errors.New(NotAllowed)
 	ErrInvalidPasswordScheme      = errors.New("INVALID_PASSWORD_SCHEME")
 	ErrExceededDomainAccountLimit = errors.New("EXCEEDED_DOMAIN_ACCOUNT_LIMIT")
 	ErrExceededDomainQuotaSize    = errors.New("EXCEEDED_DOMAIN_QUOTA_SIZE")
