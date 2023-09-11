@@ -27,6 +27,7 @@ const (
 	InvalidFormData       = "INVALID_FORM_DATA"
 	InvalidOtpCode        = "INVALID_OTP_CODE"
 	InvalidDeploymentID   = "INVALID_DEPLOYMENT_ID"
+	InvalidEmailAddress   = "INVALID_EMAIL_ADDRESS"
 	ImportedSettings      = "IMPORTED_SETTINGS"
 	ApplyingSavedChanges  = "APPLYING_SAVED_CHANGES"
 	ApplyingUpgrade       = "APPLYING_UPGRADE"
@@ -40,7 +41,7 @@ var (
 	ErrInvalidCredentials         = errors.New(InvalidCredentials)
 	ErrInternalServerError        = errors.New(InternalServerError)
 	ErrInvalidLicenseKey          = errors.New(InvalidLicenseKey)
-	ErrInvalidEmailAddress        = errors.New("INVALID_EMAIL_ADDRESS")
+	ErrInvalidEmailAddress        = errors.New(InvalidEmailAddress)
 	ErrInvalidProduct             = errors.New(InvalidProduct)
 	ErrInvalidDomain              = errors.New(InvalidDomain)
 	ErrInvalidParam               = errors.New(InvalidParam)
