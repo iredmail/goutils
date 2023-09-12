@@ -37,7 +37,6 @@ func New(options ...Option) (*Manager, error) {
 
 	m.autocertMgr.Cache = autocert.DirCache(m.autoCertCacheDir)
 
-	// 加载 /opt/spider/{cert,key}.pem
 	if goutils.DestExists(m.sslCertFile) && goutils.DestExists(m.sslKeyFile) {
 		cert, err := tls.LoadX509KeyPair(m.sslCertFile, m.sslKeyFile)
 		if err != nil {
