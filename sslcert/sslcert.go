@@ -88,7 +88,7 @@ type Manager struct {
 	//
 	// 加载顺序和优先级：
 	//
-	// 1. /opt/spider/{cert,key}.pem
+	// 1. {cert,key}.pem
 	// 2. autocert
 	//
 
