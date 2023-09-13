@@ -11,9 +11,8 @@ type Option func(m *Manager)
 func WithCertDomain(domains ...string) Option {
 	return func(m *Manager) {
 		for _, domain := range domains {
-			domain = strings.ToLower(domain)
 			if emailutils.IsDomain(domain) {
-				m.certDomains = append(m.certDomains, domain)
+				m.certDomains = append(m.certDomains, strings.ToLower(domain))
 			}
 		}
 	}
