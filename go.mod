@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/doug-martin/goqu/v9 v9.18.0
-	github.com/gofiber/fiber/v2 v2.49.1
+	github.com/gofiber/fiber/v2 v2.49.2
 	github.com/google/uuid v1.3.1
 	github.com/gookit/slog v0.5.4
 	github.com/k0kubun/pp/v3 v3.2.0
