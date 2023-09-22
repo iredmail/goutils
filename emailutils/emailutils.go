@@ -242,3 +242,13 @@ func ToLowerWithExt(s string) string {
 		return strings.ToLower(s)
 	}
 }
+
+// ToLowerWithoutExt 将邮件地址转换为小写，并且移除地址扩展（+extension）。
+// 例如：UsEr+LoG@ExAmPlE.CoM -> user@example.com。
+func ToLowerWithoutExt(s string) string {
+	if !IsEmail(s) {
+		return s
+	}
+
+	return StripExtension(s)
+}
