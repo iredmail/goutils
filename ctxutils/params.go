@@ -36,6 +36,22 @@ func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 	return emailutils.ToLowerWithExt(addr), nil
 }
 
+func ParamEmailWithoutExt(ctx *fiber.Ctx, name ...string) (addr string, err error) {
+	param := "email"
+
+	if len(name) > 0 {
+		param = name[0]
+	}
+
+	addr = ctx.Params(param)
+
+	if !emailutils.IsEmail(addr) {
+		return "", errors.New("INVALID_EMAIL")
+	}
+
+	return emailutils.ToLowerWithoutExt(addr), nil
+}
+
 // ParamPage 用于查询 URL parameters（`/xxx/:page`）的 `page` 参数的值。
 // 如果没有指定则默认为 1。
 func ParamPage(ctx *fiber.Ctx) (page int) {
