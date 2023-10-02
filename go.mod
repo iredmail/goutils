@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/gookit/slog v0.5.4
 	github.com/k0kubun/pp/v3 v3.2.0
-	github.com/shirou/gopsutil/v3 v3.23.8
+	github.com/shirou/gopsutil/v3 v3.23.9
 	github.com/stretchr/testify v1.8.4
 	github.com/vorlif/spreak v0.4.0
 	golang.org/x/crypto v0.13.0
