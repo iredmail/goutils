@@ -11,15 +11,24 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/host"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 type OSInfo struct {
 	Hostname string `json:"hostname"`
 
-	System       string `json:"system"` // linux, darwin, freebsd, openbsd, windows
-	OSFamily     string `json:"os_family"`
-	Architecture string `json:"architecture"` // 386, amd64, arm, arm64
+	System       string   `json:"system"`       // linux, darwin, freebsd, openbsd, windows
+	Architecture string   `json:"architecture"` // 386, amd64, arm, arm64
+	CPUCores     []string `json:"cpu_cores"`
+	Memory       uint64   `json:"memory"` // in bytes
+
+	// OS
+	KernelVersion string `json:"kernel_version"`
+	OSFamily      string `json:"os_family"`
+	OSName        string `json:"os_name"`
+	OSVersion     string `json:"os_version"`
 
 	// Host is a docker container.
 	IsContainer bool `json:"is_container"`
@@ -42,6 +51,7 @@ type OSInfo struct {
 	PkgMgr string `json:"pkg_mgr"`
 
 	// Uptime
+	BootTime      uint64 `json:"boot_time"`
 	UptimeDays    uint64 `json:"uptime_days"`
 	UptimeHours   uint64 `json:"uptime_hours"`
 	UptimeMinutes uint64 `json:"uptime_minutes"`
@@ -66,11 +76,41 @@ func (oi OSInfo) ToMap() (m map[string]any, err error) {
 func GetOSInfo() (oi OSInfo, err error) {
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
 
-	hi, _ := host.Info()
-	if hi != nil {
-		oi.Hostname = hi.Hostname
+	//
+	// CPU
+	//
+	cpuInfo, err := cpu.Info()
+	if err != nil {
+		return
 	}
 
+	for _, ci := range cpuInfo {
+		oi.CPUCores = append(oi.CPUCores, fmt.Sprintf("%s %.2fGHz (%d cores)", ci.ModelName, ci.Mhz/1000, ci.Cores))
+	}
+
+	//
+	// Memory
+	//
+	vm, err := mem.VirtualMemory()
+	if err != nil {
+		return
+	}
+	oi.Memory = vm.Total
+
+	hi, err := host.Info()
+	if err != nil {
+		return
+	}
+
+	//
+	// Hostname
+	//
+	oi.Hostname = hi.Hostname
+	oi.KernelVersion = hi.KernelVersion
+
+	//
+	// OS
+	//
 	if runtime.GOOS == "linux" {
 		oi.System = "Linux"
 
@@ -163,6 +203,9 @@ func GetOSInfo() (oi OSInfo, err error) {
 
 		oi.DistributionVersion = strings.TrimSpace(stdout.String())
 	}
+
+	oi.OSName = hi.Platform
+	oi.OSVersion = hi.PlatformVersion
 
 	// Docker container.
 	if DestExists("/.dockerenv") {

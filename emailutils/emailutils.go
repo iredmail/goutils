@@ -162,10 +162,9 @@ func StripExtension(email string) string {
 // ParseAddress 是 `mail.ParseAddress()` 的简单封装：
 // - 去除首尾的引号
 // - 将邮件地址转换为小写
-// FIXME Go 官方的 `mail.ParseAddress()` 不支持一些不规范的地址，如 `Name <user@[172.16.1.1]>`。
-//
-//	考虑用第三方库代替，否则配置参数里的 archiving_domain 归档邮件域名不能用内部 IP 地址。
 func ParseAddress(address string) (*mail.Address, error) {
+	// FIXME Go 官方的 `mail.ParseAddress()` 不支持一些不规范的地址，如 `Name <user@[172.16.1.1]>`。
+	// FIXME 考虑用第三方库代替，否则配置参数里的 archiving_domain 归档邮件域名不能用内部 IP 地址。
 	addr, err := mail.ParseAddress(address)
 	if err != nil {
 		// 移除错误信息前面的 `mail: ` 字符
