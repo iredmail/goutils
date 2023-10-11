@@ -55,6 +55,8 @@ func Sendmail(c Config, recipients, bcc []string, replyTo, subject, body string)
 
 	if emailutils.IsEmail(replyTo) {
 		headers["Reply-To"] = replyTo
+	} else {
+		headers["Reply-To"] = c.From.Address
 	}
 
 	if len(bcc) > 0 {
