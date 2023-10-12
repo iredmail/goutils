@@ -98,8 +98,10 @@ func Sendmail(c Config, from string, to []string, subject string, body []byte, b
 		return err
 	}
 
-	if err = client.Rcpt(strings.Join(to, ",")); err != nil {
-		return err
+	for _, rcpt := range to {
+		if err = client.Rcpt(rcpt); err != nil {
+			return err
+		}
 	}
 
 	w, err := client.Data()
