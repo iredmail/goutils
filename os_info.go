@@ -267,9 +267,7 @@ func GetHostFQDN() (fqdn string) {
 	cmd.Stdout = &stdout
 
 	if err := cmd.Run(); err == nil {
-		fqdn = stdout.String()
-		fqdn = strings.TrimSuffix(fqdn, "\n")
-		fqdn = strings.TrimSuffix(fqdn, "\r\n")
+		fqdn = strings.TrimSpace(stdout.String())
 	}
 
 	return fqdn
