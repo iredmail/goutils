@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/iredmail/goutils"
 	"github.com/iredmail/goutils/emailutils"
 )
 
@@ -57,7 +58,7 @@ func Sendmail(c Config, from string, to []string, subject string, body []byte, b
 		return err
 	}
 
-	if err = client.Hello(emailutils.ExtractDomain(from)); err != nil {
+	if err = client.Hello(goutils.GetHostFQDN()); err != nil {
 		return err
 	}
 
@@ -79,9 +80,7 @@ func Sendmail(c Config, from string, to []string, subject string, body []byte, b
 		var auth smtp.Auth
 
 		if ok, auths := client.Extension("AUTH"); ok {
-			if strings.Contains(auths, "CRAM-MD5") {
-				auth = smtp.CRAMMD5Auth(c.SMTPUser, c.SMTPPassword)
-			} else if strings.Contains(auths, "LOGIN") &&
+			if strings.Contains(auths, "LOGIN") &&
 				!strings.Contains(auths, "PLAIN") {
 				auth = newLoginAuth(c.Host, c.SMTPUser, c.SMTPPassword)
 			} else {
