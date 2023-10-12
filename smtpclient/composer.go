@@ -56,21 +56,18 @@ func (c *Composer) WithDate(t time.Time) *Composer {
 	c.date = t
 
 	return c
-
 }
 
 func (c *Composer) WithMessageID(msgid string) *Composer {
 	c.messageID = msgid
 
 	return c
-
 }
 
 func (c *Composer) WithHeaders(headers map[string]string) *Composer {
 	c.headers = headers
 
 	return c
-
 }
 
 func (c *Composer) WithFileAttachments(pths ...string) *Composer {
