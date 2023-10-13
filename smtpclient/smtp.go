@@ -119,9 +119,13 @@ func SendmailWithComposerInBackground(c Config, composer *Composer, l logger.Log
 		err := SendmailWithComposer(c, composer)
 		if err != nil {
 			if l != nil {
-				// l.Error("Failed in SendmailWithComposer: %v", err)
+				l.Error("Failed in sending email: %v", err)
 			} else {
-				fmt.Printf("DEBUG SendmailWithComposer log err: %v\n", err)
+				fmt.Printf("Failed in sending email: %v\n", err)
+			}
+		} else {
+			if l != nil {
+				l.Info("Email sent: %s", composer.GetSubject())
 			}
 		}
 	}()

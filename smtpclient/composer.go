@@ -196,3 +196,4 @@ func (c *Composer) Bytes() (msg []byte, err error) {
 func (c *Composer) GetTo() []mail.Address  { return c.to }
 func (c *Composer) GetCc() []mail.Address  { return c.cc }
 func (c *Composer) GetBcc() []mail.Address { return c.bcc }
+func (c *Composer) GetSubject() string     { return c.subject }
