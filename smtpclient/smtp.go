@@ -125,7 +125,12 @@ func SendmailWithComposerInBackground(c Config, composer *Composer, l logger.Log
 			}
 		} else {
 			if l != nil {
-				l.Info("Email sent: %s", composer.GetSubject())
+				var addrs []string
+				for _, addr := range composer.GetTo() {
+					addrs = append(addrs, addr.Address)
+				}
+
+				l.Info("Email sent. Subject='%s', To='%s'", composer.GetSubject(), strings.Join(addrs, ","))
 			}
 		}
 	}()
