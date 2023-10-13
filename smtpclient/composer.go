@@ -10,12 +10,13 @@ import (
 	"github.com/iredmail/goutils"
 )
 
+// Composer 用于编写邮件。
 type Composer struct {
-	From     mail.Address
-	To       []mail.Address
-	Subject  string // mail subject
-	BodyText []byte // mail body in plain text format
-	BodyHTML []byte // mail body in html format
+	from     mail.Address
+	to       []mail.Address
+	subject  string // mail subject
+	bodyText []byte // mail body in plain text format
+	bodyHTML []byte // mail body in html format
 
 	// Optional
 	cc              []mail.Address // header `Cc:`
@@ -32,6 +33,42 @@ type ByteAttachment struct {
 	Name        string
 	ContentType string
 	Bytes       []byte
+}
+
+func NewComposer() *Composer {
+	return &Composer{
+		headers: make(map[string]string),
+	}
+}
+
+func (c *Composer) WithFrom(from mail.Address) *Composer {
+	c.from = from
+
+	return c
+}
+
+func (c *Composer) WithTo(to []mail.Address) *Composer {
+	c.to = to
+
+	return c
+}
+
+func (c *Composer) WithSubject(subject string) *Composer {
+	c.subject = subject
+
+	return c
+}
+
+func (c *Composer) WithBodyText(text []byte) *Composer {
+	c.bodyText = text
+
+	return c
+}
+
+func (c *Composer) WithBodyHTML(html []byte) *Composer {
+	c.bodyHTML = html
+
+	return c
 }
 
 func (c *Composer) WithCc(cc []mail.Address) *Composer {
@@ -85,16 +122,16 @@ func (c *Composer) WithByteAttachments(atts ...*ByteAttachment) *Composer {
 // Bytes 将邮件内容转换为 `[]byte`。
 func (c *Composer) Bytes() (msg []byte, err error) {
 	mb := enmime.Builder().
-		From(c.From.Name, c.From.Address).
-		ToAddrs(c.To).
-		Subject(c.Subject)
+		From(c.from.Name, c.from.Address).
+		ToAddrs(c.to).
+		Subject(c.subject)
 
-	if len(c.BodyText) > 0 {
-		mb = mb.Text(c.BodyText)
+	if len(c.bodyText) > 0 {
+		mb = mb.Text(c.bodyText)
 	}
 
-	if len(c.BodyHTML) > 0 {
-		mb = mb.HTML(c.BodyHTML)
+	if len(c.bodyHTML) > 0 {
+		mb = mb.HTML(c.bodyHTML)
 	}
 
 	if c.cc != nil {
@@ -155,3 +192,7 @@ func (c *Composer) Bytes() (msg []byte, err error) {
 
 	return
 }
+
+func (c *Composer) GetTo() []mail.Address  { return c.to }
+func (c *Composer) GetCc() []mail.Address  { return c.cc }
+func (c *Composer) GetBcc() []mail.Address { return c.bcc }

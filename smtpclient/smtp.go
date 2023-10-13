@@ -8,12 +8,13 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
-	"os"
+	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/iredmail/goutils"
 	"github.com/iredmail/goutils/emailutils"
+	"github.com/iredmail/goutils/logger"
 )
 
 type Config struct {
@@ -35,7 +36,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 	// Export mail body before smtp connection, make sure it's valid email message.
 	msg, err := composer.Bytes()
 	if err != nil {
-		return fmt.Errorf("invalid email message: %v", err)
+		return fmt.Errorf("failed in building email message from composer: %v", err)
 	}
 
 	client, err := smtp.Dial(net.JoinHostPort(c.Host, c.Port))
@@ -66,7 +67,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 		return err
 	}
 
-	for _, addr := range composer.To {
+	for _, addr := range composer.GetTo() {
 		if err = client.Rcpt(addr.Address); err != nil {
 			return err
 		}
@@ -102,9 +103,27 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 }
 
 // SendmailWithComposerInBackground 在后台发送邮件，不阻塞当前进程。
-func SendmailWithComposerInBackground(c Config, composer *Composer) {
+func SendmailWithComposerInBackground(c Config, composer *Composer, l logger.Logger) {
 	go func() {
-		_ = SendmailWithComposer(c, composer)
+		// 捕捉 panic 并记录具体信息，便于后期排错。
+		defer func() {
+			if r := recover(); r != nil {
+				if l != nil {
+					l.Error("panic in SendmailWithComposer: %v\n%s", r, debug.Stack())
+				} else {
+					fmt.Printf("panic in SendmailWithComposer: %v\n%s", r, debug.Stack())
+				}
+			}
+		}()
+
+		err := SendmailWithComposer(c, composer)
+		if err != nil {
+			if l != nil {
+				// l.Error("Failed in SendmailWithComposer: %v", err)
+			} else {
+				fmt.Printf("DEBUG SendmailWithComposer log err: %v\n", err)
+			}
+		}
 	}()
 }
 
@@ -216,10 +235,21 @@ func Sendmail(c Config, recipients, bcc []string, replyTo, subject, body string)
 }
 
 // SendmailInBackground 在后台发送邮件，不阻塞当前进程。
-func SendmailInBackground(c Config, recipients, bcc []string, replyTo, subject, body string) {
+/*
+func SendmailInBackground(c Config, recipients, bcc []string, replyTo, subject, body string, l logger.Logger) {
 	go func() {
-		// TODO return error
-		_ = Sendmail(c, recipients, bcc, replyTo, subject, body)
+		// 捕捉 panic 并记录具体信息，便于后期排错。
+		defer func() {
+			if r := recover(); r != nil {
+				if l != nil {
+					l.Error("panic in SendmailWithComposer: %v\n%s", r, debug.Stack())
+				} else {
+					fmt.Printf("panic in SendmailWithComposer: %v\n%s", r, debug.Stack())
+				}
+			}
+		}()
+
+		err := Sendmail(c, recipients, bcc, replyTo, subject, body)
 	}()
 }
 
@@ -299,3 +329,4 @@ func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath s
 
 	return client.Quit()
 }
+*/
