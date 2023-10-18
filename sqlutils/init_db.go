@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	// SQLitePragmas 定义打开 SQLite 数据库时的 pragma 参数。
+	// SQLiteDefaultPragmas 定义打开 SQLite 数据库时的 pragma 参数。
 	// 参考：
 	// https://www.sqlite.org/pragma.html
 	// https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
-	SQLitePragmas = [][2]string{
+	SQLiteDefaultPragmas = [][2]string{
 		{"busy_timeout", "10000"},
 		{"synchronous", "NORMAL"},
 		{"auto_vacuum", "FULL"},
@@ -36,13 +36,15 @@ var (
 //   - maxIdleConns 指定打开数据库时的最大空闲连接数。如果为 0 表示使用默认值（50）。
 //   - connMaxLifetime 指定连接的最大存活时间。如果为 0 表示使用默认值（10 分钟）。
 func InitSQLiteDB(pth string, pragmas [][2]string, maxIdleConns int, connMaxLifetime time.Duration) (sqliteDB *sql.DB, err error) {
-	if len(pragmas) > 0 {
+	if len(pragmas) == 0 {
+		pth = pth + "?" + GenSQLiteURIPragmas(SQLiteDefaultPragmas)
+	} else {
 		pth = pth + "?" + GenSQLiteURIPragmas(pragmas)
 	}
 
 	sqliteDB, err = sql.Open("sqlite", pth)
 	if err != nil {
-		return nil, fmt.Errorf("failed in open SQLite database: %s, %v", pth, err)
+		return nil, fmt.Errorf("failed in opening SQLite database: %s, %v", pth, err)
 	}
 
 	// 避免 `database is locked (5) (SQLITE_BUSY)` 错误。
