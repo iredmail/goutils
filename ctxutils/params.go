@@ -2,6 +2,7 @@ package ctxutils
 
 import (
 	"errors"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -12,6 +13,10 @@ import (
 
 func ParamDomain(ctx *fiber.Ctx) (domain string, err error) {
 	domain = ctx.Params("domain")
+	domain, err = url.QueryUnescape(domain)
+	if err != nil {
+		return "", errors.New("INVALID_EMAIL_DOMAIN")
+	}
 
 	if !emailutils.IsDomain(domain) {
 		return "", errors.New("INVALID_EMAIL_DOMAIN")
@@ -28,6 +33,10 @@ func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 	}
 
 	addr = ctx.Params(param)
+	addr, err = url.QueryUnescape(addr)
+	if err != nil {
+		return "", errors.New("INVALID_EMAIL")
+	}
 
 	if !emailutils.IsEmail(addr) {
 		return "", errors.New("INVALID_EMAIL")
@@ -44,6 +53,10 @@ func ParamEmailWithoutExt(ctx *fiber.Ctx, name ...string) (addr string, err erro
 	}
 
 	addr = ctx.Params(param)
+	addr, err = url.QueryUnescape(addr)
+	if err != nil {
+		return "", errors.New("INVALID_EMAIL")
+	}
 
 	if !emailutils.IsEmail(addr) {
 		return "", errors.New("INVALID_EMAIL")
