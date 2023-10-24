@@ -9,17 +9,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/iredmail/goutils/emailutils"
+	"github.com/iredmail/goutils/respcode"
 )
 
 func ParamDomain(ctx *fiber.Ctx) (domain string, err error) {
 	domain = ctx.Params("domain")
 	domain, err = url.QueryUnescape(domain)
 	if err != nil {
-		return "", errors.New("INVALID_EMAIL_DOMAIN")
+		return "", respcode.ErrInvalidDomain
 	}
 
 	if !emailutils.IsDomain(domain) {
-		return "", errors.New("INVALID_EMAIL_DOMAIN")
+		return "", respcode.ErrInvalidDomain
 	}
 
 	return strings.ToLower(domain), nil
@@ -35,11 +36,11 @@ func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 	addr = ctx.Params(param)
 	addr, err = url.QueryUnescape(addr)
 	if err != nil {
-		return "", errors.New("INVALID_EMAIL")
+		return "", respcode.ErrInvalidEmailAddress
 	}
 
 	if !emailutils.IsEmail(addr) {
-		return "", errors.New("INVALID_EMAIL")
+		return "", respcode.ErrInvalidEmailAddress
 	}
 
 	return emailutils.ToLowerWithExt(addr), nil
