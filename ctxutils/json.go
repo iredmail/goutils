@@ -79,3 +79,10 @@ func JSONSuccessMap(ctx *fiber.Ctx, m fiber.Map) error {
 
 	return ctx.JSON(m)
 }
+
+func JSONSuccessData(ctx *fiber.Ctx, data any) error {
+	return ctx.JSON(fiber.Map{
+		"_success": true,
+		"data":     data,
+	})
+}
