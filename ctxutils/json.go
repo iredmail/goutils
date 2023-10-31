@@ -79,3 +79,26 @@ func JSONSuccessMap(ctx *fiber.Ctx, m fiber.Map) error {
 
 	return ctx.JSON(m)
 }
+
+func JSONSuccessData(ctx *fiber.Ctx, data any) error {
+	return ctx.JSON(fiber.Map{
+		"_success": true,
+		"data":     data,
+	})
+}
+
+func JSONIsDuplicate(ctx *fiber.Ctx) error {
+	return ctx.JSON(fiber.Map{
+		"_success":       true,
+		"_is_duplicated": true,
+		"_msg":           "Duplicate",
+	})
+}
+
+func JSONIsNotDuplicate(ctx *fiber.Ctx) error {
+	return ctx.JSON(fiber.Map{
+		"_success":       true,
+		"_is_duplicated": false,
+		"_msg":           "",
+	})
+}
