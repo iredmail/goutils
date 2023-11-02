@@ -1,6 +1,7 @@
 package sqlutils
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
@@ -25,8 +26,8 @@ type TableStat struct {
 	Size int64  `db:"table_size"` // Table size in bytes
 }
 
-// GetDBStat 返回指定数据库的相关信息。
-func GetDBStat(pth string, db *goqu.Database) (stat DBStat) {
+// GetSqliteDBStat 返回指定 sqlite 数据库的相关信息。
+func GetSqliteDBStat(pth string, db *sql.DB) (stat DBStat) {
 	var pageSize, pageCount, freelistCount int64
 	var journalMode, autoVacuum, synchronous string
 
