@@ -21,11 +21,6 @@ type DBStat struct {
 	FreelistCount int64  `json:"freelist_count"` // number of unused pages in the database file
 }
 
-type TableStat struct {
-	Name string `db:"name"`       // Table name.
-	Size int64  `db:"table_size"` // Table size in bytes
-}
-
 // GetSqliteDBStat 返回指定 sqlite 数据库的相关信息。
 func GetSqliteDBStat(pth string, db *sql.DB) (stat DBStat) {
 	var pageSize, pageCount, freelistCount int64
@@ -71,6 +66,11 @@ func GetSqliteDBStat(pth string, db *sql.DB) (stat DBStat) {
 		Synchronous:   strings.ToUpper(synchronous),
 		FreelistCount: freelistCount,
 	}
+}
+
+type TableStat struct {
+	Name string `db:"name"`       // Table name.
+	Size int64  `db:"table_size"` // Table size in bytes
 }
 
 // GetTableStats 返回数据库中所有表的大小，包含索引。
