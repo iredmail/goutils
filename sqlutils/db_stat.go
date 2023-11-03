@@ -8,17 +8,17 @@ import (
 )
 
 type DBStat struct {
-	Path string // 数据库名称或文件路径
+	Path string `json:"path"` // 数据库名称或文件路径
 
-	Size int64 // PageSize * PageCount
+	Size int64 `json:"size"` // PageSize * PageCount
 
 	// Pragma
-	PageSize      int64
-	PageCount     int64
-	JournalMode   string // 日志模式
-	AutoVacuum    string
-	Synchronous   string
-	FreelistCount int64 // number of unused pages in the database file
+	PageSize      int64  `json:"page_size"`
+	PageCount     int64  `json:"page_count"`
+	JournalMode   string `json:"journal_mode"` // 日志模式
+	AutoVacuum    string `json:"auto_vacuum"`
+	Synchronous   string `json:"synchronous"`
+	FreelistCount int64  `json:"freelist_count"` // number of unused pages in the database file
 }
 
 type TableStat struct {
