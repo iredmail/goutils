@@ -27,13 +27,16 @@ var (
 		// synchronous=NORMAL setting is a good choice for most applications running in WAL mode.
 		// {"schema.synchronous", "full"},
 	}
+
+	DefaultMaxIdleConnections int = 20
+	DefaultConnMaxLifetime        = 10 * time.Minute
 )
 
 // InitSQLiteDB 初始化 pth 参数指定的 SQLite 数据库。
 //
 //   - pth 指定数据库文件的路径。
 //   - pragma 如果是 nil，则使用默认的 pragmas。
-//   - maxIdleConns 指定打开数据库时的最大空闲连接数。如果为 0 表示使用默认值（50）。
+//   - maxIdleConns 指定打开数据库时的最大空闲连接数。如果为 0 表示使用默认值（20）。
 //   - connMaxLifetime 指定连接的最大存活时间。如果为 0 表示使用默认值（10 分钟）。
 func InitSQLiteDB(pth string, pragmas [][2]string, maxIdleConns int, connMaxLifetime time.Duration) (sqliteDB *sql.DB, err error) {
 	if len(pragmas) == 0 {
@@ -51,12 +54,12 @@ func InitSQLiteDB(pth string, pragmas [][2]string, maxIdleConns int, connMaxLife
 	sqliteDB.SetMaxOpenConns(1)
 
 	if maxIdleConns == 0 {
-		maxIdleConns = 50
+		maxIdleConns = DefaultMaxIdleConnections
 	}
 	sqliteDB.SetMaxIdleConns(maxIdleConns)
 
 	if connMaxLifetime == 0 {
-		connMaxLifetime = 10 * time.Minute
+		connMaxLifetime = DefaultConnMaxLifetime
 	}
 	sqliteDB.SetConnMaxLifetime(connMaxLifetime)
 
