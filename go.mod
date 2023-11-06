@@ -3,7 +3,6 @@ module github.com/iredmail/goutils
 go 1.21.3
 
 require (
-	github.com/Luzifer/go-openssl/v4 v4.2.1
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/doug-martin/goqu/v9 v9.18.0
@@ -16,7 +15,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	github.com/vorlif/spreak v0.4.0
 	golang.org/x/crypto v0.14.0
-	golang.org/x/text v0.13.0
+	golang.org/x/text v0.14.0
 	modernc.org/sqlite v1.27.0
 	rsc.io/qr v0.2.0
 )
