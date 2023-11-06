@@ -16,4 +16,11 @@ func TestEncryption(t *testing.T) {
 	decryptedBytes, err := Decrypt(pass, encryptedBytes)
 	assert.Nil(t, err)
 	assert.Equal(t, decryptedBytes, plainBytes)
+
+	encryptedBytes, err = EncryptBinaryBytes(pass, plainBytes)
+	assert.Nil(t, err)
+
+	decryptedBytes, err = DecryptBinaryBytes(pass, encryptedBytes)
+	assert.Nil(t, err)
+	assert.Equal(t, decryptedBytes, plainBytes)
 }
