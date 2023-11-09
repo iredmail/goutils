@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
-        go: ['>=1.21.3']
+        go: ['>=1.21.4']
 
     steps:
         #- uses: actions/cache@v3
