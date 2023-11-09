@@ -22,7 +22,7 @@ type Config struct {
 	Port string
 
 	StartTLS bool
-	// TODO skip ssl cert verification
+	StartSSL bool
 
 	// Sender
 	From mail.Address
@@ -48,6 +48,16 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 	conn, err := net.DialTimeout("tcp", net.JoinHostPort(c.Host, c.Port), c.timeout)
 	if err != nil {
 		return err
+	}
+
+	// 开启 ssl 安全连接
+	if c.StartSSL {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         c.Host,
+		}
+
+		conn = tls.Server(conn, tlsConfig)
 	}
 
 	client, err := smtp.NewClient(conn, c.Host)
