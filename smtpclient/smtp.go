@@ -30,6 +30,8 @@ type Config struct {
 	// smtp authentication
 	SMTPUser     string
 	SMTPPassword string
+
+	timeout time.Duration
 }
 
 func SendmailWithComposer(c Config, composer *Composer) (err error) {
@@ -39,7 +41,16 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 		return fmt.Errorf("failed in building email message from composer: %v", err)
 	}
 
-	client, err := smtp.Dial(net.JoinHostPort(c.Host, c.Port))
+	if c.timeout == 0 {
+		c.timeout = time.Second * 15
+	}
+
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(c.Host, c.Port), c.timeout)
+	if err != nil {
+		return err
+	}
+
+	client, err := smtp.NewClient(conn, c.Host)
 	if err != nil {
 		return err
 	}
