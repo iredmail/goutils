@@ -9,10 +9,9 @@ import (
 
 type DBStat struct {
 	Path string `json:"path"` // 数据库名称或文件路径
+	Size int64  `json:"size"` // PageSize * PageCount
 
-	Size int64 `json:"size"` // PageSize * PageCount
-
-	// Pragma
+	// 通过 Pragma 指令获取的相关信息
 	PageSize      int64  `json:"page_size"`
 	PageCount     int64  `json:"page_count"`
 	JournalMode   string `json:"journal_mode"` // 日志模式
