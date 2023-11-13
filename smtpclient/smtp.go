@@ -21,8 +21,9 @@ type Config struct {
 	Host string
 	Port string
 
-	StartTLS bool
-	StartSSL bool
+	StartTLS             bool
+	UseSSL               bool
+	VerifySSLCertificate bool
 
 	// Sender
 	From mail.Address
@@ -51,9 +52,9 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 	}
 
 	// 开启 ssl 安全连接
-	if c.StartSSL {
+	if c.UseSSL {
 		tlsConfig := &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: !c.VerifySSLCertificate,
 			ServerName:         c.Host,
 		}
 
@@ -67,7 +68,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 
 	if c.StartTLS {
 		tc := &tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: !c.VerifySSLCertificate,
 			ServerName:         c.Host,
 		}
 
