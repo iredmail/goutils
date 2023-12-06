@@ -13,7 +13,7 @@ require (
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/shirou/gopsutil/v3 v3.23.11
 	github.com/stretchr/testify v1.8.4
-	github.com/vorlif/spreak v0.4.0
+	github.com/vorlif/spreak v0.5.0
 	golang.org/x/crypto v0.16.0
 	golang.org/x/text v0.14.0
 	modernc.org/sqlite v1.27.0
