@@ -9,7 +9,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.51.0
 	github.com/google/uuid v1.5.0
 	github.com/gookit/slog v0.5.4
-	github.com/jhillyerd/enmime v1.0.1
+	github.com/jhillyerd/enmime v1.1.0
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/shirou/gopsutil/v3 v3.23.11
 	github.com/stretchr/testify v1.8.4
