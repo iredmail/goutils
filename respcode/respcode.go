@@ -4,6 +4,7 @@ import "errors"
 
 const (
 	InternalServerError   = "INTERNAL_SERVER_ERROR"
+	MissingCSRFToken      = "MISSING_CSRF_TOKEN"
 	PermissionDenied      = "PERMISSION_DENIED"
 	LoginRequired         = "LOGIN_REQUIRED"
 	LoginOrAPIKeyRequired = "LOGIN_OR_API_KEY_REQUIRED"
@@ -14,8 +15,10 @@ const (
 	LoggedOut             = "LOGGED_OUT"
 	Added                 = "ADDED"
 	Updated               = "UPDATED"
-	SignedUp              = "SIGNED_UP"
 	Deleted               = "DELETED"
+	Enabled               = "ENABLED"
+	Disabled              = "DISABLED"
+	SignedUp              = "SIGNED_UP"
 	PasswordMismatch      = "PASSWORD_MISMATCH"
 	PasswordTooShort      = "PASSWORD_TOO_SHORT"
 	InvalidBackend        = "INVALID_BACKEND"
@@ -35,6 +38,7 @@ const (
 	AccountExists         = "ACCOUNT_EXISTS"
 	NotAllowed            = "NOT_ALLOWED"
 	ExceededDomainMLLimit = "EXCEEDED_DOMAIN_ML_LIMIT"
+	EmailAlreadyExists    = "EMAIL_ALREADY_EXISTS"
 )
 
 var (
@@ -69,4 +73,6 @@ var (
 	ErrExceededDomainAccountLimit = errors.New("EXCEEDED_DOMAIN_ACCOUNT_LIMIT")
 	ErrExceededDomainQuotaSize    = errors.New("EXCEEDED_DOMAIN_QUOTA_SIZE")
 	ErrUnsupportedPasswordScheme  = errors.New("UNSUPPORTED_PASSWORD_SCHEME")
+	ErrDisallowToCreateUser       = errors.New("DISALLOW_TO_CREATE_USER")
+	ErrEmailAlreadyExists         = errors.New(EmailAlreadyExists)
 )
