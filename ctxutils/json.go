@@ -13,8 +13,11 @@ func JSONError(ctx *fiber.Ctx, err error) error {
 	})
 }
 
-func JSONErrorMap(ctx *fiber.Ctx, m fiber.Map) error {
+func JSONErrorMap(ctx *fiber.Ctx, m fiber.Map, msg ...string) error {
 	m["_success"] = false
+	if len(msg) > 0 {
+		m["_msg"] = msg
+	}
 
 	return ctx.JSON(m)
 }
@@ -27,7 +30,7 @@ func JSONErrorInvalidParamValue(ctx *fiber.Ctx, param string, err error) error {
 	})
 }
 
-func JSONError500(ctx *fiber.Ctx) error {
+func JSONInternalServerError(ctx *fiber.Ctx) error {
 	return ctx.JSON(fiber.Map{
 		"_success": false,
 		"_msg":     "INTERNAL_SERVER_ERROR",
@@ -74,8 +77,11 @@ func JSONSuccessMsg(ctx *fiber.Ctx, msg string) error {
 //		"_msg": "",
 //		...
 //	}
-func JSONSuccessMap(ctx *fiber.Ctx, m fiber.Map) error {
+func JSONSuccessMap(ctx *fiber.Ctx, m fiber.Map, msg ...string) error {
 	m["_success"] = true
+	if len(msg) > 0 {
+		m["_msg"] = msg
+	}
 
 	return ctx.JSON(m)
 }
