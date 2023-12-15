@@ -16,7 +16,7 @@ require (
 	github.com/vorlif/spreak v0.6.0
 	golang.org/x/crypto v0.16.0
 	golang.org/x/text v0.14.0
-	modernc.org/sqlite v1.27.0
+	modernc.org/sqlite v1.28.0
 	rsc.io/qr v0.2.0
 )
 
