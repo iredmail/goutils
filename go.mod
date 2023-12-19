@@ -14,7 +14,7 @@ require (
 	github.com/shirou/gopsutil/v3 v3.23.11
 	github.com/stretchr/testify v1.8.4
 	github.com/vorlif/spreak v0.6.0
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/text v0.14.0
 	modernc.org/sqlite v1.28.0
 	rsc.io/qr v0.2.0
