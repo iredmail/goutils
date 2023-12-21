@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 	"unicode"
+
+	"github.com/iredmail/goutils"
 )
 
 var (
@@ -31,6 +33,10 @@ func IsFQDN(s string) bool {
 // IsDomain 校验给定字符串是否为格式正确的邮件域名。
 func IsDomain(s string) bool {
 	if len(s) < 4 || len(s) > 254 {
+		return false
+	}
+
+	if goutils.IsIPv4(s) {
 		return false
 	}
 
