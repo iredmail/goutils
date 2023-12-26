@@ -3,44 +3,41 @@ package respcode
 import "errors"
 
 const (
-	InternalServerError      = "INTERNAL_SERVER_ERROR"
-	MissingCSRFToken         = "MISSING_CSRF_TOKEN"
-	PermissionDenied         = "PERMISSION_DENIED"
-	LoginRequired            = "LOGIN_REQUIRED"
-	LoginOrAPIKeyRequired    = "LOGIN_OR_API_KEY_REQUIRED"
-	InvalidCredentials       = "INVALID_CREDENTIALS"
-	InvalidLicenseKey        = "INVALID_LICENSE_KEY"
-	InvalidProduct           = "INVALID_PRODUCT"
-	InvalidDomain            = "INVALID_DOMAIN"
-	LoggedOut                = "LOGGED_OUT"
-	Added                    = "ADDED"
-	Updated                  = "UPDATED"
-	Deleted                  = "DELETED"
-	Enabled                  = "ENABLED"
-	Disabled                 = "DISABLED"
-	SignedUp                 = "SIGNED_UP"
-	PasswordMismatch         = "PASSWORD_MISMATCH"
-	PasswordTooShort         = "PASSWORD_TOO_SHORT"
-	InvalidPlatform          = "INVALID_PLATFORM"
-	InvalidBackend           = "INVALID_BACKEND"
-	InvalidComponent         = "INVALID_COMPONENT"
-	InvalidParam             = "INVALID_PARAM"
-	InvalidValue             = "INVALID_VALUE"
-	InvalidUpgrade           = "INVALID_UPGRADE"
-	InvalidUpdate            = "INVALID_UPDATE"
-	InvalidFormData          = "INVALID_FORM_DATA"
-	InvalidOtpCode           = "INVALID_OTP_CODE"
-	InvalidDeploymentID      = "INVALID_DEPLOYMENT_ID"
-	InvalidEmailAddress      = "INVALID_EMAIL_ADDRESS"
-	ImportedSettings         = "IMPORTED_SETTINGS"
-	ApplyingSavedChanges     = "APPLYING_SAVED_CHANGES"
-	ApplyingUpgrade          = "APPLYING_UPGRADE"
-	NotDeploying             = "NOT_DEPLOYING"
-	AccountExists            = "ACCOUNT_EXISTS"
-	NotAllowed               = "NOT_ALLOWED"
-	ExceededDomainMLLimit    = "EXCEEDED_DOMAIN_ML_LIMIT"
-	ExceededDomainAliasLimit = "EXCEEDED_DOMAIN_ALIAS_LIMIT"
-	EmailAlreadyExists       = "EMAIL_ALREADY_EXISTS"
+	InternalServerError  = "INTERNAL_SERVER_ERROR"
+	MissingCSRFToken     = "MISSING_CSRF_TOKEN"
+	PermissionDenied     = "PERMISSION_DENIED"
+	LoginRequired        = "LOGIN_REQUIRED"
+	InvalidCredentials   = "INVALID_CREDENTIALS"
+	InvalidLicenseKey    = "INVALID_LICENSE_KEY"
+	InvalidProduct       = "INVALID_PRODUCT"
+	InvalidDomain        = "INVALID_DOMAIN"
+	LoggedOut            = "LOGGED_OUT"
+	Added                = "ADDED"
+	Updated              = "UPDATED"
+	Deleted              = "DELETED"
+	Enabled              = "ENABLED"
+	Disabled             = "DISABLED"
+	SignedUp             = "SIGNED_UP"
+	PasswordMismatch     = "PASSWORD_MISMATCH"
+	PasswordTooShort     = "PASSWORD_TOO_SHORT"
+	InvalidPlatform      = "INVALID_PLATFORM"
+	InvalidBackend       = "INVALID_BACKEND"
+	InvalidComponent     = "INVALID_COMPONENT"
+	InvalidParam         = "INVALID_PARAM"
+	InvalidValue         = "INVALID_VALUE"
+	InvalidUpgrade       = "INVALID_UPGRADE"
+	InvalidUpdate        = "INVALID_UPDATE"
+	InvalidFormData      = "INVALID_FORM_DATA"
+	InvalidOtpCode       = "INVALID_OTP_CODE"
+	InvalidDeploymentID  = "INVALID_DEPLOYMENT_ID"
+	InvalidEmailAddress  = "INVALID_EMAIL_ADDRESS"
+	ImportedSettings     = "IMPORTED_SETTINGS"
+	ApplyingSavedChanges = "APPLYING_SAVED_CHANGES"
+	ApplyingUpgrade      = "APPLYING_UPGRADE"
+	NotDeploying         = "NOT_DEPLOYING"
+	AccountExists        = "ACCOUNT_EXISTS"
+	NotAllowed           = "NOT_ALLOWED"
+	EmailAlreadyExists   = "EMAIL_ALREADY_EXISTS"
 )
 
 var (
@@ -72,12 +69,14 @@ var (
 	ErrAccountExists               = errors.New(AccountExists)
 	ErrNotAllowed                  = errors.New(NotAllowed)
 	ErrInvalidPasswordScheme       = errors.New("INVALID_PASSWORD_SCHEME")
+	ErrExceededDomainLimit         = errors.New("EXCEEDED_DOMAIN_LIMIT")
 	ErrExceededDomainMaxQuotaLimit = errors.New("EXCEEDED_DOMAIN_MAX_QUOTA_LIMIT")
 	ErrExceededDomainAccountLimit  = errors.New("EXCEEDED_DOMAIN_ACCOUNT_LIMIT")
-	ErrExceededDomainAliasLimit    = errors.New(ExceededDomainAliasLimit)
-	ErrExceededDomainMLLimit       = errors.New(ExceededDomainMLLimit)
+	ErrExceededDomainAliasLimit    = errors.New("EXCEEDED_DOMAIN_ALIAS_LIMIT")
+	ErrExceededDomainMLLimit       = errors.New("EXCEEDED_DOMAIN_ML_LIMIT")
 	ErrExceededDomainQuotaSize     = errors.New("EXCEEDED_DOMAIN_QUOTA_SIZE")
 	ErrUnsupportedPasswordScheme   = errors.New("UNSUPPORTED_PASSWORD_SCHEME")
 	ErrDisallowToCreateUser        = errors.New("DISALLOW_TO_CREATE_USER")
 	ErrEmailAlreadyExists          = errors.New(EmailAlreadyExists)
+	ErrLoginOrAPIKeyRequired       = errors.New("LOGIN_OR_API_KEY_REQUIRED")
 )
