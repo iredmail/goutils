@@ -149,7 +149,7 @@ func VerifyPassword(hashedPassword, plainPassword string) (matched bool, err err
 	case SchemeSHA512:
 		matched = VerifySHA512Password(hashedPassword, plainPassword)
 	case SchemeSSHA512:
-		matched = VerifySSHAPassword(hashedPassword, plainPassword)
+		matched = VerifySSHA512Password(hashedPassword, plainPassword)
 	case SchemeSHA512Crypt:
 		// TODO
 	case SchemeBcrypt:
