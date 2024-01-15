@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/mail"
 	"net/smtp"
 	"runtime/debug"
 	"strings"
@@ -22,9 +21,6 @@ type Config struct {
 	StartTLS             bool
 	UseSSL               bool
 	VerifySSLCertificate bool
-
-	// Sender
-	From mail.Address
 
 	// smtp authentication
 	SMTPUser     string
