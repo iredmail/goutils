@@ -34,7 +34,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 	// - Domain: from@domain
 	// - IP: from@[IP]
 	if !strings.Contains(composer.from.Address, "@") {
-		if goutils.IsIPv4(c.Host) {
+		if goutils.IsIP(c.Host) {
 			composer.from.Address = fmt.Sprintf("%s@[%s]", composer.from.Address, c.Host)
 		} else {
 			composer.from.Address = fmt.Sprintf("%s@%s", composer.from.Address, c.Host)
