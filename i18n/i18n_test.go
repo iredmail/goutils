@@ -9,11 +9,11 @@ import (
 	"golang.org/x/text/language"
 )
 
-//go:embed locales/*.json
+//go:embed test_locales/*.json
 var fsEmbedLocales embed.FS
 
 func TestTranslate(t *testing.T) {
-	fsLocales, err := fs.Sub(fsEmbedLocales, "locales")
+	fsLocales, err := fs.Sub(fsEmbedLocales, "test_locales")
 	assert.Nil(t, err)
 
 	err = Init(fsLocales, language.English, language.English, language.SimplifiedChinese)
