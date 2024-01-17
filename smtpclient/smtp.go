@@ -30,10 +30,9 @@ type Config struct {
 }
 
 func SendmailWithComposer(c Config, composer *Composer) (err error) {
-	// 如果 from 不是一个邮件地址，那么需要将 from 和 host 进行组装
-	// - Domain: from@domain
-	// - IP: from@[IP]
-	if !strings.Contains(composer.from.Address, "@") {
+	// 如果 from 不是完整邮件地址，则将 smtp 主机名作为邮件地址的域名部分追加到 from 拼凑成完整邮件地址。
+	// 例如：user@domain.com、 user@[IP]
+	if len(composer.from.Address) > 0 && !strings.Contains(composer.from.Address, "@") {
 		if goutils.IsIP(c.Host) {
 			composer.from.Address = fmt.Sprintf("%s@[%s]", composer.from.Address, c.Host)
 		} else {
