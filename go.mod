@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.21.5
+go 1.21.6
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
