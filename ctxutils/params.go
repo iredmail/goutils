@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
+	"github.com/iredmail/goutils"
 	"github.com/iredmail/goutils/emailutils"
 	"github.com/iredmail/goutils/respcode"
 )
@@ -90,8 +91,9 @@ func ParamInt64(ctx *fiber.Ctx, key string) (i int64) {
 func ParamUUIDLicenseKey(ctx *fiber.Ctx) (key string, err error) {
 	key = strings.ToUpper(ctx.Params("license_key"))
 
-	if len(key) == 0 {
-		return "", respcode.ErrInvalidLicenseKey
+	if !goutils.IsUUIDLicenseKey(key) {
+		err = respcode.ErrInvalidLicenseKey
+		return
 	}
 
 	if err = uuid.Validate(key); err != nil {
