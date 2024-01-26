@@ -11,6 +11,7 @@ func TestEmail(t *testing.T) {
 	assert.False(t, IsEmail("abc"))
 	assert.False(t, IsEmail("abc.com"))
 	assert.False(t, IsEmail("user.123@abc@abc.com"))
+	assert.False(t, IsEmail("user@domain"))
 	assert.True(t, IsEmail("user@abc.com"))
 	assert.True(t, IsEmail("user+abc@abc.com"))
 	assert.True(t, IsEmail("user.abc@abc.com"))
