@@ -93,6 +93,7 @@ func ParamUUIDLicenseKey(ctx *fiber.Ctx) (key string, err error) {
 
 	if !goutils.IsUUIDLicenseKey(key) {
 		err = respcode.ErrInvalidLicenseKey
+	
 		return
 	}
 
