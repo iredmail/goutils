@@ -7,7 +7,7 @@ require (
 	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/gofiber/fiber/v2 v2.52.0
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/gookit/slog v0.5.4
 	github.com/jhillyerd/enmime v1.1.0
 	github.com/k0kubun/pp/v3 v3.2.0
