@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 
 	"github.com/iredmail/goutils/emailutils"
 	"github.com/iredmail/goutils/respcode"
@@ -81,6 +82,21 @@ func ParamInt64(ctx *fiber.Ctx, key string) (i int64) {
 	s := ctx.Params(key, "0")
 
 	i, _ = strconv.ParseInt(s, 10, 64)
+
+	return
+}
+
+// ParamUUIDLicenseKey 用于查询 URL parameter（`/xxx/:license_key`）里 `license_key` 参数的值（必须是 UUID 格式）。
+func ParamUUIDLicenseKey(ctx *fiber.Ctx) (key string, err error) {
+	key = strings.ToUpper(ctx.Params("license_key"))
+
+	if len(key) == 0 {
+		return "", respcode.ErrInvalidLicenseKey
+	}
+
+	if err = uuid.Validate(key); err != nil {
+		return "", respcode.ErrInvalidLicenseKey
+	}
 
 	return
 }

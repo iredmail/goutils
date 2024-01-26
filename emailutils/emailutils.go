@@ -23,6 +23,20 @@ var (
 func IsEmail(s string) bool {
 	_, err := mail.ParseAddress(s)
 
+	if err != nil {
+		return false
+	}
+
+	// net/mail 认为 `user@domain` 是合法的邮件地址。
+	_, domain, found := strings.Cut(s, "@")
+	if !found {
+		return false
+	}
+
+	if !IsDomain(domain) {
+		return false
+	}
+
 	return err == nil
 }
 
