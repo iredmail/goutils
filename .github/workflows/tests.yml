@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
-        go: ['>=1.21.6']
+        go: ['>=1.22.0']
 
     steps:
         #- uses: actions/cache@v3
@@ -29,14 +29,14 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           stable: false
           go-version: ${{ matrix.go }}
 
       - run: make testv
 
-      - uses: golangci/golangci-lint-action@v3
+      - uses: golangci/golangci-lint-action@v4
         with:
           #version: v2.5.2
           version: latest
