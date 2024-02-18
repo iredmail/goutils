@@ -18,6 +18,7 @@ import (
 
 type OSInfo struct {
 	Hostname string `json:"hostname"`
+	HostID   string `json:"host_id"`
 
 	System       string   `json:"system"`       // linux, darwin, freebsd, openbsd, windows
 	Architecture string   `json:"architecture"` // 386, amd64, arm, arm64
@@ -106,6 +107,7 @@ func GetOSInfo() (oi OSInfo, err error) {
 	// Hostname
 	//
 	oi.Hostname = hi.Hostname
+	oi.HostID = hi.HostID
 	oi.KernelVersion = hi.KernelVersion
 
 	//
