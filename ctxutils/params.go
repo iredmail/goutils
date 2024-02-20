@@ -89,7 +89,7 @@ func ParamInt64(ctx *fiber.Ctx, key string) (i int64) {
 
 // ParamUUIDLicenseKey 用于查询 URL parameter（`/xxx/:license_key`）里 `license_key` 参数的值（必须是 UUID 格式）。
 func ParamUUIDLicenseKey(ctx *fiber.Ctx) (key string, err error) {
-	key = strings.ToUpper(ctx.Params("license_key"))
+	key = strings.ToUpper(strings.TrimSpace(ctx.Params("license_key")))
 
 	if !goutils.IsUUIDLicenseKey(key) {
 		err = respcode.ErrInvalidLicenseKey
