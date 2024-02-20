@@ -78,6 +78,7 @@ var (
 	ErrInvalidPasswordScheme       = errors.New("INVALID_PASSWORD_SCHEME")
 	ErrExceededDomainLimit         = errors.New("EXCEEDED_DOMAIN_LIMIT")
 	ErrExceededDomainMaxQuotaLimit = errors.New("EXCEEDED_DOMAIN_MAX_QUOTA_LIMIT")
+	ErrExceededLicenseAccountLimit = errors.New("EXCEEDED_LICENSE_ACCOUNT_LIMIT")
 	ErrExceededDomainAccountLimit  = errors.New("EXCEEDED_DOMAIN_ACCOUNT_LIMIT")
 	ErrExceededDomainAliasLimit    = errors.New("EXCEEDED_DOMAIN_ALIAS_LIMIT")
 	ErrExceededDomainMLLimit       = errors.New("EXCEEDED_DOMAIN_ML_LIMIT")
