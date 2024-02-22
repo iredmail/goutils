@@ -87,4 +87,5 @@ var (
 	ErrDisallowToCreateUser        = errors.New("DISALLOW_TO_CREATE_USER")
 	ErrEmailAlreadyExists          = errors.New(EmailAlreadyExists)
 	ErrLoginOrAPIKeyRequired       = errors.New("LOGIN_OR_API_KEY_REQUIRED")
+	ErrValidLicenseRequired        = errors.New("VALID_LICENSE_REQUIRED")
 )
