@@ -541,3 +541,11 @@ var (
 		{"UTC", "GMT+00:00"},
 	}
 )
+
+func GetTimezones() []timezoneCode {
+	return Timezones
+}
+
+func GetLanguages() []languageCode {
+	return Languages
+}
