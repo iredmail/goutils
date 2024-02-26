@@ -268,3 +268,32 @@ func ToLowerWithoutExt(s string) string {
 
 	return StripExtension(s)
 }
+
+func MaskEmails(emails ...string) (maskEmails []string) {
+	if len(emails) == 0 {
+		return
+	}
+
+	for _, email := range emails {
+		if !IsEmail(email) {
+			continue
+		}
+
+		before, after, _ := strings.Cut(email, "@")
+		if len(before) > 1 {
+			before = before[:len(before)-1] + "*"
+		}
+
+		if len(after) > 3 {
+			after = "***" + after[3:]
+		} else {
+			after = "*" + after[1:]
+		}
+
+		maskEmails = append(maskEmails, before+"@"+after)
+	}
+
+	slices.Sort(maskEmails)
+
+	return
+}
