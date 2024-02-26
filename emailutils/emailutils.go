@@ -274,6 +274,7 @@ func MaskEmails(emails ...string) (maskEmails []string) {
 		return
 	}
 
+	slices.Sort(emails)
 	for _, email := range emails {
 		if !IsEmail(email) {
 			continue
@@ -292,8 +293,6 @@ func MaskEmails(emails ...string) (maskEmails []string) {
 
 		maskEmails = append(maskEmails, before+"@"+after)
 	}
-
-	slices.Sort(maskEmails)
 
 	return
 }
