@@ -269,7 +269,7 @@ func ToLowerWithoutExt(s string) string {
 	return StripExtension(s)
 }
 
-func MaskEmails(emails ...string) (maskEmails []string) {
+func ObfuscateAddresses(emails ...string) (obfuscated []string) {
 	if len(emails) == 0 {
 		return
 	}
@@ -280,18 +280,30 @@ func MaskEmails(emails ...string) (maskEmails []string) {
 			continue
 		}
 
-		before, after, _ := strings.Cut(email, "@")
-		if len(before) > 1 {
-			before = before[:len(before)-1] + "*"
-		}
+		email = ToLowerWithExt(email)
 
-		if len(after) > 3 {
-			after = "***" + after[3:]
+		username, domain, _ := strings.Cut(email, "@")
+		if len(username) == 1 {
+			// u@ -> u*@
+			username = username[:1] + "*"
 		} else {
-			after = "*" + after[1:]
+			// user@ -> us*@
+			username = username[:2] + "*"
 		}
 
-		maskEmails = append(maskEmails, before+"@"+after)
+		if len(domain) == 3 || len(domain) == 4 || len(domain) == 5 {
+			// x.y -> *.y
+			// x.io -> *.io
+			domain = "*" + domain[1:]
+		} else if len(domain) == 6 {
+			// abc.io -> **c.io
+			domain = "**" + domain[2:]
+		} else {
+			// abcdefg.io -> ***defg.io
+			domain = "***" + domain[3:]
+		}
+
+		obfuscated = append(obfuscated, username+"@"+domain)
 	}
 
 	return
