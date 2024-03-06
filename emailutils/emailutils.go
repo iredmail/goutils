@@ -14,9 +14,10 @@ import (
 )
 
 var (
-	regexDomain    = regexp.MustCompile(`^[a-zA-Z0-9\.\-]+\.[a-zA-Z0-9]{2,25}$`)
-	regexTLDDomain = regexp.MustCompile(`[a-z0-9\-]{2,25}`)
-	regexFQDN      = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
+	regexDomain               = regexp.MustCompile(`^[a-zA-Z0-9\.\-]+\.[a-zA-Z0-9]{2,25}$`)
+	regexTLDDomain            = regexp.MustCompile(`[a-z0-9\-]{2,25}`)
+	regexValidDomainFirstChar = regexp.MustCompile(`^[0-9a-zA-Z]{1,1}$`)
+	regexFQDN                 = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
 )
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
@@ -63,6 +64,10 @@ func IsTLDDomain(d string) bool {
 	}
 
 	return regexTLDDomain.MatchString(d)
+}
+
+func IsValidDomainFirstChar(char string) bool {
+	return regexValidDomainFirstChar.MatchString(char)
 }
 
 func IsWildcardAddr(s string) bool {

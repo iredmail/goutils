@@ -31,6 +31,12 @@ func TestEmail(t *testing.T) {
 	assert.False(t, IsDomain("114.114.114.114"))
 	assert.False(t, IsDomain("1234"))
 
+	// IsValidDomainFirstChar
+	assert.True(t, IsValidDomainFirstChar("a"))
+	assert.True(t, IsValidDomainFirstChar("C"))
+	assert.True(t, IsValidDomainFirstChar("1"))
+	assert.False(t, IsValidDomainFirstChar("#"))
+
 	// IsFQDN
 	assert.True(t, IsFQDN("mail.demo.io"))
 	assert.False(t, IsFQDN("demo"))
