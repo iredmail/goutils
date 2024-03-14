@@ -8,7 +8,7 @@ require (
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/gofiber/fiber/v2 v2.52.2
 	github.com/google/uuid v1.6.0
-	github.com/gookit/slog v0.5.5
+	github.com/gookit/slog v0.5.6-0.20240312032352-b683bb666f8e
 	github.com/jhillyerd/enmime v1.2.0
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/shirou/gopsutil/v3 v3.24.2
