@@ -17,6 +17,7 @@ const (
 	Deleted              = "DELETED"
 	Enabled              = "ENABLED"
 	Disabled             = "DISABLED"
+	Verified             = "Verified"
 	SignedUp             = "SIGNED_UP"
 	PasswordMismatch     = "PASSWORD_MISMATCH"
 	PasswordTooShort     = "PASSWORD_TOO_SHORT"
