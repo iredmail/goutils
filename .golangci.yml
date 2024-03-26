@@ -14,9 +14,6 @@ run:
 
   allow-parallel-runners: true
 
-  skip-dirs:
-    - external/
-
   #skip-files:
   #  - ".*\\.my\\.go$"
   #  - lib/bad.go

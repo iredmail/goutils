@@ -239,7 +239,7 @@ func ExtractEmailsFromAddressList(s string) (emails []string, err error) {
 //
 //	CHAR =  <any ASCII character>        ; (  0-177,  0.-127.)
 func IsValidASCIIHeaderName(name string) bool {
-	for i := 0; i < len(name); i++ {
+	for i := range len(name) {
 		if name[i] > unicode.MaxASCII {
 			return false
 		}

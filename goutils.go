@@ -79,7 +79,7 @@ func Intersect[T comparable](s1, s2 []T) []T {
 
 func GetStructJSONTags(v any) (tags []string) {
 	rv := reflect.ValueOf(v)
-	for i := 0; i < rv.NumField(); i++ {
+	for i := range rv.NumField() {
 		field := rv.Field(i)
 		if field.Kind() == reflect.Struct {
 			tags = append(tags, GetStructJSONTags(field.Interface())...)

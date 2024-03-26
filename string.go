@@ -30,7 +30,7 @@ func genWeakerRandomString(length int) string {
 func GenRandomString(length int) string {
 	ret := make([]byte, length)
 	charLen := int64(len(charsForRandomString))
-	for i := 0; i < length; i++ {
+	for i := range length {
 		num, err := rand.Int(rand.Reader, big.NewInt(charLen))
 
 		if err != nil {
@@ -46,7 +46,6 @@ func SplitLines(s string) (lines []string) {
 	newLines := strings.Split(s, "\n")
 
 	for _, i := range newLines {
-		i := i
 		lines = append(lines, strings.TrimSpace(i))
 	}
 
@@ -55,7 +54,7 @@ func SplitLines(s string) (lines []string) {
 
 // StringSliceToLower 将 slice 里的元素都转换为小写。
 func StringSliceToLower(ss []string) {
-	for i := 0; i < len(ss); i++ {
+	for i := range len(ss) {
 		ss[i] = strings.ToLower(ss[i])
 	}
 }
