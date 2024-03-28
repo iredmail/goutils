@@ -132,9 +132,7 @@ func NewFileLogger(pth string, opts ...Option) (logger LoggerWithWriter, err err
 		h.SetFormatter(logFormatter)
 		l.sl.AddHandler(h)
 		l.rotateWriter = h.Writer()
-	}
-
-	if l.rotateInterval != "" {
+	} else if l.rotateInterval != "" {
 		h, err := handlerRotateTime(l, pth)
 		if err != nil {
 			return nil, err
