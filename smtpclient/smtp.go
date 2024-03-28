@@ -15,18 +15,18 @@ import (
 )
 
 type Config struct {
-	Host string
-	Port string
+	Host    string
+	Port    string
+	Timeout time.Duration
 
 	StartTLS             bool
 	UseSSL               bool
 	VerifySSLCertificate bool
 
 	// smtp authentication
+	DisplayName  string
 	SMTPUser     string
 	SMTPPassword string
-
-	timeout time.Duration
 }
 
 func SendmailWithComposer(c Config, composer *Composer) (err error) {
@@ -46,11 +46,11 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 		return fmt.Errorf("failed in building email message from composer: %v", err)
 	}
 
-	if c.timeout == 0 {
-		c.timeout = time.Second * 15
+	if c.Timeout == 0 {
+		c.Timeout = time.Second * 15
 	}
 
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort(c.Host, c.Port), c.timeout)
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(c.Host, c.Port), c.Timeout)
 	if err != nil {
 		return err
 	}
