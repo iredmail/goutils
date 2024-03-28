@@ -80,7 +80,7 @@ func JSONSuccessMsg(ctx *fiber.Ctx, msg string) error {
 func JSONSuccessMap(ctx *fiber.Ctx, m fiber.Map, msg ...string) error {
 	m["_success"] = true
 	if len(msg) > 0 {
-		m["_msg"] = msg
+		m["_msg"] = msg[0]
 	}
 
 	return ctx.JSON(m)
