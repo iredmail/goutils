@@ -97,6 +97,21 @@ func GetStructJSONTags(v any) (tags []string) {
 	return
 }
 
+// GetStructFieldNames 获取结构体中声明的字段名称，当参数不为结构体时返回空
+func GetStructFieldNames(obj any) (names []string) {
+	t := reflect.TypeOf(obj)
+	if t.Kind() == reflect.Struct {
+		for i := range t.NumField() {
+			field := t.Field(i)
+			names = append(names, field.Name)
+		}
+
+		slices.Sort(names)
+	}
+
+	return
+}
+
 func CalculateTotalPages(total, pageSize float64) int {
 	return int(math.Ceil(total / pageSize))
 }
