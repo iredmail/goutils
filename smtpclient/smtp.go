@@ -89,7 +89,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 		}
 	}
 
-	if err = client.Mail(composer.from.String()); err != nil {
+	if err = client.Mail(composer.from.Address); err != nil {
 		return err
 	}
 
