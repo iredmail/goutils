@@ -40,6 +40,19 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 		}
 	}
 
+	// 如果 composer.From 为空并且 SMTPUser 不为空，那么将 SMTPUser 赋值 composer.From 字段
+	if composer.from.Address == "" && c.SMTPUser != "" {
+		if goutils.IsIP(c.Host) {
+			composer.from.Address = fmt.Sprintf("%s@[%s]", c.SMTPUser, c.Host)
+		} else {
+			composer.from.Address = fmt.Sprintf("%s@%s", c.SMTPUser, c.Host)
+		}
+	}
+
+	if composer.from.Address == "" {
+		composer.from.Address = fmt.Sprintf("%s:%s", c.Host, c.Port)
+	}
+
 	// Export mail body before smtp connection, make sure it's valid email message.
 	msg, err := composer.Bytes()
 	if err != nil {
