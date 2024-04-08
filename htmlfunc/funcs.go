@@ -2,7 +2,7 @@ package htmlfunc
 
 func FuncMap() map[string]interface{} {
 	return map[string]interface{}{
-		"map_int_value":   mapIntValue,
-		"map_int64_value": mapInt64Value,
+		"get_map_int64_string": GetMapInt64String,
+		"get_map_string_int64": GetMapStringInt64,
 	}
 }
