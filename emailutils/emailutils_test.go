@@ -1,6 +1,7 @@
 package emailutils
 
 import (
+	"net/mail"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -62,7 +63,7 @@ func TestEmail(t *testing.T) {
 	}
 
 	for _, v := range addrs {
-		addr, err := ParseAddress(v)
+		addr, err := mail.ParseAddress(v)
 		assert.Nil(t, err)
 		assert.Equal(t, expected, addr.String())
 	}
