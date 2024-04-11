@@ -187,24 +187,19 @@ func StripExtension(email string) string {
 // 注意：
 //   - 自 Go 1.22.2 起，邮件地址的域名部分可以用 `[IP]` 格式。
 //   - `mail.ParseAddress()` 处理的是 RFC 5322 address，是经过 base64 encode 后的字符串。
-//
-// DEPRECATED
-func ParseAddress(address string) (*mail.Address, error) {
+func ParseAddress(address string) (addr *mail.Address, err error) {
 	// FIXME 考虑用第三方库代替，否则配置参数里的 archiving_domain 归档邮件域名不能用内部 IP 地址。
-	addr, err := mail.ParseAddress(address)
+	addr, err = mail.ParseAddress(address)
 	if err != nil {
 		// 移除错误信息前面的 `mail: ` 字符
 		return nil, errors.New(strings.TrimPrefix(err.Error(), "mail: "))
 	}
 
 	// 去掉首尾的引号。部分 Microsoft Outlook 客户端会带上引号。
-	newName := strings.Trim(addr.Name, `'"`)
-	newAddr := strings.Trim(addr.Address, `'"`)
+	addr.Name = strings.Trim(addr.Name, `'"`)
+	addr.Address = strings.Trim(addr.Address, `'"`)
 
-	return &mail.Address{
-		Name:    newName,
-		Address: strings.ToLower(newAddr),
-	}, nil
+	return
 }
 
 // ExtractEmailsFromAddressList 从 `To:`, `Cc:` 等含有多个邮件地址的字符串里提取（不包含地址扩展的）完整邮件地址。

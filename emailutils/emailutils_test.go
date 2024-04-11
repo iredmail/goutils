@@ -1,13 +1,12 @@
 package emailutils
 
 import (
-	"net/mail"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEmail(t *testing.T) {
+func TestIsEmail(t *testing.T) {
 	// IsEmail
 	assert.False(t, IsEmail("abc"))
 	assert.False(t, IsEmail("abc.com"))
@@ -20,7 +19,9 @@ func TestEmail(t *testing.T) {
 	assert.True(t, IsEmail("user@sub3.sub2.sub1.com"))
 	assert.True(t, IsEmail("lcastaã±eda@ruska.com.pe"))
 	assert.True(t, IsEmail("lcastaeda@ruska.com.pe"))
+}
 
+func TestIsDomain(t *testing.T) {
 	// IsDomain
 	assert.True(t, IsDomain("abc.com"))
 	assert.True(t, IsDomain("0.io"))
@@ -31,29 +32,41 @@ func TestEmail(t *testing.T) {
 	assert.False(t, IsDomain("abcdefg"))
 	assert.False(t, IsDomain("114.114.114.114"))
 	assert.False(t, IsDomain("1234"))
+}
 
+func TestIsValidDomainFirstChar(t *testing.T) {
 	// IsValidDomainFirstChar
 	assert.True(t, IsValidDomainFirstChar("a"))
 	assert.True(t, IsValidDomainFirstChar("C"))
 	assert.True(t, IsValidDomainFirstChar("1"))
 	assert.False(t, IsValidDomainFirstChar("#"))
+}
 
+func TestIsFQDN(t *testing.T) {
 	// IsFQDN
 	assert.True(t, IsFQDN("mail.demo.io"))
 	assert.False(t, IsFQDN("demo"))
+}
 
+func TestExtractDomain(t *testing.T) {
 	assert.Equal(t, ExtractDomain("user@A.io"), "a.io")
 	assert.Equal(t, ExtractDomain("user@[192.168.1.1]"), "192.168.1.1")
+}
 
+func TestExtractUsername(t *testing.T) {
 	assert.Equal(t, ExtractUsername("user"), "user")          // invalid email
 	assert.Equal(t, ExtractUsername("user@A.io"), "user")     // valid
 	assert.Equal(t, ExtractUsername("user+ext@A.io"), "user") // valid with extension
+}
 
+func TestStripExtension(t *testing.T) {
 	// Username address extension
 	assert.Equal(t, StripExtension("User@A.Io"), "user@a.io")
 	assert.Equal(t, StripExtension("User+ext-123=456@a.iO"), "user@a.io")
 	assert.Equal(t, StripExtension("User-123=456@A.iO"), "user-123=456@a.io")
+}
 
+func TestParseAddress(t *testing.T) {
 	// Parse email addresses.
 	expected := `"Name" <u@d.io>`
 	addrs := []string{
@@ -63,7 +76,7 @@ func TestEmail(t *testing.T) {
 	}
 
 	for _, v := range addrs {
-		addr, err := mail.ParseAddress(v)
+		addr, err := ParseAddress(v)
 		assert.Nil(t, err)
 		assert.Equal(t, expected, addr.String())
 	}
@@ -83,14 +96,18 @@ func TestEmail(t *testing.T) {
 			assert.Equal(t, expected, addr.String())
 		}
 	*/
+}
 
+func TestFilterValidEmails(t *testing.T) {
 	emails := []string{"a", "b.io", "user@c.io", "d@", "e@f.com", "g+ext@h.com"}
 	valid, invalid := FilterValidEmails(emails)
 	assert.Equal(t, []string{"user@c.io", "e@f.com", "g+ext@h.com"}, valid)
 	assert.Equal(t, []string{"a", "b.io", "d@"}, invalid)
+}
 
+func TestFilterValidDomains(t *testing.T) {
 	domains := []string{"a", "b.io", "test.com", "b"}
-	valid, invalid = FilterValidDomains(domains)
+	valid, invalid := FilterValidDomains(domains)
 	assert.Equal(t, []string{"b.io", "test.com"}, valid)
 	assert.Equal(t, []string{"a", "b"}, invalid)
 }
