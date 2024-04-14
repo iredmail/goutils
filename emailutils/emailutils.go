@@ -178,7 +178,7 @@ func StripExtension(email string) string {
 		return email
 	}
 
-	return strings.ToLower(username + "@" + domain)
+	return username + "@" + domain
 }
 
 // ParseAddress 是 `mail.ParseAddress()` 的简单封装：
@@ -202,23 +202,17 @@ func ParseAddress(address string) (addr *mail.Address, err error) {
 	return
 }
 
-// ExtractEmailsFromAddressList 从 `To:`, `Cc:` 等含有多个邮件地址的字符串里提取（不包含地址扩展的）完整邮件地址。
-// - 去除首位的引号
-// - 将邮件地址转换为小写
+// ExtractEmailsFromAddressList 从 `To:`, `Cc:` 等含有多个邮件地址的邮件头的值里提取完整邮件地址。
+// 注意：返回的邮件地址都是小写、不包含地址扩展。
 func ExtractEmailsFromAddressList(s string) (emails []string, err error) {
 	addrs, err := mail.ParseAddressList(s)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	for _, addr := range addrs {
-		// 去掉首尾的引号。部分 Microsoft Outlook 客户端会带上引号。
-		i := strings.Trim(addr.Address, `'"`)
-
-		// 去掉地址扩展并转换为小写
-		i = strings.ToLower(StripExtension(i))
-
-		emails = append(emails, i)
+		// 去掉地址扩展（并转换为小写）
+		emails = append(emails, StripExtension(addr.Address))
 	}
 
 	return
