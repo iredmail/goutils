@@ -3,6 +3,7 @@ package sqlutils
 import (
 	"database/sql"
 	"fmt"
+	"maps"
 	"time"
 
 	// 注册的 driver name 是 `sqlite`，不是 `sqlite3`。
@@ -14,11 +15,11 @@ var (
 	// 参考：
 	// https://www.sqlite.org/pragma.html
 	// https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
-	SQLiteDefaultPragmas = [][2]string{
-		{"busy_timeout", "10000"},
-		{"synchronous", "NORMAL"},
-		{"auto_vacuum", "FULL"},
-		{"journal_mode", "WAL"},
+	SQLiteDefaultPragmas = map[string]string{
+		"busy_timeout": "10000",
+		"synchronous":  "NORMAL",
+		"auto_vacuum":  "FULL",
+		"journal_mode": "WAL",
 		// WAL mode is always consistent with synchronous=NORMAL, but WAL mode
 		// does lose durability. A transaction committed in WAL mode with
 		// synchronous=NORMAL might roll back following a power loss or system
@@ -38,13 +39,17 @@ var (
 //   - pragma 如果是 nil，则使用默认的 pragmas。
 //   - maxIdleConns 指定打开数据库时的最大空闲连接数。如果为 0 表示使用默认值（20）。
 //   - connMaxLifetime 指定连接的最大存活时间。如果为 0 表示使用默认值（10 分钟）。
-func InitSQLiteDB(pth string, pragmas [][2]string, maxIdleConns int, connMaxLifetime time.Duration) (sqliteDB *sql.DB, err error) {
-	if len(pragmas) == 0 {
-		pth = pth + "?" + GenSQLiteURIPragmas(SQLiteDefaultPragmas)
+func InitSQLiteDB(pth string, pragmas map[string]string, maxIdleConns int, connMaxLifetime time.Duration) (sqliteDB *sql.DB, err error) {
+	_pragmas := maps.Clone(SQLiteDefaultPragmas)
+	if pragmas == nil {
+		pragmas = _pragmas
 	} else {
-		pth = pth + "?" + GenSQLiteURIPragmas(pragmas)
+		for k, v := range pragmas {
+			_pragmas[k] = v
+		}
 	}
 
+	pth = pth + "?" + GenSQLiteURIPragmas(_pragmas)
 	sqliteDB, err = sql.Open("sqlite", pth)
 	if err != nil {
 		return nil, fmt.Errorf("failed in opening SQLite database: %s, %v", pth, err)
