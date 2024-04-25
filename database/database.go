@@ -20,9 +20,9 @@ const (
 type Type string
 
 type Connection[C any, T any] interface {
-	Type() string
-	Connect() (conn T, err error)
+	GetType() string
 	GetConfig() C
+	Connect() (conn T, err error)
 }
 
 type SQLConfig struct {
@@ -42,8 +42,12 @@ type Mariadb[C, T any] struct {
 	SQLConfig
 }
 
-func (m *Mariadb[C, T]) Type() string {
+func (m *Mariadb[C, T]) GetType() string {
 	return string(MySQLType)
+}
+
+func (m *Mariadb[C, T]) GetConfig() C {
+	return any(m.SQLConfig)
 }
 
 func (m *Mariadb[C, T]) Connect() (conn T, err error) {
@@ -85,16 +89,16 @@ func (m *Mariadb[C, T]) Connect() (conn T, err error) {
 	return
 }
 
-func (m *Mariadb[C, T]) GetConfig() C {
-	return any(m.SQLConfig)
-}
-
 type PgSQL[C, T any] struct {
 	SQLConfig
 }
 
-func (p *PgSQL[C, T]) Type() string {
+func (p *PgSQL[C, T]) GetType() string {
 	return string(PgSQLType)
+}
+
+func (p *PgSQL[C, T]) GetConfig() C {
+	return any(p.SQLConfig)
 }
 
 func (p *PgSQL[C, T]) Connect() (conn T, err error) {
@@ -132,10 +136,6 @@ func (p *PgSQL[C, T]) Connect() (conn T, err error) {
 	return
 }
 
-func (p *PgSQL[C, T]) GetConfig() C {
-	return any(p.SQLConfig)
-}
-
 type LDAPConfig struct {
 	URI                string
 	Suffix             string // dc=xx
@@ -150,8 +150,12 @@ type LDAP[C, T any] struct {
 	LDAPConfig
 }
 
-func (l *LDAP[C, T]) Type() string {
+func (l *LDAP[C, T]) GetType() string {
 	return string(LDAPType)
+}
+
+func (l *LDAP[C, T]) GetConfig() C {
+	return any(l.LDAPConfig)
 }
 
 func (l *LDAP[C, T]) Connect() (conn T, err error) {
@@ -171,8 +175,4 @@ func (l *LDAP[C, T]) Connect() (conn T, err error) {
 	conn = any(pool)
 
 	return
-}
-
-func (l *LDAP[C, T]) GetConfig() C {
-	return any(l.LDAPConfig)
 }
