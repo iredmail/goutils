@@ -47,3 +47,11 @@ func YMDYesterday() (ymd int) {
 
 	return
 }
+
+func DayStartEndEpochs(t time.Time) (start, end int64) {
+	year, month, day := t.Date()
+	start = time.Date(year, month, day, 0, 0, 0, 0, time.UTC).Unix()
+	end = time.Date(year, month, day, 23, 59, 59, int(time.Second-time.Nanosecond), time.UTC).Unix()
+
+	return
+}
