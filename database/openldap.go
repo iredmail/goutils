@@ -3,46 +3,30 @@ package database
 import (
 	"crypto/tls"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/iredmail/ldappool"
 )
 
-type LDAPConfig struct {
-	URI                string
-	Suffix             string // dc=xx
-	BaseDN             string // o=domains,dc=xx
-	DomainAdminsBaseDN string // o=domainAdmins,dc=xx,dc=xx
-	BindDN             string
-	BindPassword       string
-	StartTLS           bool
-}
-
-type LDAP[C Config, T Conn] struct {
-	LDAPConfig
-}
-
-func (l *LDAP[C, T]) GetDBType() DBType {
-	return DBTypeLDAP
-}
-
-func (l *LDAP[C, T]) GetConfig() C {
-	return any(l.LDAPConfig)
-}
-
-func (l *LDAP[C, T]) Connect() (conn T, err error) {
+func NewLDAP(c LDAPConfig) (pool ldap.Client, err error) {
 	opts := []ldappool.Option{
-		ldappool.WithBindCredentials(l.BindDN, l.BindPassword),
+		ldappool.WithBindCredentials(c.LDAPBindDN, c.LDAPBindPassword),
 	}
 
-	if l.StartTLS {
+	if c.LDAPStartTLS {
 		opts = append(opts, ldappool.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}))
 	}
 
-	pool, err := ldappool.New(l.URI, opts...)
-	if err != nil {
-		return
-	}
-
-	conn = any(pool)
+	pool, err = ldappool.New(c.LDAPURI, opts...)
 
 	return
+}
+
+type LDAPConfig struct {
+	LDAPURI                string
+	LDAPSuffix             string // dc=xx
+	LDAPBaseDN             string // o=domains,dc=xx
+	LDAPDomainAdminsBaseDN string // o=domainAdmins,dc=xx,dc=xx
+	LDAPBindDN             string
+	LDAPBindPassword       string
+	LDAPStartTLS           bool
 }
