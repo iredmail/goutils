@@ -1,13 +1,14 @@
 package dbutils
 
 const (
-	DBTypeMariadb  DBType = "mariadb"
+	DBTypeMariaDB  DBType = "mariadb"
+	DBTypeMySQL    DBType = "mysql"
 	DBTypePGSQL    DBType = "pgsql"
 	DBTypeOpenLDAP DBType = "openldap"
 )
 
 type DBType string
 
-func (dt DBType) String() string {
-	return string(dt)
+func (t DBType) String() string {
+	return string(t)
 }
