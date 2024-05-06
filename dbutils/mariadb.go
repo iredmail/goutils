@@ -1,17 +1,21 @@
-package database
+package dbutils
 
 import (
 	"database/sql"
 	"fmt"
 	"time"
 
-	_ "github.com/lib/pq"
+	_ "github.com/go-sql-driver/mysql"
 )
 
-func NewPgSQL(c SQLConfig) (db *sql.DB, err error) {
+func NewMariadb(c SQLConfig) (db *sql.DB, err error) {
 	// supported params：
-	// https://pkg.go.dev/github.com/lib/pq#hdr-Connection_String_Parameters
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
+	// https://github.com/go-sql-driver/mysql#parameters
+	//
+	//	- parseTime=true format time.
+	//	- timeout: Timeout for establishing connections, aka dial timeout.
+	//	- writeTimeout: I/O write timeout.
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		c.DBUser,
 		c.DBPassword,
 		c.DBHost,
@@ -19,7 +23,7 @@ func NewPgSQL(c SQLConfig) (db *sql.DB, err error) {
 		c.DBName,
 	)
 
-	db, err = sql.Open("postgres", dsn)
+	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return
 	}
