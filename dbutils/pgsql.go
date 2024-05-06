@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func NewPgSQL(c SQLConfig) (db *sql.DB, err error) {
+func NewPgSQL(c SQLConnConfig) (db *sql.DB, err error) {
 	// supported params：
 	// https://pkg.go.dev/github.com/lib/pq#hdr-Connection_String_Parameters
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",

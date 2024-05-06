@@ -8,7 +8,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func NewMariadb(c SQLConfig) (db *sql.DB, err error) {
+func NewMySQLConn(c SQLConnConfig) (db *sql.DB, err error) {
 	// supported params：
 	// https://github.com/go-sql-driver/mysql#parameters
 	//
