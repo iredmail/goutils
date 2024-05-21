@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.22.2
+go 1.22.3
 
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
@@ -20,7 +20,7 @@ require (
 	github.com/vorlif/spreak v0.6.0
 	golang.org/x/crypto v0.23.0
 	golang.org/x/text v0.15.0
-	modernc.org/sqlite v1.29.9
+	modernc.org/sqlite v1.29.10
 	rsc.io/qr v0.2.0
 )
 

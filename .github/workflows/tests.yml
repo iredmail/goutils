@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
-        go: ['>=1.22.2']
+        go: ['>=1.22.3']
 
     env:
         GOPRIVATE: github.com/iredmail/vmail,github.com/iredmail/gosible,github.com/iredmail/ldappool
