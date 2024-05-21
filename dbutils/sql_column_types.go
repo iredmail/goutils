@@ -53,6 +53,10 @@ func (ns NullString) Value() (driver.Value, error) {
 	return ns.value, nil
 }
 
+func (ns NullString) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + ns.value + `"`), nil
+}
+
 // IntBool 用于将 SQL 字段类型为整形的值转换为 bool。
 // 值为 1 表示 true，0 表示 false。
 type IntBool bool
