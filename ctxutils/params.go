@@ -103,3 +103,25 @@ func ParamUUIDLicenseKey(ctx *fiber.Ctx) (key string, err error) {
 
 	return
 }
+
+// ParamString 获取指定的 URL parameter 的值，并移除首尾的空白字符。
+// 如果未指定参数名，则返回默认值。如果没有默认值则值为空字符串。
+func ParamString(ctx *fiber.Ctx, name string, defaultValue ...string) (isEmpty bool, value string) {
+	if len(defaultValue) > 0 {
+		value = defaultValue[0]
+	}
+
+	if len(name) == 0 {
+		isEmpty = len(value) == 0
+
+		return
+	}
+
+	value = ctx.Params(name)
+	value, _ = url.QueryUnescape(value)
+	value = strings.TrimSpace(value)
+
+	isEmpty = len(value) == 0
+
+	return
+}
