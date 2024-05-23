@@ -53,6 +53,7 @@ linters:
     - gofumpt
     - golint
     - gomnd
+    - mnd
     - gomoddirectives
     - goprintffuncname
     - gosec
