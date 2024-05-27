@@ -61,23 +61,23 @@ func (ns NullString) MarshalJSON() ([]byte, error) {
 // 值为 1 表示 true，0 表示 false。
 type IntBool bool
 
-func (iab IntBool) Bool() bool {
-	return bool(iab)
+func (ib IntBool) Bool() bool {
+	return bool(ib)
 }
 
-func (iab *IntBool) Scan(value interface{}) error {
+func (ib *IntBool) Scan(value interface{}) error {
 	v, err := driver.Bool.ConvertValue(value)
 	if err != nil {
 		return err
 	}
 
-	*iab = IntBool(v.(bool))
+	*ib = IntBool(v.(bool))
 
 	return nil
 }
 
-func (iab IntBool) Value() (driver.Value, error) {
-	switch iab {
+func (ib IntBool) Value() (driver.Value, error) {
+	switch ib {
 	case true:
 		return 1, nil
 	default:
