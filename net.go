@@ -23,6 +23,28 @@ func IsNetworkPort(num int) (ok bool) {
 	return
 }
 
+func IsWildcardAddr(addr string) bool {
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return false // Invalid IP address format
+	}
+
+	return ip.IsUnspecified()
+}
+
+func IsWildcardIPV4(addr string) bool {
+	ip := net.ParseIP(addr)
+	if ip == nil {
+		return false // Invalid IP address format
+	}
+
+	if ip.To4() == nil {
+		return false
+	}
+
+	return ip.IsUnspecified()
+}
+
 // GetIPPortFromNetAddrString 从格式为 `ip:port` （常用的是 `net.Addr.String()`）的字符串里获取 IP 和端口号。
 func GetIPPortFromNetAddrString(addr string) (ip string, port string, version int) {
 	slice := strings.Split(addr, ":")
