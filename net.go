@@ -2,7 +2,14 @@ package goutils
 
 import (
 	"net"
+	"regexp"
 	"strings"
+)
+
+var (
+	// Wildcard address: `user@*`
+	rxWildcardAddr  = `[\w\-][\w\-\.\+\=]*@\*`
+	cmpWildcardAddr = regexp.MustCompile(rxWildcardAddr)
 )
 
 func IsIP(s string) bool {
@@ -23,14 +30,8 @@ func IsNetworkPort(num int) (ok bool) {
 	return
 }
 
-// IsWildcardAddr Wildcard sender address: 'user@*'
 func IsWildcardAddr(addr string) bool {
-	ip := net.ParseIP(addr)
-	if ip == nil {
-		return false // Invalid IP address format
-	}
-
-	return ip.IsUnspecified()
+	return cmpWildcardAddr.MatchString(addr)
 }
 
 // IsWildcardIPV4 Wildcard IPv4: 192.168.0.*
