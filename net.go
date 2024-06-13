@@ -3,6 +3,7 @@ package goutils
 import (
 	"net"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -10,6 +11,10 @@ var (
 	// Wildcard address: `user@*`
 	rxWildcardAddr  = `[\w\-][\w\-\.\+\=]*@\*`
 	cmpWildcardAddr = regexp.MustCompile(rxWildcardAddr)
+
+	// Wildcard IPv4: 192.168.0.*, 192.168.*.1
+	rxWildcardIPv4  = `^(?:[\d\*]{1,3})\.(?:[\d\*]{1,3})\.(?:[\d\*]{1,3})\.(?:[\d\*]{1,3})$`
+	cmpWildcardIPv4 = regexp.MustCompile(rxWildcardIPv4)
 )
 
 func IsIP(s string) bool {
@@ -31,21 +36,41 @@ func IsNetworkPort(num int) (ok bool) {
 }
 
 func IsWildcardAddr(addr string) bool {
-	return cmpWildcardAddr.MatchString(addr)
-}
-
-// IsWildcardIPV4 Wildcard IPv4: 192.168.0.*
-func IsWildcardIPV4(addr string) bool {
-	ip := net.ParseIP(addr)
-	if ip == nil {
-		return false // Invalid IP address format
-	}
-
-	if ip.To4() == nil {
+	if !strings.Contains(addr, "*") {
 		return false
 	}
 
-	return ip.IsUnspecified()
+	return cmpWildcardAddr.MatchString(addr)
+}
+
+func IsWildcardIPv4(addr string) bool {
+	if !strings.Contains(addr, "*") {
+		return false
+	}
+
+	fields := strings.Split(addr, ".")
+	if len(fields) != 4 {
+		return false
+	}
+
+	for _, field := range fields {
+		if field == "*" {
+			continue
+		}
+
+		num, err := strconv.Atoi(field)
+		if err != nil {
+			// Not a number.
+			return false
+		}
+
+		if num < 0 || num > 255 {
+			// Not a valid number in IPv4 address.
+			return false
+		}
+	}
+
+	return cmpWildcardIPv4.MatchString(addr)
 }
 
 // GetIPPortFromNetAddrString 从格式为 `ip:port` （常用的是 `net.Addr.String()`）的字符串里获取 IP 和端口号。
