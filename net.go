@@ -23,6 +23,7 @@ func IsNetworkPort(num int) (ok bool) {
 	return
 }
 
+// IsWildcardAddr Wildcard sender address: 'user@*'
 func IsWildcardAddr(addr string) bool {
 	ip := net.ParseIP(addr)
 	if ip == nil {
@@ -32,6 +33,7 @@ func IsWildcardAddr(addr string) bool {
 	return ip.IsUnspecified()
 }
 
+// IsWildcardIPV4 Wildcard IPv4: 192.168.0.*
 func IsWildcardIPV4(addr string) bool {
 	ip := net.ParseIP(addr)
 	if ip == nil {
