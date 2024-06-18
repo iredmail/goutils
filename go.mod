@@ -11,7 +11,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.4
 	github.com/google/uuid v1.6.0
 	github.com/gookit/slog v0.5.6
-	github.com/iredmail/ldappool v0.0.0-20240507004946-f9f5ee73ca00
+	github.com/iredmail/ldappool v0.0.0-20240618111622-de12cc7b81a5
 	github.com/jhillyerd/enmime v1.2.0
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/lib/pq v1.10.9
