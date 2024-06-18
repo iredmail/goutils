@@ -13,31 +13,15 @@ jobs:
         GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
     steps:
-        #- uses: actions/cache@v3
-        #with:
-            # In order:
-            # * Module download cache
-            # * Build cache (Linux)
-            # * Build cache (Mac)
-            # * Build cache (Windows)
-            #    path: |
-            #    ~/go/pkg/mod
-            #    ~/.cache/go-build
-            #    ~/Library/Caches/go-build
-            #    ~\AppData\Local\go-build
-            #key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
-            #restore-keys: |
-            #    ${{ runner.os }}-go-${{ matrix.go-version }}-
-
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
       - uses: actions/setup-go@v5
         with:
-          stable: false
           go-version: ${{ matrix.go }}
 
+      - run: git config --global url."https://$GH_ACCESS_TOKEN@github.com/".insteadOf https://github.com/
       - run: make testv
 
       - uses: golangci/golangci-lint-action@v4
