@@ -21,7 +21,7 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - run: git config --global url."https://$GH_ACCESS_TOKEN@github.com/".insteadOf https://github.com/
+      - run: git config --global --add url."git@github.com:".insteadOf "https://github.com/"
       - run: make testv
 
       - name: golangci-lint
