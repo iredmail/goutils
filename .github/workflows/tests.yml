@@ -8,9 +8,9 @@ jobs:
         #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
         go: ['>=1.22.4']
 
-#    env:
-#        GOPRIVATE: github.com/iredmail/vmail,github.com/iredmail/gosible,github.com/iredmail/ldappool
-#        GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+    env:
+        GOPRIVATE: github.com/iredmail/vmail,github.com/iredmail/gosible,github.com/iredmail/ldappool
+        GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +24,8 @@ jobs:
       - run: git config --global url."https://$GH_ACCESS_TOKEN@github.com/".insteadOf https://github.com/
       - run: make testv
 
-      - uses: golangci/golangci-lint-action@v4
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
         with:
           #version: v2.5.2
           version: latest
