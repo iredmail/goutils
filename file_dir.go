@@ -87,6 +87,12 @@ func ReadFullFileContent(pth string) (content []byte, err error) {
 
 // ReadFullFileContentInString 读取指定文件的所有内容，并去除首尾的空白字符，以 string 类型返回文件内容。
 func ReadFullFileContentInString(pth string) (content string, err error) {
+	if !DestExists(pth) {
+		err = fmt.Errorf("file %s does not exist", pth)
+
+		return
+	}
+
 	b, err := os.ReadFile(pth)
 	if err != nil {
 		return
