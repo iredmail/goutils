@@ -8,10 +8,6 @@ jobs:
         #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
         go: ['>=1.22.4']
 
-    env:
-        GOPRIVATE: github.com/iredmail/vmail,github.com/iredmail/gosible
-        GH_ACCESS_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
-
     steps:
       - uses: actions/checkout@v4
         with:
@@ -21,7 +17,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-      - run: git config --global --add url."git@github.com:".insteadOf "https://github.com/"
       - run: make testv
 
       - name: golangci-lint
