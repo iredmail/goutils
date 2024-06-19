@@ -36,7 +36,7 @@ linters:
     - dogsled
     - dupword
     - errorlint
-    - exhaustivestruct
+    #- exhaustivestruct
     - forbidigo
     - funlen
     - forcetypeassert
@@ -49,30 +49,30 @@ linters:
     - gocyclo
     - godox
     - godot
-    - goerr113
+    #- goerr113
     - gofumpt
-    - golint
+    #- golint
     - gomnd
     - mnd
     - gomoddirectives
     - goprintffuncname
     - gosec
     #- govet
-    - ifshort
+    #- ifshort
     - interfacebloat
-    - interfacer
+    #- interfacer
     - ineffassign
     - lll
     #- maintidx
-    - maligned
+    #- maligned
     - nakedret
     - nestif
     - nonamedreturns
-    - nosnakecase
+    #- nosnakecase
     - nosprintfhostport
     - paralleltest
     - prealloc
-    - scopelint
+    #- scopelint
     - tagliatelle
     - testpackage
     - wastedassign
