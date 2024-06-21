@@ -306,3 +306,18 @@ func ObfuscateAddresses(emails ...string) (obfuscated []string) {
 
 	return
 }
+
+func ReverseDomain(domain string) string {
+	split := strings.Split(domain, ".")
+	slices.Reverse(split)
+
+	return strings.Join(split, ".")
+}
+
+func ReverseDomains(domains []string) []string {
+	for i, d := range domains {
+		domains[i] = ReverseDomain(d)
+	}
+
+	return domains
+}
