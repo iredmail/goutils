@@ -60,6 +60,9 @@ type OSInfo struct {
 	// Net
 	IPAddresses  []string `json:"ip_addresses"`
 	MacAddresses []string `json:"mac_addresses"`
+
+	// Metadata
+	HasDovecotPgsqlLastLogin bool `json:"-"`
 }
 
 func (oi OSInfo) ToMap() (m map[string]any, err error) {
@@ -72,6 +75,41 @@ func (oi OSInfo) ToMap() (m map[string]any, err error) {
 	err = json.Unmarshal(jb, &m)
 
 	return
+}
+
+// setDovecotPgsqlLastLogin 检查当前操作系统版本提供的 Dovecot 包是否支持将 last login time 保存在
+// PostgreSQL 数据库。
+//
+// 注意：
+//   - Dovecot 2.3.16 及后续版本才支持使用 PostgreSQL 存储 last login time。
+//   - Dovecot 所有版本都支持使用 MySQL / MariaDB 存储 last login time。
+//   - 此函数不需要 root 权限。
+func (oi OSInfo) setDovecotPgsqlLastLogin() {
+	// 排除不支持的版本，后续的新版本都支持。
+	switch oi.Distribution {
+	case "Debian":
+		// Debian 12 (Bookworm) 及后续版本都支持。
+		if slices.Contains([]string{"10", "11"}, oi.DistributionVersion) {
+			oi.HasDovecotPgsqlLastLogin = false
+		}
+	case "Ubuntu":
+		// Ubuntu 22.04 及后续版本都支持。
+		if slices.Contains([]string{"18.04", "20.04"}, oi.DistributionVersion) {
+			oi.HasDovecotPgsqlLastLogin = false
+		}
+	case "RedHat", "CentOS", "Rocky", "AlmaLinux":
+		// RHEL 9 及后续版本都支持。
+		if slices.Contains([]string{"7", "8"}, oi.DistributionMajorVersion) {
+			oi.HasDovecotPgsqlLastLogin = false
+		}
+	case "OpenBSD":
+		// OpenBSD 7.3 及后续版本都支持。
+		if slices.Contains([]string{"7.1", "7.2"}, oi.DistributionVersion) {
+			oi.HasDovecotPgsqlLastLogin = false
+		}
+	}
+
+	oi.HasDovecotPgsqlLastLogin = true
 }
 
 func GetOSInfo() (oi OSInfo, err error) {
@@ -251,6 +289,8 @@ func GetOSInfo() (oi OSInfo, err error) {
 	oi.UptimeDays = uptime / (60 * 60 * 24)
 	oi.UptimeHours = (uptime - (oi.UptimeDays * 60 * 60 * 24)) / (60 * 60)
 	oi.UptimeMinutes = ((uptime - (oi.UptimeDays * 60 * 60 * 24)) - (oi.UptimeHours * 60 * 60)) / 60
+
+	oi.setDovecotPgsqlLastLogin()
 
 	return
 }
