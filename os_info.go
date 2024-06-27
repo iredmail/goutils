@@ -224,7 +224,7 @@ func GetOSInfo() (oi OSInfo, err error) {
 		if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagLoopback == 0 {
 			addrs, err := iface.Addrs()
 			if err != nil {
-
+				return
 			}
 			for _, addr := range addrs {
 				if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
