@@ -84,7 +84,7 @@ func (oi OSInfo) ToMap() (m map[string]any, err error) {
 //   - Dovecot 2.3.16 及后续版本才支持使用 PostgreSQL 存储 last login time。
 //   - Dovecot 所有版本都支持使用 MySQL / MariaDB 存储 last login time。
 //   - 此函数不需要 root 权限。
-func (oi OSInfo) setDovecotPgsqlLastLogin() {
+func (oi *OSInfo) setDovecotPgsqlLastLogin() {
 	// 排除不支持的版本，后续的新版本都支持。
 	switch oi.Distribution {
 	case "Debian":
@@ -246,6 +246,7 @@ func GetOSInfo() (oi OSInfo, err error) {
 
 	oi.OSName = hi.Platform
 	oi.OSVersion = hi.PlatformVersion
+	oi.setDovecotPgsqlLastLogin()
 
 	// Docker container.
 	if DestExists("/.dockerenv") {
@@ -289,8 +290,6 @@ func GetOSInfo() (oi OSInfo, err error) {
 	oi.UptimeDays = uptime / (60 * 60 * 24)
 	oi.UptimeHours = (uptime - (oi.UptimeDays * 60 * 60 * 24)) / (60 * 60)
 	oi.UptimeMinutes = ((uptime - (oi.UptimeDays * 60 * 60 * 24)) - (oi.UptimeHours * 60 * 60)) / 60
-
-	oi.setDovecotPgsqlLastLogin()
 
 	return
 }
