@@ -300,7 +300,7 @@ var (
 		{"America/Santarem", "GMT-03:00"},
 		{"America/Santiago", "GMT-03:00"},
 		{"America/Santo_Domingo", "GMT-04:00"},
-		{"America/Sao_Paulo", "GMT-02:00"},
+		{"America/Sao_Paulo", "GMT-03:00"},
 		{"America/Scoresbysund", "GMT-01:00"},
 		{"America/Sitka", "GMT-09:00"},
 		{"America/St_Barthelemy", "GMT-04:00"},
