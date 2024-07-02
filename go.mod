@@ -8,10 +8,10 @@ require (
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/go-ldap/ldap/v3 v3.4.8
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/gofiber/fiber/v2 v2.52.4
+	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/uuid v1.6.0
 	github.com/gookit/slog v0.5.6
-	github.com/iredmail/ldappool v0.0.0-20240618111622-de12cc7b81a5
+	github.com/iredmail/ldappool v0.0.0-20240619024518-769578aef494
 	github.com/jhillyerd/enmime v1.2.0
 	github.com/k0kubun/pp/v3 v3.2.0
 	github.com/lib/pq v1.10.9
@@ -68,7 +68,7 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20240304020402-f0dba7c97c2b // indirect
-	modernc.org/libc v1.53.3 // indirect
+	modernc.org/libc v1.54.0 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
