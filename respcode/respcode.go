@@ -39,6 +39,7 @@ const (
 	AccountExists           = "ACCOUNT_EXISTS"
 	NotAllowed              = "NOT_ALLOWED"
 	EmailAlreadyExists      = "EMAIL_ALREADY_EXISTS"
+	EmailNotExists          = "EMAIL_NOT_EXISTS"
 )
 
 var (
@@ -75,6 +76,7 @@ var (
 	ErrPermissionDenied            = errors.New(PermissionDenied)
 	ErrDomainExists                = errors.New("DOMAIN_EXISTS")
 	ErrAccountExists               = errors.New(AccountExists)
+	ErrEmailNotExists              = errors.New(EmailNotExists)
 	ErrNotAllowed                  = errors.New(NotAllowed)
 	ErrInvalidPasswordScheme       = errors.New("INVALID_PASSWORD_SCHEME")
 	ErrExceededDomainLimit         = errors.New("EXCEEDED_DOMAIN_LIMIT")
