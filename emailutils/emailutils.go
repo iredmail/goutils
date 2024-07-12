@@ -111,6 +111,15 @@ func ExtractDomain(e string) string {
 	return strings.ToLower(domain)
 }
 
+// ExtractDomains 从多个邮件地址里提取邮件域名并转换为小写。
+func ExtractDomains(emails []string) (domains []string) {
+	for _, addr := range emails {
+		domains = append(domains, ExtractDomain(addr))
+	}
+
+	return slices.Compact(domains)
+}
+
 // ExtractUsernameAndDomain 从给定的 s 里提取用户名和域名。
 // 如果 `s` 不是有效的邮件地址，`isValidEmail` 为 false。
 func ExtractUsernameAndDomain(s string) (username, domain string, isValidEmail bool) {
@@ -144,19 +153,6 @@ func ExtractDomainFromEmail(e string) string {
 	}
 
 	return strings.ToLower(domain)
-}
-
-// ExtractDomains 从多个邮件地址里提取邮件域名并转换为小写。
-func ExtractDomains(emails []string) (domains []string) {
-	for _, addr := range emails {
-		d := ExtractDomain(addr)
-
-		if !slices.Contains(domains, d) {
-			domains = append(domains, strings.ToLower(d))
-		}
-	}
-
-	return domains
 }
 
 // StripExtension 移除邮件地址里的 `+extension` 扩展。
