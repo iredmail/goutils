@@ -2,6 +2,7 @@ package dbutils
 
 import (
 	"database/sql/driver"
+	"encoding/json"
 )
 
 // NullString 用于字符串类型的 SQL 字段可能出现 null 的情况。
@@ -55,6 +56,57 @@ func (ns NullString) Value() (driver.Value, error) {
 
 func (ns NullString) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ns.value + `"`), nil
+}
+
+type NullFloat32 struct {
+	value  float32
+	isNull bool
+}
+
+func NewNullFloat32(v ...float32) NullFloat32 {
+	nnf := NullFloat32{}
+	if len(v) > 0 {
+		nnf.value = v[0]
+	} else {
+		nnf.isNull = true
+	}
+
+	return nnf
+}
+
+func (nf NullFloat32) Float32() float32 {
+	return nf.value
+}
+
+func (nf *NullFloat32) Scan(value interface{}) error {
+	if value == nil {
+		nf.isNull = true
+
+		return nil
+	}
+
+	switch s := value.(type) {
+	case float32:
+		nf.value = s
+	}
+
+	return nil
+}
+
+func (nf NullFloat32) Value() (driver.Value, error) {
+	if nf.isNull {
+		return nil, nil
+	}
+
+	return nf.value, nil
+}
+
+func (nf NullFloat32) MarshalJSON() ([]byte, error) {
+	if nf.isNull {
+		return json.Marshal(nil)
+	}
+
+	return json.Marshal(nf.value)
 }
 
 // IntBool 用于将 SQL 字段类型为整形的值转换为 bool。
