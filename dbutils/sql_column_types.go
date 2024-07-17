@@ -1,6 +1,7 @@
 package dbutils
 
 import (
+	"bytes"
 	"database/sql/driver"
 	"encoding/json"
 )
@@ -54,6 +55,10 @@ func (ns NullString) Value() (driver.Value, error) {
 	return ns.value, nil
 }
 
+func (ns *NullString) UnmarshalJSON(data []byte) error {
+	return json.Unmarshal(data, &ns.value)
+}
+
 func (ns NullString) MarshalJSON() ([]byte, error) {
 	return []byte(`"` + ns.value + `"`), nil
 }
@@ -99,6 +104,17 @@ func (nf NullFloat32) Value() (driver.Value, error) {
 	}
 
 	return nf.value, nil
+}
+
+func (nf *NullFloat32) UnmarshalJSON(data []byte) error {
+	if bytes.Contains(data, []byte("null")) ||
+		bytes.Contains(data, []byte("\"\"")) {
+		nf.isNull = true
+
+		return nil
+	}
+
+	return json.Unmarshal(data, &nf.value)
 }
 
 func (nf NullFloat32) MarshalJSON() ([]byte, error) {
