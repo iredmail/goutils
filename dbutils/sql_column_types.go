@@ -127,6 +127,8 @@ func (nf *NullFloat32) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
+	nf.isNull = false
+
 	return json.Unmarshal(data, &nf.value)
 }
 
