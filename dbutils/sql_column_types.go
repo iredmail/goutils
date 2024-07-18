@@ -26,7 +26,7 @@ func (ns NullString) String() string {
 
 func (ns *NullString) Scan(value interface{}) error {
 	if value == nil {
-		ns.value = ""
+		ns.emptyToNull = true
 
 		return nil
 	}
@@ -48,7 +48,7 @@ func (ns *NullString) Scan(value interface{}) error {
 
 // Value 在使用 struct 指定对应的 database 字段为 NullString 类型时，会调用此方法转换相应的值。
 func (ns NullString) Value() (driver.Value, error) {
-	if ns.emptyToNull && ns.value == "" {
+	if ns.emptyToNull {
 		return nil, nil
 	}
 
@@ -56,11 +56,24 @@ func (ns NullString) Value() (driver.Value, error) {
 }
 
 func (ns *NullString) UnmarshalJSON(data []byte) error {
+	if bytes.Contains(data, []byte("null")) ||
+		bytes.Contains(data, []byte("\"\"")) {
+		ns.emptyToNull = true
+
+		return nil
+	}
+
+	ns.emptyToNull = false
+
 	return json.Unmarshal(data, &ns.value)
 }
 
 func (ns NullString) MarshalJSON() ([]byte, error) {
-	return []byte(`"` + ns.value + `"`), nil
+	if ns.emptyToNull {
+		return json.Marshal(nil)
+	}
+
+	return json.Marshal(ns.value)
 }
 
 type NullFloat32 struct {
