@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 )
 
-// NullString 用于字符串类型的 SQL 字段可能出现 null 的情况。
+// NullString 用于字符串类型的 SQL 字段，当值为空时必须设置为 SQL NULL 而不是空字符串的情况。
 type NullString struct {
 	value       string
 	emptyToNull bool
