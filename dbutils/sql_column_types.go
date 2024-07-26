@@ -17,7 +17,7 @@ func NewNullString(value string) NullString {
 }
 
 func NewNullStringWithEmptyToNull(value string) NullString {
-	return NullString{value: value, emptyToNull: true}
+	return NullString{value: value, emptyToNull: value == ""}
 }
 
 func (ns NullString) String() string {
