@@ -2,8 +2,10 @@ package goutils
 
 import (
 	"crypto/rand"
+	"fmt"
 	"math/big"
 	mRand "math/rand"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -57,4 +59,42 @@ func StringSliceToLower(ss []string) {
 	for i := range len(ss) {
 		ss[i] = strings.ToLower(ss[i])
 	}
+}
+
+func FlattenToStrings(v any) (values []string, err error) {
+	if v == nil {
+		return
+	}
+
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.String:
+		if rv.String() != "" {
+			values = append(values, rv.String())
+		}
+	case reflect.Slice:
+		for i := 0; i < rv.Len(); i++ {
+			value := rv.Index(i)
+			if value.Kind() == reflect.Slice {
+				var results []string
+				results, err = FlattenToStrings(value.Interface())
+				if err != nil {
+					return
+				}
+
+				values = append(values, results...)
+
+				continue
+			}
+
+			str, isStr := value.Interface().(string)
+			if isStr && str != "" {
+				values = append(values, value.String())
+			}
+		}
+	default:
+		err = fmt.Errorf("task argument has invalid type, must be string, []string or [][]string: %#v", v)
+	}
+
+	return
 }
