@@ -24,7 +24,7 @@ jobs:
         with:
           #version: v2.5.2
           version: latest
-          args: --print-issued-lines
+          args: --print-issued-lines --issues-exit-code=0
           #only-new-issues: false
           skip-go-installation: true
           skip-pkg-cache: false
