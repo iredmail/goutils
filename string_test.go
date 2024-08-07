@@ -17,16 +17,27 @@ func TestStringSliceToLower(t *testing.T) {
 
 func TestFlatten(t *testing.T) {
 	var empty []string
+
 	assert.Equal(t, empty, Flatten(nil))
 	assert.Equal(t, []string{"1"}, Flatten("1"))
-	assert.Equal(t, []string{"1", "2"}, Flatten([]string{"1", "2"}))
+	assert.Equal(t,
+		[]string{"1", "2"},
+		Flatten([]string{"1", "2"}),
+	)
 
 	// Mixed.
-	assert.Equal(t, []string{"1", "2", "3", "4"}, Flatten([]any{"1", []string{"2", "3"}, "4"}))
+	assert.Equal(t,
+		[]string{"1", "2", "3", "4"},
+		Flatten([]any{
+			"1",
+			[]string{"2", "3"},
+			"4"},
+		),
+	)
 
 	// Nested.
 	assert.Equal(t,
-		[]string{"1", "2", "3", "4", "5"},
+		[]string{"1", "2", "3", "4", "5", "6", "7"},
 		Flatten(
 			[]any{
 				"1",
