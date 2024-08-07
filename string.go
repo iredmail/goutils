@@ -2,10 +2,10 @@ package goutils
 
 import (
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	mRand "math/rand"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 )
@@ -61,7 +61,7 @@ func StringSliceToLower(ss []string) {
 	}
 }
 
-func FlattenToStrings(v any) (values []string, err error) {
+func Flatten(v any) (flattened []string) {
 	if v == nil {
 		return
 	}
@@ -70,31 +70,33 @@ func FlattenToStrings(v any) (values []string, err error) {
 	switch rv.Kind() {
 	case reflect.String:
 		if rv.String() != "" {
-			values = append(values, rv.String())
+			flattened = append(flattened, rv.String())
 		}
 	case reflect.Slice:
 		for i := 0; i < rv.Len(); i++ {
 			value := rv.Index(i)
 			if value.Kind() == reflect.Slice {
 				var results []string
-				results, err = FlattenToStrings(value.Interface())
-				if err != nil {
-					return
-				}
-
-				values = append(values, results...)
-
-				continue
+				results = Flatten(value.Interface())
+				flattened = append(flattened, results...)
 			}
 
 			str, isStr := value.Interface().(string)
 			if isStr && str != "" {
-				values = append(values, value.String())
+				flattened = append(flattened, value.String())
 			}
 		}
 	default:
-		err = fmt.Errorf("task argument has invalid type, must be string, []string or [][]string: %#v", v)
+		return
 	}
 
-	return
+	// Remove empty and duplicate values.
+	var nonEmptyValues []string
+	for _, val := range flattened {
+		if val != "" && !slices.Contains(nonEmptyValues, val) {
+			nonEmptyValues = append(nonEmptyValues, val)
+		}
+	}
+
+	return nonEmptyValues
 }
