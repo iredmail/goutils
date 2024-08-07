@@ -24,6 +24,7 @@ type OSInfo struct {
 	Architecture string   `json:"architecture"` // 386, amd64, arm, arm64
 	CPUCores     []string `json:"cpu_cores"`
 	Memory       uint64   `json:"memory"` // in bytes
+	Swap         uint64   `json:"swap"`   // in bytes
 
 	// OS
 	KernelVersion string `json:"kernel_version"`
@@ -135,6 +136,12 @@ func GetOSInfo() (oi OSInfo, err error) {
 		return
 	}
 	oi.Memory = vm.Total
+
+	sms, err := mem.SwapMemory()
+	if err != nil {
+		return
+	}
+	oi.Swap = sms.Total
 
 	hi, err := host.Info()
 	if err != nil {

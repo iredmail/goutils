@@ -30,18 +30,21 @@ func FilterValidDomains(domains []string) (valid []string, invalid []string) {
 }
 
 // FilterSameDomainEmails 返回同域名内的邮件地址和外部域名的邮件地址。
-// same 里所有邮件地址里的地址扩展（+ext）都被移除，但在 `orig` 的 Value 里保留了地址扩展。
-// orig 是以移除地址扩展后的地址作为 key，以原始
-func FilterSameDomainEmails(domain string, emails []string) (same []string, others []string, orig map[string]string) {
+//
+// - same 和 others 里的邮件地址都已转换为小写并移除地址扩展（+ext），但在 `orig` 的 Value 里保留了地址扩展。
+// - orig 以移除地址扩展后的地址作为 key，以原始邮件地址作为 value。
+func FilterSameDomainEmails(domain string, mails []string) (same []string, others []string, orig map[string]string) {
 	orig = make(map[string]string)
 
-	for _, e := range emails {
+	for _, e := range mails {
 		if !IsEmail(e) {
 			continue
 		}
 
-		// 移除地址扩展
+		// 转换为小写并移除地址扩展
 		addr := StripExtension(e)
+
+		// 转换为小写但保留地址扩展
 		e = ToLowerWithExt(e)
 
 		if strings.HasSuffix(addr, "@"+domain) {
