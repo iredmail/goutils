@@ -24,7 +24,7 @@ jobs:
         with:
           #version: v2.5.2
           version: latest
-          args: --print-issued-lines --config=$GITHUB_WORKSPACE/.golangci.yml
+          args: --print-issued-lines
           #only-new-issues: false
           skip-go-installation: true
           skip-pkg-cache: false
