@@ -66,37 +66,25 @@ func Flatten(v any) (flattened []string) {
 		return
 	}
 
+	var results []string
 	rv := reflect.ValueOf(v)
 	switch rv.Kind() {
 	case reflect.String:
-		if rv.String() != "" {
-			flattened = append(flattened, rv.String())
-		}
+		results = append(results, rv.String())
 	case reflect.Slice:
 		for i := 0; i < rv.Len(); i++ {
-			value := rv.Index(i)
-			if value.Kind() == reflect.Slice {
-				var results []string
-				results = Flatten(value.Interface())
-				flattened = append(flattened, results...)
-			}
-
-			str, isStr := value.Interface().(string)
-			if isStr && str != "" {
-				flattened = append(flattened, value.String())
-			}
+			results = append(results, Flatten(rv.Index(i).Interface())...)
 		}
 	default:
-		return
+		break
 	}
 
-	// Remove empty and duplicate values.
-	var nonEmptyValues []string
-	for _, val := range flattened {
-		if val != "" && !slices.Contains(nonEmptyValues, val) {
-			nonEmptyValues = append(nonEmptyValues, val)
+	// Remove empty and duplicate value.
+	for _, result := range results {
+		if result != "" && !slices.Contains(flattened, result) {
+			flattened = append(flattened, result)
 		}
 	}
 
-	return nonEmptyValues
+	return flattened
 }
