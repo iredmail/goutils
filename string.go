@@ -72,7 +72,7 @@ func Flatten(v any) (flattened []string) {
 	case reflect.String:
 		results = append(results, rv.String())
 	case reflect.Slice:
-		for i := 0; i < rv.Len(); i++ {
+		for i := range rv.Len() {
 			results = append(results, Flatten(rv.Index(i).Interface())...)
 		}
 	default:
