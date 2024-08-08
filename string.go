@@ -61,7 +61,9 @@ func StringSliceToLower(ss []string) {
 	}
 }
 
-func Flatten(v any) (flattened []string) {
+// FlattenStrings 函数将输入的任意类型 v 展平为一个字符串切片，空字符串和重复的字符串会被移除。
+// 对于嵌套的切片，函数会递归地展平所有层级。
+func FlattenStrings(v any) (flattened []string) {
 	if v == nil {
 		return
 	}
@@ -73,7 +75,7 @@ func Flatten(v any) (flattened []string) {
 		results = append(results, rv.String())
 	case reflect.Slice:
 		for i := range rv.Len() {
-			results = append(results, Flatten(rv.Index(i).Interface())...)
+			results = append(results, FlattenStrings(rv.Index(i).Interface())...)
 		}
 	default:
 		break
