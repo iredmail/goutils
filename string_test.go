@@ -22,7 +22,7 @@ func TestFlatten(t *testing.T) {
 	assert.Equal(t, []string{"1"}, Flatten("1"))
 	assert.Equal(t,
 		[]string{"1", "2"},
-		Flatten([]string{"1", "2", ""}),
+		Flatten([]string{"1", "2", "", "1", "2"}), // empty and duplicate values
 	)
 
 	// Mixed.
@@ -41,17 +41,19 @@ func TestFlatten(t *testing.T) {
 		Flatten(
 			[]any{
 				"1",
-				[]string{"2", "3"},
+				"",                          // empty
+				"1",                         // duplicate
+				[]string{"2", "3", "", "2"}, // empty + duplicate
 
 				// 2 levels.
 				[][]string{
-					{"4", "5"},
+					{"4", "5", "", "5"}, // empty + duplicate
 				},
 
 				// 3 levels.
 				[][][]string{
 					{
-						{"6", "7", "7"},
+						{"6", "7", "", "7"}, // empty + duplicate
 					},
 				},
 			},
