@@ -99,14 +99,19 @@ func (nf NullFloat32) Float32() float32 {
 func (nf *NullFloat32) Scan(value interface{}) error {
 	if value == nil {
 		nf.isNull = true
-
 		return nil
 	}
 
 	switch s := value.(type) {
 	case float32:
 		nf.value = s
+	case float64:
+		nf.value = float32(s)
+	case int64:
+		nf.value = float32(s)
 	}
+
+	nf.isNull = false
 
 	return nil
 }
@@ -123,12 +128,10 @@ func (nf *NullFloat32) UnmarshalJSON(data []byte) error {
 	if bytes.Contains(data, []byte("null")) ||
 		bytes.Contains(data, []byte("\"\"")) {
 		nf.isNull = true
-
 		return nil
 	}
 
 	nf.isNull = false
-
 	return json.Unmarshal(data, &nf.value)
 }
 
