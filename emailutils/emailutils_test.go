@@ -155,3 +155,38 @@ func TestToLower(t *testing.T) {
 	result = ToLowerWithExt(email)
 	assert.Equal(t, expected, result)
 }
+
+func TestIsTLDDomain(t *testing.T) {
+	// Valid TLD domains
+	assert.True(t, IsTLDDomain("aB"))  // Minimum length (2 characters)
+	assert.True(t, IsTLDDomain("a-B")) // Hyphen with mixed case
+	assert.True(t, IsTLDDomain("A-b")) // Hyphen with mixed case
+	assert.True(t, IsTLDDomain("com"))
+	assert.True(t, IsTLDDomain("org"))
+	assert.True(t, IsTLDDomain("COM"))
+	assert.True(t, IsTLDDomain("ORG"))
+	assert.True(t, IsTLDDomain("Co"))
+	assert.True(t, IsTLDDomain("iO"))
+	assert.True(t, IsTLDDomain("APP"))
+	assert.True(t, IsTLDDomain("Example"))
+	assert.True(t, IsTLDDomain("a-B-c"))
+	assert.True(t, IsTLDDomain("X-1-2-3"))
+	assert.True(t, IsTLDDomain("abcDEFghiJKLmnoPQRstuVWXY")) // 25 characters
+	assert.True(t, IsTLDDomain("ABCDEFGHIJKLMNOPQRSTUVWXY")) // 25 uppercase characters
+
+	// Invalid TLD domains
+	assert.False(t, IsTLDDomain(""))
+	assert.False(t, IsTLDDomain("a"))                          // Too short
+	assert.False(t, IsTLDDomain("abcdefghijklmnopqrstuvwxyz")) // Too long (26 characters)
+	assert.False(t, IsTLDDomain("com."))
+	assert.False(t, IsTLDDomain(".com"))
+	assert.False(t, IsTLDDomain("example.com"))
+	assert.False(t, IsTLDDomain("c_o_m"))       // Underscore
+	assert.False(t, IsTLDDomain("домен"))       // Non-ASCII characters
+	assert.False(t, IsTLDDomain("com!"))        // Special character
+	assert.False(t, IsTLDDomain("-com"))        // Starts with hyphen
+	assert.False(t, IsTLDDomain("com-"))        // Ends with hyphen
+	assert.False(t, IsTLDDomain("192.168.1.1")) // IP address
+	assert.False(t, IsTLDDomain("local host"))  // Space not allowed
+	assert.False(t, IsTLDDomain("A"))           // Single uppercase character (too short)
+}

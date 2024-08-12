@@ -15,7 +15,7 @@ import (
 
 var (
 	regexDomain               = regexp.MustCompile(`^[a-zA-Z0-9\.\-]+\.[a-zA-Z0-9]{2,25}$`)
-	regexTLDDomain            = regexp.MustCompile(`[a-z0-9\-]{2,25}`)
+	regexTLDDomain            = regexp.MustCompile(`[a-zA-Z0-9\-]{2,25}`)
 	regexValidDomainFirstChar = regexp.MustCompile(`^[0-9a-zA-Z]{1,1}$`)
 	regexFQDN                 = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
 )
