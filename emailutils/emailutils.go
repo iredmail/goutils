@@ -59,10 +59,6 @@ func IsDomain(s string) bool {
 }
 
 func IsTLDDomain(d string) bool {
-	if !IsDomain(d) {
-		return false
-	}
-
 	return regexTLDDomain.MatchString(d)
 }
 
