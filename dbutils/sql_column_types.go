@@ -76,13 +76,13 @@ func (ns NullString) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ns.value)
 }
 
-type NullFloat32 struct {
-	value  float32
+type NullFloat64 struct {
+	value  float64
 	isNull bool
 }
 
-func NewNullFloat32(v ...float32) NullFloat32 {
-	nnf := NullFloat32{}
+func NewNullFloat64(v ...float64) NullFloat64 {
+	nnf := NullFloat64{}
 	if len(v) > 0 {
 		nnf.value = v[0]
 	} else {
@@ -92,31 +92,28 @@ func NewNullFloat32(v ...float32) NullFloat32 {
 	return nnf
 }
 
-func (nf NullFloat32) Float32() float32 {
+func (nf NullFloat64) Float64() float64 {
 	return nf.value
 }
 
-func (nf *NullFloat32) Scan(value interface{}) error {
+func (nf *NullFloat64) Scan(value interface{}) error {
 	if value == nil {
 		nf.isNull = true
+
 		return nil
 	}
 
 	switch s := value.(type) {
 	case float32:
-		nf.value = s
+		nf.value = float64(s)
 	case float64:
-		nf.value = float32(s)
-	case int64:
-		nf.value = float32(s)
+		nf.value = s
 	}
-
-	nf.isNull = false
 
 	return nil
 }
 
-func (nf NullFloat32) Value() (driver.Value, error) {
+func (nf NullFloat64) Value() (driver.Value, error) {
 	if nf.isNull {
 		return nil, nil
 	}
@@ -124,18 +121,20 @@ func (nf NullFloat32) Value() (driver.Value, error) {
 	return nf.value, nil
 }
 
-func (nf *NullFloat32) UnmarshalJSON(data []byte) error {
+func (nf *NullFloat64) UnmarshalJSON(data []byte) error {
 	if bytes.Contains(data, []byte("null")) ||
 		bytes.Contains(data, []byte("\"\"")) {
 		nf.isNull = true
+
 		return nil
 	}
 
 	nf.isNull = false
+
 	return json.Unmarshal(data, &nf.value)
 }
 
-func (nf NullFloat32) MarshalJSON() ([]byte, error) {
+func (nf NullFloat64) MarshalJSON() ([]byte, error) {
 	if nf.isNull {
 		return json.Marshal(nil)
 	}
