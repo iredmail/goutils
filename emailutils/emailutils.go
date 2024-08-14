@@ -14,10 +14,17 @@ import (
 )
 
 var (
-	regexDomain               = regexp.MustCompile(`^[a-zA-Z0-9\.\-]+\.[a-zA-Z0-9]{2,25}$`)
-	regexTLDDomain            = regexp.MustCompile(`[a-zA-Z0-9\-]{2,25}`)
+	regexDomain = regexp.MustCompile(`^[a-zA-Z0-9\.\-]+\.[a-zA-Z0-9]{2,25}$`)
+
+	// - 以字母或数字开头，长度为 2-25 个字符
+	// - 不能以 `-` 结尾
+	regexTLDDomain = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9\-]{0,23}[a-zA-Z0-9]$`)
+
+	// FQDN 域名的首字母
 	regexValidDomainFirstChar = regexp.MustCompile(`^[0-9a-zA-Z]{1,1}$`)
-	regexFQDN                 = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
+
+	// FQDN 域名
+	regexFQDN = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
 )
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
@@ -203,7 +210,7 @@ func ExtractEmailsFromAddressList(s string) (emails []string, err error) {
 	}
 
 	for _, addr := range addrs {
-		// 去掉地址扩展（并转换为小写）
+		// 去掉���址扩展（并转换为小写）
 		emails = append(emails, StripExtension(addr.Address))
 	}
 
