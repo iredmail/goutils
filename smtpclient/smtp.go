@@ -174,3 +174,91 @@ func SendmailWithComposerInBackground(c Config, composer *Composer, l logger.Log
 		}
 	}()
 }
+
+/*
+	func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath string) (err error) {
+	smtpServer := fmt.Sprintf("%s:%s", c.Host, c.Port)
+
+	client, err := smtp.Dial(smtpServer)
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		_ = client.Close()
+	}()
+
+	// HELO
+	domain := emailutils.ExtractDomain(from.Address)
+	if domain == "" {
+		domain = "example.com"
+	}
+
+	err = client.Hello(domain)
+	if err != nil {
+		return err
+	}
+
+	// TLS
+	if c.StartTLS {
+		tlsConfig := &tls.Config{
+			// ServerName:         utils.GetHostName(),
+			InsecureSkipVerify: true,
+		}
+
+		err = client.StartTLS(tlsConfig)
+		if err != nil {
+			fmt.Printf("failed in STARTTLS directive: %v\n", err)
+			os.Exit(255)
+		}
+	}
+
+	// AUTH
+	auth := smtp.PlainAuth("", c.SMTPUser, c.SMTPPassword, c.Host)
+	err = client.Auth(auth)
+	if err != nil {
+		return err
+	}
+
+	// MAIL
+	err = client.Mail(from.Address)
+	if err != nil {
+		return err
+	}
+
+	// `RCPT TO:`
+	var toAddrs []string
+	for _, addr := range recipients {
+		toAddrs = append(toAddrs, addr)
+	}
+
+	to := strings.Join(toAddrs, ",")
+	if err = client.Rcpt(to); err != nil {
+		return err
+	}
+
+	// `DATA`
+	w, err := client.Data()
+	if err != nil {
+		return err
+	}
+
+	// 读取邮件源码文件
+	rawEmail, err := os.ReadFile(emlPath)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(rawEmail)
+	if err != nil {
+		return err
+	}
+
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+
+	return client.Quit()
+}
+*/
