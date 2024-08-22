@@ -66,3 +66,15 @@ func TestFlattenStrings(t *testing.T) {
 	// Unsupported type.
 	assert.Equal(t, empty, FlattenStrings(1))
 }
+
+func TestIsRandomString(t *testing.T) {
+	valid := GenRandomString(32)
+	invalid1 := "123cc jdjdj"
+	invalid2 := "123cc*jdjdj"
+	invalid3 := "123cc-jdjdj;select"
+
+	assert.True(t, IsRandomString(valid, 32))
+	assert.False(t, IsRandomString(invalid1, len(invalid1)))
+	assert.False(t, IsRandomString(invalid2, len(invalid2)))
+	assert.False(t, IsRandomString(invalid3, len(invalid3)))
+}
