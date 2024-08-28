@@ -2,11 +2,9 @@ package goutils
 
 import (
 	"crypto/rand"
-	"fmt"
 	"math/big"
 	mRand "math/rand"
 	"reflect"
-	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -91,11 +89,4 @@ func FlattenStrings(v any) (flattened []string) {
 	}
 
 	return flattened
-}
-
-func IsRandomString(s string, length int) bool {
-	pattern := fmt.Sprintf(`^[a-zA-Z0-9]{%d}$`, length)
-	regex := regexp.MustCompile(pattern)
-
-	return regex.MatchString(s)
 }
