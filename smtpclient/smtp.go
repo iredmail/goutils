@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/mail"
 	"net/smtp"
+	"os"
 	"runtime/debug"
 	"strings"
 	"time"
 
 	"github.com/iredmail/goutils"
+	"github.com/iredmail/goutils/emailutils"
 	"github.com/iredmail/goutils/logger"
 )
 
@@ -175,8 +178,9 @@ func SendmailWithComposerInBackground(c Config, composer *Composer, l logger.Log
 	}()
 }
 
-/*
-	func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath string) (err error) {
+// SendmailWithEml reads full email message and sends it out.
+// WARNING: This function should be just used as a tool for testing purpose, not to send general emails.
+func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath string) (err error) {
 	smtpServer := fmt.Sprintf("%s:%s", c.Host, c.Port)
 
 	client, err := smtp.Dial(smtpServer)
@@ -261,4 +265,3 @@ func SendmailWithComposerInBackground(c Config, composer *Composer, l logger.Log
 
 	return client.Quit()
 }
-*/
