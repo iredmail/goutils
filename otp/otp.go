@@ -87,8 +87,10 @@ func Authenticate(secret, password string) (authed bool) {
 func GenTotpSecret() (secret string, err error) {
 	ret := make([]byte, 16)
 	charLen := int64(len(charsForTotpSecret))
+
+	var num *big.Int
 	for i := range charLen {
-		num, err := rand.Int(rand.Reader, big.NewInt(charLen))
+		num, err = rand.Int(rand.Reader, big.NewInt(charLen))
 		if err != nil {
 			return
 		}
