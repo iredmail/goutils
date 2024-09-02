@@ -1,14 +1,23 @@
 package otp
 
 import (
+	"crypto/rand"
 	"encoding/base32"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/dgryski/dgoogauth"
 	"rsc.io/qr"
+)
+
+const (
+	// charsForTotpSecret 指定用于生成 TOTP secret 的字符。
+	// TOTP secret 只能使用大写字母 A-Z 及数字 2-7（共32个字符）。
+	// 参考：https://datatracker.ietf.org/doc/html/rfc4648#section-6
+	charsForTotpSecret = "234567ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 var ErrInvalidOtpSecret = errors.New("invalid otp secret")
@@ -73,4 +82,19 @@ func Authenticate(secret, password string) (authed bool) {
 	}
 
 	return authed
+}
+
+func GenTotpSecret() (secret string, err error) {
+	ret := make([]byte, 16)
+	charLen := int64(len(charsForTotpSecret))
+	for i := range charLen {
+		num, err := rand.Int(rand.Reader, big.NewInt(charLen))
+		if err != nil {
+			return
+		}
+
+		ret[i] = charsForTotpSecret[num.Int64()]
+	}
+
+	return string(ret), nil
 }
