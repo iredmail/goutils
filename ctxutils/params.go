@@ -36,7 +36,7 @@ func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 	}
 
 	addr = ctx.Params(param)
-	addr, err = url.QueryUnescape(addr)
+	addr, err = url.QueryUnescape(strings.TrimSpace(addr))
 	if err != nil {
 		return "", respcode.ErrInvalidEmailAddress
 	}
