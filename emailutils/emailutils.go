@@ -29,7 +29,7 @@ var (
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
 func IsEmail(s string) bool {
-	_, err := mail.ParseAddress(s)
+	_, err := mail.ParseAddress(strings.TrimSpace(s))
 
 	if err != nil {
 		return false
@@ -45,7 +45,7 @@ func IsEmail(s string) bool {
 		return false
 	}
 
-	return err == nil
+	return true
 }
 
 func IsFQDN(s string) bool {

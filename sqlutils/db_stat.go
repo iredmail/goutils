@@ -12,22 +12,23 @@ type DBStat struct {
 	Size int64  `json:"size"` // PageSize * PageCount
 
 	// 通过 Pragma 指令获取的相关信息
-	PageSize      int64  `json:"page_size"`
-	PageCount     int64  `json:"page_count"`
-	JournalMode   string `json:"journal_mode"` // 日志模式
-	AutoVacuum    string `json:"auto_vacuum"`
-	Synchronous   string `json:"synchronous"`
-	FreelistCount int64  `json:"freelist_count"` // number of unused pages in the database file
+	JournalMode string `json:"journal_mode"` // 日志模式
+	AutoVacuum  string `json:"auto_vacuum"`
+	Synchronous string `json:"synchronous"`
+	// PageSize      int64  `json:"page_size"`
+	// PageCount     int64  `json:"page_count"`
+	// FreelistCount int64  `json:"freelist_count"` // number of unused pages in the database file
 }
 
 // GetSqliteDBStat 返回指定 sqlite 数据库的相关信息。
 func GetSqliteDBStat(pth string, db *sql.DB) (stat DBStat) {
-	var pageSize, pageCount, freelistCount int64
+	var pageSize, pageCount int64
+	// var freelistCount int64
 	var journalMode, autoVacuum, synchronous string
 
 	_ = db.QueryRow("PRAGMA page_size").Scan(&pageSize)
 	_ = db.QueryRow("PRAGMA page_count").Scan(&pageCount)
-	_ = db.QueryRow("PRAGMA freelist_count").Scan(&freelistCount)
+	// _ = db.QueryRow("PRAGMA freelist_count").Scan(&freelistCount)
 
 	_ = db.QueryRow("PRAGMA journal_mode").Scan(&journalMode)
 	_ = db.QueryRow("PRAGMA auto_vacuum").Scan(&autoVacuum)
@@ -54,16 +55,15 @@ func GetSqliteDBStat(pth string, db *sql.DB) (stat DBStat) {
 	}
 
 	return DBStat{
-		Path: pth,
+		Path:        pth,
+		Size:        pageSize * pageCount,
+		JournalMode: strings.ToUpper(journalMode),
+		AutoVacuum:  strings.ToUpper(autoVacuum),
+		Synchronous: strings.ToUpper(synchronous),
 
-		Size: pageSize * pageCount,
-
-		PageCount:     pageCount,
-		PageSize:      pageSize,
-		JournalMode:   strings.ToUpper(journalMode),
-		AutoVacuum:    strings.ToUpper(autoVacuum),
-		Synchronous:   strings.ToUpper(synchronous),
-		FreelistCount: freelistCount,
+		// PageCount:     pageCount,
+		// PageSize:      pageSize,
+		// FreelistCount: freelistCount,
 	}
 }
 
