@@ -4,7 +4,6 @@ go 1.23.0
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
-	github.com/dgryski/dgoogauth v0.0.0-20190221195224-5a805980a5f3
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/go-ldap/ldap/v3 v3.4.8
 	github.com/go-sql-driver/mysql v1.8.1
@@ -21,7 +20,6 @@ require (
 	golang.org/x/crypto v0.26.0
 	golang.org/x/text v0.17.0
 	modernc.org/sqlite v1.32.0
-	rsc.io/qr v0.2.0
 )
 
 require (
