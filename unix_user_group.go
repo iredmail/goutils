@@ -64,3 +64,26 @@ func LookupGroup(group string) (gid int, err error) {
 
 	return
 }
+
+func GetAssignedGroups(username string) (groupIds []string, groupNames []string, err error) {
+	u, err := user.Lookup(username)
+	if err != nil {
+		return
+	}
+
+	groupIds, err = u.GroupIds()
+	if err != nil {
+		return
+	}
+
+	for _, gid := range groupIds {
+		group, err := user.LookupGroupId(gid)
+		if err != nil {
+			continue
+		}
+
+		groupNames = append(groupNames, group.Name)
+	}
+
+	return
+}
