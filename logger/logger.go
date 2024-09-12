@@ -38,9 +38,9 @@ func (l *logger) applyOptions(opts ...Option) {
 	}
 }
 
-func newLogger(opts ...Option) logger {
+func newLogger(opts ...Option) *logger {
 	sl := slog.New()
-	l := logger{
+	l := &logger{
 		sl:             sl,
 		level:          "info",
 		timeFormat:     time.DateTime,
@@ -159,7 +159,7 @@ func genLogFormatter(timeFormat string) *slog.TextFormatter {
 	return logFormatter
 }
 
-func handlerRotateFile(log logger, logFile string) (*handler.SyncCloseHandler, error) {
+func handlerRotateFile(log *logger, logFile string) (*handler.SyncCloseHandler, error) {
 	return handler.NewSizeRotateFileHandler(
 		logFile,
 		log.maxSize,
@@ -173,7 +173,7 @@ func handlerRotateFile(log logger, logFile string) (*handler.SyncCloseHandler, e
 
 // handlerRotateTime
 // rotateInterval: 1w, 1d, 1h, 1m, 1s
-func handlerRotateTime(log logger, logFile string) (*handler.SyncCloseHandler, error) {
+func handlerRotateTime(log *logger, logFile string) (*handler.SyncCloseHandler, error) {
 	if len(log.rotateInterval) < 2 {
 		return nil, fmt.Errorf("invalid rotate interval: %s", log.rotateInterval)
 	}
@@ -235,24 +235,24 @@ func parseLevels(level string) []slog.Level {
 // 实现 Logger 接口。
 //
 
-func (l logger) Info(msg string, args ...interface{}) {
+func (l *logger) Info(msg string, args ...interface{}) {
 	l.sl.Infof(msg, args...)
 }
 
-func (l logger) Error(msg string, args ...interface{}) {
+func (l *logger) Error(msg string, args ...interface{}) {
 	l.sl.Errorf(msg, args...)
 }
 
-func (l logger) Warn(msg string, args ...interface{}) {
+func (l *logger) Warn(msg string, args ...interface{}) {
 	l.sl.Warnf(msg, args...)
 }
 
-func (l logger) Debug(msg string, args ...interface{}) {
+func (l *logger) Debug(msg string, args ...interface{}) {
 	l.sl.Debugf(msg, args...)
 }
 
 // Write Only supported file target mode.
-func (l logger) Write(p []byte) (int, error) {
+func (l *logger) Write(p []byte) (int, error) {
 	if l.rotateWriter == nil {
 		return 0, nil
 	}
