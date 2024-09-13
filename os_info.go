@@ -11,7 +11,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/host"
 	"github.com/shirou/gopsutil/v4/mem"
 )
@@ -20,11 +19,11 @@ type OSInfo struct {
 	Hostname string `json:"hostname"`
 	HostID   string `json:"host_id"`
 
-	System       string   `json:"system"`       // linux, darwin, freebsd, openbsd, windows
-	Architecture string   `json:"architecture"` // 386, amd64, arm, arm64
-	CPUCores     []string `json:"cpu_cores"`
-	Memory       uint64   `json:"memory"` // in bytes
-	Swap         uint64   `json:"swap"`   // in bytes
+	System       string `json:"system"`       // linux, darwin, freebsd, openbsd, windows
+	Architecture string `json:"architecture"` // 386, amd64, arm, arm64
+	CPUCores     int    `json:"cpu_cores"`    // number of CPU cores
+	Memory       uint64 `json:"memory"`       // in bytes
+	Swap         uint64 `json:"swap"`         // in bytes
 
 	// OS
 	KernelVersion string `json:"kernel_version"`
@@ -115,20 +114,7 @@ func (oi *OSInfo) setDovecotPgsqlLastLogin() {
 
 func GetOSInfo() (oi OSInfo, err error) {
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
-
-	//
-	// CPU
-	//
-	cpuInfo, err := cpu.Info()
-	if err != nil {
-		err = fmt.Errorf("failed in getting CPU info: %v", err)
-
-		return
-	}
-
-	for _, ci := range cpuInfo {
-		oi.CPUCores = append(oi.CPUCores, fmt.Sprintf("%s %.2fGHz (%d cores)", ci.ModelName, ci.Mhz/1000, ci.Cores))
-	}
+	oi.CPUCores = runtime.NumCPU()
 
 	//
 	// Memory
