@@ -121,6 +121,8 @@ func GetOSInfo() (oi OSInfo, err error) {
 	//
 	cpuInfo, err := cpu.Info()
 	if err != nil {
+		err = fmt.Errorf("failed in getting CPU info: %v", err)
+
 		return
 	}
 
@@ -133,18 +135,24 @@ func GetOSInfo() (oi OSInfo, err error) {
 	//
 	vm, err := mem.VirtualMemory()
 	if err != nil {
+		err = fmt.Errorf("failed in getting memory info: %v", err)
+
 		return
 	}
 	oi.Memory = vm.Total
 
 	sms, err := mem.SwapMemory()
 	if err != nil {
+		err = fmt.Errorf("failed in swap memory info: %v", err)
+
 		return
 	}
 	oi.Swap = sms.Total
 
 	hi, err := host.Info()
 	if err != nil {
+		err = fmt.Errorf("failed in host info: %v", err)
+
 		return
 	}
 
