@@ -115,3 +115,30 @@ func GetStructFieldNames(obj any) (names []string) {
 func CalculateTotalPages(total, pageSize float64) int {
 	return int(math.Ceil(total / pageSize))
 }
+
+func FindAddAndRemoveValues[T comparable](a, b []T) (addValues, removeValues []T) {
+	ma := make(map[T]bool)
+	mb := make(map[T]bool)
+
+	for _, v := range a {
+		ma[v] = true
+	}
+
+	for _, v := range b {
+		mb[v] = true
+	}
+
+	for v := range mb {
+		if !ma[v] {
+			addValues = append(addValues, v)
+		}
+	}
+
+	for v := range ma {
+		if !mb[v] {
+			removeValues = append(removeValues, v)
+		}
+	}
+
+	return
+}
