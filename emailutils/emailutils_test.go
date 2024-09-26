@@ -34,14 +34,6 @@ func TestIsDomain(t *testing.T) {
 	assert.False(t, IsDomain("1234"))
 }
 
-func TestIsValidDomainFirstChar(t *testing.T) {
-	// IsValidDomainFirstChar
-	assert.True(t, IsValidDomainFirstChar("a"))
-	assert.True(t, IsValidDomainFirstChar("C"))
-	assert.True(t, IsValidDomainFirstChar("1"))
-	assert.False(t, IsValidDomainFirstChar("#"))
-}
-
 func TestIsFQDN(t *testing.T) {
 	// IsFQDN
 	assert.True(t, IsFQDN("mail.demo.io"))

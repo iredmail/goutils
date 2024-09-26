@@ -69,10 +69,6 @@ func IsTLDDomain(d string) bool {
 	return regexTLDDomain.MatchString(d)
 }
 
-func IsValidDomainFirstChar(char string) bool {
-	return regexValidDomainFirstChar.MatchString(char)
-}
-
 func IsWildcardAddr(s string) bool {
 	s = strings.ReplaceAll(s, "*", "1")
 
