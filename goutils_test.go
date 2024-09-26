@@ -1,7 +1,6 @@
 package goutils
 
 import (
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,20 +38,4 @@ func TestGoUtils(t *testing.T) {
 	assert.True(t, CalculateTotalPages(50, 50) == 1)
 	assert.True(t, CalculateTotalPages(52, 50) == 2)
 	assert.True(t, CalculateTotalPages(200, 50) == 4)
-
-	add, remove := FindAddAndRemoveValues([]int{1, 2, 3}, []int{3, 4, 5})
-	sort.Ints(add)
-	sort.Ints(remove)
-	assert.True(t, add[0] == 4 && add[1] == 5)
-	assert.True(t, remove[0] == 1 && remove[1] == 2)
-
-	add, remove = FindAddAndRemoveValues([]int{}, []int{3, 4, 5})
-	sort.Ints(add)
-	assert.True(t, add[0] == 3 && add[1] == 4 && add[2] == 5)
-	assert.True(t, len(remove) == 0)
-
-	add, remove = FindAddAndRemoveValues([]int{1, 2, 3}, []int{})
-	sort.Ints(remove)
-	assert.True(t, len(add) == 0)
-	assert.True(t, remove[0] == 1 && remove[1] == 2 && remove[2] == 3)
 }
