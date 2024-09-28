@@ -2,10 +2,83 @@ package goutils
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"os"
+	"os/user"
 	"path/filepath"
+	"syscall"
 )
+
+type FileStat struct {
+	Exists    bool
+	IsLink    bool // symbol link
+	IsRegular bool // regular file
+	IsDir     bool // directory
+	Owner     string
+	Group     string
+	Mode      os.FileMode
+	Uid       uint32
+	Gid       uint32
+}
+
+func (fs *FileStat) String() string {
+	return fmt.Sprintf(
+		"Exists: %v, IsLink: %v, IsRegular: %v, IsDir: %v",
+		fs.Exists, fs.IsLink, fs.IsRegular, fs.IsDir,
+	)
+}
+
+func GetFileStat(pth string) (*FileStat, error) {
+	fs := new(FileStat)
+
+	stat, err := os.Lstat(pth)
+	if err != nil {
+		// 不能用 os.IsNotExist(err) 来判断文件是否存在
+		if e, ok := err.(*os.PathError); ok {
+			// no such file or directory
+			if errors.Is(e.Err, syscall.ENOENT) {
+				return fs, nil
+			}
+		}
+
+		return fs, fmt.Errorf("failed in checking stat of %s: %v", pth, err)
+	}
+
+	fs.Exists = true
+	fs.Mode = stat.Mode()
+
+	// Get uid / gid and owner / group names
+	ss := stat.Sys().(*syscall.Stat_t)
+	fs.Uid = ss.Uid
+	fs.Gid = ss.Gid
+
+	usr, err := user.LookupId(fmt.Sprintf("%d", fs.Uid))
+	if err == nil {
+		fs.Owner = usr.Username
+	}
+
+	group, err := user.LookupGroupId(fmt.Sprintf("%d", fs.Gid))
+	if err == nil {
+		fs.Group = group.Name
+	}
+
+	if stat.IsDir() {
+		fs.IsDir = true
+
+		return fs, nil
+	}
+
+	if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+		fs.IsLink = true
+
+		return fs, nil
+	}
+
+	fs.IsRegular = true
+
+	return fs, nil
+}
 
 // DestExists 检查目标对象（文件、目录、符号链接，等）是否存在。
 func DestExists(pth string) bool {
