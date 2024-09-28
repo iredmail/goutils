@@ -29,8 +29,8 @@ func (fs *FileStat) String() string {
 	)
 }
 
-func GetFileStat(pth string) (*FileStat, error) {
-	fs := new(FileStat)
+func GetFileStat(pth string) (FileStat, error) {
+	fs := FileStat{}
 
 	stat, err := os.Lstat(pth)
 	if err != nil {
