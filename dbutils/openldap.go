@@ -4,19 +4,20 @@ import (
 	"crypto/tls"
 
 	"github.com/go-ldap/ldap/v3"
+
 	"github.com/iredmail/ldappool"
 )
 
 func NewOpenLDAPConn(c LDAPConnConfig) (pool ldap.Client, err error) {
 	opts := []ldappool.Option{
-		ldappool.WithBindCredentials(c.LDAPBindDN, c.LDAPBindPassword),
+		ldappool.WithBindCredentials(c.BindDN, c.BindPassword),
 	}
 
-	if c.LDAPStartTLS {
+	if c.StartTLS {
 		opts = append(opts, ldappool.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}))
 	}
 
-	pool, err = ldappool.New(c.LDAPURI, opts...)
+	pool, err = ldappool.New(c.URI, opts...)
 
 	return
 }
