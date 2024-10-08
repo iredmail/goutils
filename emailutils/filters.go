@@ -5,6 +5,8 @@ import (
 	"strings"
 )
 
+// FilterValidEmails 从给定的邮件地址列表里过滤出有效的和无效的邮件地址。
+// 注意：邮件地址扩展会被保留。
 func FilterValidEmails(addrs []string) (valid []string, invalid []string) {
 	for _, addr := range addrs {
 		if IsEmail(addr) {

@@ -58,6 +58,7 @@ var (
 	ErrInvalidCustomer             = errors.New("INVALID_CUSTOMER")
 	ErrEmptyPassword               = errors.New("EMPTY_PASSWORD")
 	ErrInvalidAccount              = errors.New("INVALID_ACCOUNT")
+	ErrInvalidMailUser             = errors.New("INVALID_MAIL_USER")
 	ErrInvalidAPIKey               = errors.New("INVALID_API_KEY")
 	ErrInvalidOtpCode              = errors.New("INVALID_OTP_CODE")
 	ErrInvalidComponent            = errors.New("INVALID_COMPONENT")
