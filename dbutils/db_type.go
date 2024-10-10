@@ -1,5 +1,9 @@
 package dbutils
 
+import (
+	"fmt"
+)
+
 const (
 	DBTypeMariaDB  DBType = "mariadb"
 	DBTypeMySQL    DBType = "mysql"
@@ -16,8 +20,10 @@ func (t DBType) String() string {
 	return string(t)
 }
 
-func DBTypeToDialect(t DBType) (dialect string) {
+func (t DBType) Dialect() (dialect string) {
 	switch t {
+	case DBTypeMariaDB, DBTypeMySQL:
+		dialect = DialectMySQL
 	case DBTypePGSQL:
 		dialect = DialectPg
 	default:
@@ -25,4 +31,8 @@ func DBTypeToDialect(t DBType) (dialect string) {
 	}
 
 	return
+}
+
+func ErrUnsupportedDBType(dt DBType) error {
+	return fmt.Errorf("unsupported db type: %s", dt.String())
 }
