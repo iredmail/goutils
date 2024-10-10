@@ -238,11 +238,8 @@ func IsValidASCIIHeaderName(name string) bool {
 
 // ToLowerWithExt 将邮件地址转换为小写，但保留地址扩展部分（+extension）的大小写。
 // 例如：UsEr+LoG@ExAmPlE.CoM -> user+LoG@example.com。
+// 注意：传入的 `s` 必须是合法的邮件地址，ToLowerWithExt 内部不检查其是否合法。
 func ToLowerWithExt(s string) string {
-	if !IsEmail(s) {
-		return s
-	}
-
 	userExt, domain, _ := strings.Cut(s, "@")
 	username, ext, found := strings.Cut(userExt, "+")
 	if found {
@@ -302,6 +299,7 @@ func ObfuscateAddresses(emails ...string) (obfuscated []string) {
 	return
 }
 
+/*
 func ReverseDomain(domain string) string {
 	split := strings.Split(domain, ".")
 	slices.Reverse(split)
@@ -315,4 +313,28 @@ func ReverseDomains(domains []string) []string {
 	}
 
 	return domains
+}
+*/
+
+// ExtractEmailsInCommaString extracts email addresses from a string which
+// contains one or multiple email address separated by comma.
+//
+// Notes:
+//   - Invalid and duplicate emails will be discarded.
+//   - Username and domain parts will be converted to lower cases.
+//   - Address extension will be kept (with same upper/lower cases).
+func ExtractEmailsInCommaString(s string) (mails []string) {
+	for _, addr := range strings.Split(s, ",") {
+		addr = strings.TrimSpace(addr)
+
+		if IsEmail(addr) {
+			addr = ToLowerWithExt(addr)
+
+			if !slices.Contains(mails, addr) {
+				mails = append(mails, addr)
+			}
+		}
+	}
+
+	return
 }

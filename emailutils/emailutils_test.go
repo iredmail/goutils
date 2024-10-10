@@ -182,3 +182,32 @@ func TestIsTLDDomain(t *testing.T) {
 	assert.False(t, IsTLDDomain("local host"))  // Space not allowed
 	assert.False(t, IsTLDDomain("A"))           // Single uppercase character (too short)
 }
+
+func TestExtractEmailsInCommaString(t *testing.T) {
+	type D struct {
+		input  string
+		output []string
+	}
+
+	data := []D{
+		// One email
+		{"u1@a.io", []string{"u1@a.io"}},
+
+		// Multiple emails
+		{"u1@a.io, u2@a.io, u3@a.io", []string{"u1@a.io", "u2@a.io", "u3@a.io"}},
+
+		// Invalid emails will be discarded
+		{"u1@a.io, u2@a.io, invalid-email", []string{"u1@a.io", "u2@a.io"}},
+
+		// Email with address extension
+		{"u1@a.io, u2+Ext@a.io", []string{"u1@a.io", "u2+Ext@a.io"}},
+
+		// Email with upper cases in username and domain parts.
+		{"UsEr1@A.iO, uSeR2+ExT@a.io", []string{"user1@a.io", "user2+ExT@a.io"}},
+	}
+
+	for _, d := range data {
+		emails := ExtractEmailsInCommaString(d.input)
+		assert.Equal(t, d.output, emails)
+	}
+}
