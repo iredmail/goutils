@@ -115,9 +115,8 @@ func ExtractDomains(emails []string) (domains []string) {
 	for _, addr := range emails {
 		domains = append(domains, ExtractDomain(addr))
 	}
-	slices.Sort(domains)
 
-	return slices.Compact(domains)
+	return goutils.CompactSlices(domains)
 }
 
 // ExtractUsernameAndDomain 从给定的 s 里提取用户名和域名。

@@ -1,6 +1,7 @@
 package goutils
 
 import (
+	"cmp"
 	"math"
 	"net"
 	"reflect"
@@ -139,4 +140,10 @@ func DeleteSlices[T comparable](target []T, remove ...T) []T {
 	}
 
 	return arr
+}
+
+func CompactSlices[T cmp.Ordered](s []T) []T {
+	slices.Sort(s)
+
+	return slices.Compact(s)
 }
