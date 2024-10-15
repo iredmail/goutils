@@ -115,6 +115,7 @@ func ExtractDomains(emails []string) (domains []string) {
 	for _, addr := range emails {
 		domains = append(domains, ExtractDomain(addr))
 	}
+	slices.Sort(domains)
 
 	return slices.Compact(domains)
 }
