@@ -1,7 +1,6 @@
 package goutils
 
 import (
-	"cmp"
 	"math"
 	"net"
 	"reflect"
@@ -115,35 +114,4 @@ func GetStructFieldNames(obj any) (names []string) {
 
 func CalculateTotalPages(total, pageSize float64) int {
 	return int(math.Ceil(total / pageSize))
-}
-
-func AddSlices[T comparable](target []T, add ...T) []T {
-	for _, s := range add {
-		if !slices.Contains(target, s) {
-			target = append(target, s)
-		}
-	}
-
-	return target
-}
-
-func DeleteSlices[T comparable](target []T, remove ...T) []T {
-	if len(remove) == 0 {
-		return target
-	}
-
-	var arr []T
-	for _, s := range target {
-		if !slices.Contains(remove, s) {
-			arr = append(arr, s)
-		}
-	}
-
-	return arr
-}
-
-func CompactSlices[T cmp.Ordered](s []T) []T {
-	slices.Sort(s)
-
-	return slices.Compact(s)
 }

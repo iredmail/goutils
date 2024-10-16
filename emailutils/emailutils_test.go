@@ -45,6 +45,13 @@ func TestExtractDomain(t *testing.T) {
 	assert.Equal(t, ExtractDomain("user@[192.168.1.1]"), "192.168.1.1")
 }
 
+func TestExtractDomains(t *testing.T) {
+	assert.Equal(t, 0, len(ExtractDomains([]string{})))
+	assert.Equal(t, []string{"a.io"}, ExtractDomains([]string{"user@A.io"}))
+	assert.Equal(t, []string{"a.io", "b.io"}, ExtractDomains([]string{"user@A.io", "user2@a.IO", "user@B.io"}))
+	assert.Equal(t, []string{"a.io", "b.io", "c.io"}, ExtractDomains([]string{"1@c.io", "1@a.io", "2@b.IO", "1@b.io", "2@a.IO", "3@c.io"}))
+}
+
 func TestExtractUsername(t *testing.T) {
 	assert.Equal(t, ExtractUsername("user"), "user")          // invalid email
 	assert.Equal(t, ExtractUsername("user@A.io"), "user")     // valid

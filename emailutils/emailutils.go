@@ -110,13 +110,23 @@ func ExtractDomain(e string) string {
 	return strings.ToLower(domain)
 }
 
-// ExtractDomains 从多个邮件地址里提取邮件域名并转换为小写。
+// ExtractDomains 从多个邮件地址里提取邮件域名并转换为小写和排序。注意：重复的域名会被移除。
 func ExtractDomains(emails []string) (domains []string) {
-	for _, addr := range emails {
-		domains = append(domains, ExtractDomain(addr))
+	if len(emails) == 0 {
+		return
 	}
 
-	return goutils.CompactSlices(domains)
+	for _, addr := range emails {
+		d := ExtractDomain(addr)
+
+		if !slices.Contains(domains, d) {
+			domains = append(domains, d)
+		}
+	}
+
+	slices.Sort(domains)
+
+	return
 }
 
 // ExtractUsernameAndDomain 从给定的 s 里提取用户名和域名。
