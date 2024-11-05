@@ -7,4 +7,7 @@ type LDAPConnConfig struct {
 	BindDN             string
 	BindPassword       string
 	StartTLS           bool
+
+	// MaxConnections 定义 ldap 连接池维持的最大连接数。默认为 10。
+	MaxConnections int
 }
