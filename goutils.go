@@ -2,7 +2,6 @@ package goutils
 
 import (
 	"math"
-	"net"
 	"reflect"
 	"slices"
 	"strings"
@@ -58,12 +57,6 @@ func NotEmpty(v any) bool {
 	}
 
 	return false
-}
-
-func IsIPv4(address string) bool {
-	ip := net.ParseIP(address)
-
-	return ip.To4() != nil
 }
 
 func Intersect[T comparable](s1, s2 []T) []T {

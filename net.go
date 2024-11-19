@@ -98,3 +98,9 @@ func GetIPPortFromNetAddr(addr net.Addr) (ip string, port string, version int) {
 
 	return
 }
+
+func IsIPv4(address string) bool {
+	ip := net.ParseIP(address)
+
+	return ip.To4() != nil
+}

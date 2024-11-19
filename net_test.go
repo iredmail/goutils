@@ -7,12 +7,15 @@ import (
 )
 
 func TestNet(t *testing.T) {
-	assert.Equal(t, true, IsIP("192.168.0.1"))
-	assert.Equal(t, true, IsIP("192.168.0.0"))
-	assert.Equal(t, false, IsIP("192.168.0.0/24"))
+	assert.True(t, IsIP("192.168.0.1"))
+	assert.True(t, IsIP("192.168.0.0"))
+	assert.False(t, IsIP("192.168.0.0/24"))
 
-	assert.Equal(t, true, IsCIDR("192.168.0.0/24"))
-	assert.Equal(t, false, IsCIDR("192.168.0.0"))
+	assert.True(t, IsIPv4("192.168.2.4"))
+	assert.False(t, IsIPv4("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
+
+	assert.True(t, IsCIDR("192.168.0.0/24"))
+	assert.False(t, IsCIDR("192.168.0.0"))
 }
 
 func TestIsWildcardAddr(t *testing.T) {
