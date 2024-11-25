@@ -21,6 +21,10 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 }
 
 func IsLanguageSupported(lang string) bool {
+	if bundle == nil {
+		return false
+	}
+
 	tag, _, err := language.ParseAcceptLanguage(lang)
 	if err != nil {
 		return false
@@ -30,12 +34,20 @@ func IsLanguageSupported(lang string) bool {
 }
 
 func Translate(lang string, s string) string {
+	if bundle == nil {
+		return s
+	}
+
 	t := spreak.NewKeyLocalizer(bundle, lang)
 
 	return t.Get(s)
 }
 
 func TranslateF(lang string, s string, args ...any) string {
+	if bundle == nil {
+		return s
+	}
+
 	t := spreak.NewKeyLocalizer(bundle, lang)
 
 	return t.Getf(s, args...)
