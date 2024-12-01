@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.23.2
+go 1.23.3
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
@@ -14,7 +14,7 @@ require (
 	github.com/jhillyerd/enmime v1.3.0
 	github.com/k0kubun/pp/v3 v3.3.0
 	github.com/lib/pq v1.10.9
-	github.com/shirou/gopsutil/v4 v4.24.10
+	github.com/shirou/gopsutil/v4 v4.24.11
 	github.com/stretchr/testify v1.9.0
 	github.com/vorlif/spreak v0.6.0
 	golang.org/x/crypto v0.29.0
