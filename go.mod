@@ -12,7 +12,7 @@ require (
 	github.com/gookit/slog v0.5.7
 	github.com/iredmail/ldappool v0.0.0-20241106080618-49c2edc1411d
 	github.com/jhillyerd/enmime v1.3.0
-	github.com/k0kubun/pp/v3 v3.3.0
+	github.com/k0kubun/pp/v3 v3.4.1
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.24.11
 	github.com/stretchr/testify v1.9.0
@@ -67,7 +67,7 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20241004144649-1aea3fae8852 // indirect
-	modernc.org/libc v1.61.2 // indirect
+	modernc.org/libc v1.61.3 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
 	modernc.org/strutil v1.2.0 // indirect
