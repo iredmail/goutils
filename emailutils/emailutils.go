@@ -348,3 +348,11 @@ func ExtractEmailsInCommaString(s string) (mails []string) {
 
 	return
 }
+
+func ReplaceEmailsDomain(domain string, mails []string) (replaced []string) {
+	for _, email := range mails {
+		replaced = append(replaced, ExtractUsername(email)+"@"+domain)
+	}
+
+	return
+}
