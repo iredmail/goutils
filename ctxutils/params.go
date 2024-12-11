@@ -14,8 +14,13 @@ import (
 	"github.com/iredmail/goutils/respcode"
 )
 
-func ParamDomain(ctx *fiber.Ctx) (domain string, err error) {
-	domain = ctx.Params("domain")
+func ParamDomain(ctx *fiber.Ctx, key ...string) (domain string, err error) {
+	_key := "domain"
+	if len(key) > 0 {
+		_key = key[0]
+	}
+
+	domain = ctx.Params(_key)
 	domain, err = url.QueryUnescape(domain)
 	if err != nil {
 		return "", respcode.ErrInvalidDomain
