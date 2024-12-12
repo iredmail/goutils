@@ -5,7 +5,7 @@ import (
 	"net/mail"
 	"time"
 
-	"github.com/jhillyerd/enmime"
+	"github.com/jhillyerd/enmime/v2"
 
 	"github.com/iredmail/goutils"
 )
