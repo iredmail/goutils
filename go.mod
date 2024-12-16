@@ -1,16 +1,16 @@
 module github.com/iredmail/goutils
 
-go 1.23.3
+go 1.23.4
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/doug-martin/goqu/v9 v9.19.0
-	github.com/go-ldap/ldap/v3 v3.4.8
+	github.com/go-ldap/ldap/v3 v3.4.9
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/google/uuid v1.6.0
 	github.com/gookit/slog v0.5.7
-	github.com/iredmail/ldappool v0.0.0-20241106080618-49c2edc1411d
+	github.com/iredmail/ldappool v0.0.0-20241216010537-2be1312167b2
 	github.com/jhillyerd/enmime/v2 v2.0.0
 	github.com/k0kubun/pp/v3 v3.4.1
 	github.com/lib/pq v1.10.9
@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/vorlif/spreak v0.6.0
 	golang.org/x/crypto v0.31.0
-	golang.org/x/exp v0.0.0-20241210194714-1829a127f884
+	golang.org/x/exp v0.0.0-20241215155358-4a5509556b9e
 	golang.org/x/text v0.21.0
 	modernc.org/sqlite v1.34.2
 )
@@ -66,7 +66,7 @@ require (
 	golang.org/x/sys v0.28.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/gc/v3 v3.0.0-20241004144649-1aea3fae8852 // indirect
+	modernc.org/gc/v3 v3.0.0-20241213165251-3bc300f6d0c9 // indirect
 	modernc.org/libc v1.61.4 // indirect
 	modernc.org/mathutil v1.6.0 // indirect
 	modernc.org/memory v1.8.0 // indirect
