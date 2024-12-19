@@ -65,3 +65,11 @@ func TestIsWildcardIPv4(t *testing.T) {
 	assert.Equal(t, false, IsWildcardIPv4("192.168.*.."))
 	assert.Equal(t, false, IsWildcardIPv4("192.168.*.*."))
 }
+
+func TestIsHttpEndpoint(t *testing.T) {
+	assert.Equal(t, true, IsHttpEndpoint("http://192.168.0.1"))
+	assert.Equal(t, true, IsHttpEndpoint("https://www.example.com"))
+	assert.Equal(t, true, IsHttpEndpoint("http://example.com"))
+	assert.Equal(t, false, IsHttpEndpoint("ftp://example.com"))
+	assert.Equal(t, false, IsHttpEndpoint("example"))
+}

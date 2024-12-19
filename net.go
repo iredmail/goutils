@@ -2,6 +2,7 @@ package goutils
 
 import (
 	"net"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -103,4 +104,18 @@ func IsIPv4(address string) bool {
 	ip := net.ParseIP(address)
 
 	return ip.To4() != nil
+}
+
+func IsHttpEndpoint(endpoint string) bool {
+	_, err := url.ParseRequestURI(endpoint)
+	if err != nil {
+		return false
+	}
+
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return false
+	}
+
+	return u.Scheme == "http" || u.Scheme == "https"
 }
