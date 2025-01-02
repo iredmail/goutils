@@ -309,22 +309,20 @@ func ObfuscateAddresses(emails ...string) (obfuscated []string) {
 	return
 }
 
-/*
-func ReverseDomain(domain string) string {
-	split := strings.Split(domain, ".")
-	slices.Reverse(split)
+func ReverseDomainByDot(domain string) string {
+	parts := strings.Split(domain, ".")
+	slices.Reverse(parts)
 
-	return strings.Join(split, ".")
+	return strings.Join(parts, ".")
 }
 
-func ReverseDomains(domains []string) []string {
+func ReverseDomainsByDot(domains []string) []string {
 	for i, d := range domains {
-		domains[i] = ReverseDomain(d)
+		domains[i] = ReverseDomainByDot(d)
 	}
 
 	return domains
 }
-*/
 
 // ExtractEmailsInCommaString extracts email addresses from a string which
 // contains one or multiple email address separated by comma.

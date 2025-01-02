@@ -7,15 +7,15 @@ require (
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/go-ldap/ldap/v3 v3.4.10
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/gofiber/fiber/v2 v2.52.5
+	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/google/uuid v1.6.0
 	github.com/gookit/slog v0.5.7
 	github.com/iredmail/ldappool v0.0.0-20241227074846-787799d06921
 	github.com/jhillyerd/enmime/v2 v2.0.0
 	github.com/k0kubun/pp/v3 v3.4.1
 	github.com/lib/pq v1.10.9
-	github.com/shirou/gopsutil/v4 v4.24.11
-	github.com/stretchr/testify v1.9.0
+	github.com/shirou/gopsutil/v4 v4.24.12
+	github.com/stretchr/testify v1.10.0
 	github.com/vorlif/spreak v0.6.0
 	golang.org/x/crypto v0.31.0
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
@@ -67,9 +67,9 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/gc/v3 v3.0.0-20241223112719-96e2e1e4408d // indirect
-	modernc.org/libc v1.61.5 // indirect
-	modernc.org/mathutil v1.7.0 // indirect
+	modernc.org/libc v1.61.6 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.0 // indirect
-	modernc.org/strutil v1.2.0 // indirect
+	modernc.org/strutil v1.2.1 // indirect
 	modernc.org/token v1.1.0 // indirect
 )
