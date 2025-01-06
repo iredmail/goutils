@@ -257,6 +257,9 @@ func GetOSInfo() (oi OSInfo, err error) {
 }
 
 // GetHostFQDN returns the FQDN returned by shell command `hostname -f` (linux/darwin) or `hostname` (openbsd).
+// 注意：以下方法无法获取 fqdn：
+//   - 标准库的 `os.Hostname()`
+//   - 库 `github.com/shirou/gopsutil/v4/host`，函数 `host.Info()`
 func GetHostFQDN() (fqdn string) {
 	var args []string
 	var stdout bytes.Buffer
