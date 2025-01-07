@@ -6,13 +6,13 @@ import (
 	"github.com/alexedwards/argon2id"
 )
 
-func GenArgon2IDPassword(plain string, prefixScheme bool) (hash string, err error) {
+func GenArgon2IDPassword(plain string, prefixScheme ...bool) (hash string, err error) {
 	hash, err = argon2id.CreateHash(plain, argon2id.DefaultParams)
 	if err != nil {
 		return
 	}
 
-	if prefixScheme {
+	if len(prefixScheme) > 0 && prefixScheme[0] {
 		hash = "{ARGON2ID}" + hash
 	}
 
