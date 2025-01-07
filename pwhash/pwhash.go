@@ -7,8 +7,6 @@ import (
 	"github.com/iredmail/goutils/respcode"
 )
 
-// TODO 支持 argon2
-
 const (
 	SchemePlain       = "PLAIN"
 	SchemeCrypt       = "CRYPT"
@@ -19,6 +17,7 @@ const (
 	SchemeSHA512      = "SHA512"
 	SchemeSSHA512     = "SSHA512"
 	SchemeSHA512Crypt = "SHA512-CRYPT"
+	SchemeArgon2ID    = "ARGON2ID"
 	// SchemeCramMD5     = "CRAM-MD5"
 	// SchemeNTLM        = "NTLM"
 
@@ -41,6 +40,7 @@ var (
 		SchemeSSHA512,
 		SchemeSHA512Crypt,
 		SchemeBcrypt,
+		SchemeArgon2ID,
 		// SchemeCramMD5,
 		// SchemeNTLM,
 	}
@@ -101,7 +101,8 @@ func GeneratePassword(scheme string, plainPassword string) (hash string, err err
 		// TODO
 	case SchemeBcrypt:
 		hash, err = GenerateBcryptPassword(plainPassword)
-
+	case SchemeArgon2ID:
+		hash, err = GenArgon2IDPassword(plainPassword, true)
 		// case SchemeCramMD5:
 		// TODO
 		// case SchemeNTLM:
@@ -154,6 +155,8 @@ func VerifyPassword(hashedPassword, plainPassword string) (matched bool, err err
 		// TODO
 	case SchemeBcrypt:
 		matched = VerifyBcryptPassword(hashedPassword, plainPassword)
+	case SchemeArgon2ID:
+		matched, err = VerifyArgon2IDPassword(plainPassword, hashedPassword)
 		// case SchemeCramMD5:
 		// TODO
 		// case SchemeNTLM:
