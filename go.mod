@@ -3,7 +3,9 @@ module github.com/iredmail/goutils
 go 1.23.4
 
 require (
+	github.com/Luzifer/go-openssl/v4 v4.2.4
 	github.com/Masterminds/semver/v3 v3.3.1
+	github.com/alexedwards/argon2id v1.0.0
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/go-ldap/ldap/v3 v3.4.10
 	github.com/go-sql-driver/mysql v1.8.1
