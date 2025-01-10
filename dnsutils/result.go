@@ -42,6 +42,7 @@ type ResultSPF struct {
 type ResultDKIM struct {
 	Domain string
 	TTL    uint32
+	DKIM   string
 }
 
 type ResultDMARC struct {
