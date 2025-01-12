@@ -12,7 +12,8 @@ import (
 )
 
 var (
-	defaultDNSServers = []string{
+	defaultTimeout = 10 * time.Second
+	defaultServers = []string{
 		"8.8.8.8:53",
 		"8.8.4.4:53",
 		"1.1.1.1:53",
@@ -30,13 +31,15 @@ var (
 
 func getRandomServer() string {
 	rand.Seed(uint64(time.Now().UnixNano()))
-	idx := rand.Intn(len(defaultDNSServers))
+	idx := rand.Intn(len(defaultServers))
 
-	return defaultDNSServers[idx]
+	return defaultServers[idx]
 }
 
 func newClientAndMsg() (*dns.Client, *dns.Msg) {
 	client := new(dns.Client)
+	client.Timeout = 10 * time.Second
+
 	msg := new(dns.Msg)
 
 	return client, msg
