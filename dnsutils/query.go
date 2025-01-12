@@ -153,60 +153,6 @@ func queryTXT(domain string, dnsServers ...string) (found bool, answers []dns.RR
 	return queryDomain(domain, dns.TypeTXT, dnsServers...)
 }
 
-func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
-	found, answers, rtt, err := queryTXT(domain)
-	if err != nil || !found {
-		return
-	}
-
-	result.Domain = domain
-	result.RTT = rtt
-
-	// 一个域名一般只有一个 SPF 记录，这里只取第一个。
-	for _, ans := range answers {
-		if txt, ok := ans.(*dns.TXT); ok {
-			for _, txtStr := range txt.Txt {
-				if regxSPF.MatchString(txtStr) {
-					result.Txt = txtStr
-					result.TTL = txt.Hdr.Ttl
-
-					break
-				}
-			}
-		}
-	}
-
-	//
-	// 处理 SPF 记录的各个 tag
-	//
-	// Samples:
-	// "v=spf1 mx:iredmail.org ip4:172.105.68.48 ip6:2a01:7e01::f03c:93ff:fe25:7e10 ip6:2a01:7e01::f03c:91ff:fe74:9543 ip4:172.104.245.227 -all"
-
-	/*
-		// 记录总的查询次数。
-		var totalQueries int
-
-		// 将 SPF 记录 split 后根据 tag 的不同做分类
-		tags := strings.Fields(result.Txt)
-		for _, tag := range tags {
-			switch {
-			case strings.HasPrefix(tag, "ip4:"):
-				result.IP4s = append(result.IP4s, strings.TrimPrefix(tag, "ip4:"))
-			case strings.HasPrefix(tag, "ip6:"):
-				result.IP6s = append(result.IP6s, strings.TrimPrefix(tag, "ip6:"))
-			case strings.HasPrefix(tag, "a:"):
-				result.As = append(result.As, strings.TrimPrefix(tag, "a:"))
-			case strings.HasPrefix(tag, "mx:"):
-				result.MXs = append(result.MXs, strings.TrimPrefix(tag, "mx:"))
-			case strings.HasPrefix(tag, "include:"):
-				result.Includes = append(result.Includes, strings.TrimPrefix(tag, "include:"))
-			}
-		}
-	*/
-
-	return
-}
-
 func QueryDKIM(domain, selector string) (result ResultDKIM, err error) {
 	if selector == "" {
 		err = errors.New("selector is missing")

@@ -30,22 +30,6 @@ type ResultMX struct {
 	Hosts     []HostMX `json:"hosts"`
 }
 
-// ResultSPF 定义 SPF 记录的查询结果。
-type ResultSPF struct {
-	Domain string
-	RTT    time.Duration
-	TTL    uint32
-	Txt    string // 原始的 SPF 记录
-
-	// IP4s     []string // `ip4:`
-	// IP6s     []string // `ip6:`
-	// As       []string // `a:`
-	// MXs      []string // `mx:`
-	// Includes []string // `include:`
-	// 经过完整解析后得到的所有 IP 地址
-	// AllIPs []string
-}
-
 type ResultDKIM struct {
 	Domain string
 	RTT    time.Duration

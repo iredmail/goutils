@@ -49,11 +49,3 @@ func TestQueryMX(t *testing.T) {
 	assert.Equal(t, "alt4.gmail-smtp-in.l.google.com", result.Hosts[3].Hostname)
 	assert.Equal(t, "gmail-smtp-in.l.google.com", result.Hosts[4].Hostname)
 }
-
-func TestQuerySPF(t *testing.T) {
-	domain := "iredmail.org"
-	found, result, err := QuerySPF(domain)
-	assert.Nil(t, err)
-	assert.True(t, found)
-	assert.Equal(t, domain, result.Domain)
-}
