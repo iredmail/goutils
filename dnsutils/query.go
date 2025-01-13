@@ -1,7 +1,6 @@
 package dnsutils
 
 import (
-	"errors"
 	"regexp"
 	"sort"
 	"strings"
@@ -72,6 +71,10 @@ func queryDomain(domain string, dnsType uint16, dnsServers ...string) (found boo
 	answers = r.Answer
 
 	return
+}
+
+func queryTXT(domain string, dnsServers ...string) (found bool, answers []dns.RR, rtt time.Duration, err error) {
+	return queryDomain(domain, dns.TypeTXT, dnsServers...)
 }
 
 func QueryA(domain string, dnsServers ...string) (found bool, result ResultA, err error) {
@@ -151,46 +154,3 @@ func QueryMX(domain string) (found bool, result ResultMX, err error) {
 
 	return
 }
-
-func queryTXT(domain string, dnsServers ...string) (found bool, answers []dns.RR, rtt time.Duration, err error) {
-	return queryDomain(domain, dns.TypeTXT, dnsServers...)
-}
-
-func QueryDKIM(domain, selector string) (result ResultDKIM, err error) {
-	if selector == "" {
-		err = errors.New("selector is missing")
-
-		return
-	}
-
-	found, answers, rtt, err := queryTXT(domain)
-	if err != nil || !found {
-		return
-	}
-
-	result.Domain = domain
-	result.RTT = rtt
-
-	// 一个域名一般只有一个 DKIM 记录，这里只取第一个。
-	for _, ans := range answers {
-		if txt, ok := ans.(*dns.TXT); ok {
-			for _, txtStr := range txt.Txt {
-				if regxDMARC.MatchString(txtStr) {
-					result.DKIM = txtStr
-					result.TTL = txt.Hdr.Ttl
-
-					break
-				}
-			}
-		}
-	}
-
-	return
-}
-
-// func QueryDMARC(domain string) (result ResultDMARC, err error) {}
-// func QueryMTASTS(domain string) (result ResultMTASTS, err error) {}
-// func QueryTLSRPT(domain string) (result ResultTLSRPT, err error) {}
-// func QueryDMARC(domain string) (result ResultDMARC, err error) {}
-// func QueryMTASTS(domain string) (result ResultMTASTS, err error) {}
-// func QueryTLSRPT(domain string) (result ResultTLSRPT, err error) {}

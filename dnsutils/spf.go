@@ -131,5 +131,7 @@ func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
 		mqs = append(mqs, mq)
 	}
 
+	// TODO 解析完了所有的 mechanisms，启动并发查询。
+
 	return
 }
