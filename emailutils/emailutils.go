@@ -354,15 +354,3 @@ func ReplaceEmailsDomain(domain string, mails []string) (replaced []string) {
 
 	return
 }
-
-func FilterEmailsByDomain(domain string, mails []string) (internal, external []string) {
-	for _, addr := range mails {
-		if strings.HasSuffix(addr, "@"+domain) {
-			internal = append(internal, addr)
-		} else {
-			external = append(external, addr)
-		}
-	}
-
-	return
-}
