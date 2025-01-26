@@ -10,9 +10,9 @@ import (
 func FilterValidEmails(addrs []string) (valid []string, invalid []string) {
 	for _, addr := range addrs {
 		if IsEmail(addr) {
-			valid = append(valid, strings.ToLower(addr))
+			valid = append(valid, strings.TrimSpace(strings.ToLower(addr)))
 		} else {
-			invalid = append(invalid, strings.ToLower(addr))
+			invalid = append(invalid, strings.TrimSpace(strings.ToLower(addr)))
 		}
 	}
 
