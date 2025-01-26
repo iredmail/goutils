@@ -1,9 +1,11 @@
 package dnsutils
 
 import (
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/iredmail/goutils/pp"
 	"github.com/miekg/dns"
 )
 
@@ -16,19 +18,16 @@ type SPFMech struct {
 
 // ResultSPF 定义 SPF 记录的查询结果。
 type ResultSPF struct {
-	Domain string
-	RTT    time.Duration
-	TTL    uint32
-	Txt    string // 原始的 SPF 记录
+	Domain       string
+	RTT          time.Duration
+	TTL          uint32
+	Txt          string // 原始的 SPF 记录
+	TotalQueries int    // 总共执行了多少次 DNS 查询
 
 	Mechs []SPFMech
 
-	IP4     []string // `ip4:`
-	IP6     []string // `ip6:`
-	A       []string // `a:`
-	MX      []string // `mx:`
-	Include []string // `include:`
-	Exists  []string // `exists:`
+	// 已经查询过的 mech，避免重复查询。
+	finished []SPFMech
 
 	// 经过完整解析后得到的所有 IP 地址及其对应的 action。
 	// 例如：
@@ -52,11 +51,18 @@ func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
 	result.Domain = domain
 	result.RTT = rtt
 
+	var foundRecord bool
 	// 一个域名一般只有一个 SPF 记录，这里只取第一个。
 	for _, ans := range answers {
+		if foundRecord {
+			break
+		}
+
 		if txt, ok := ans.(*dns.TXT); ok {
 			for _, txtStr := range txt.Txt {
 				if regxSPF.MatchString(txtStr) {
+					foundRecord = true
+
 					result.Txt = txtStr
 					result.TTL = txt.Hdr.Ttl
 
@@ -71,11 +77,10 @@ func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
 	//
 	// Samples:
 	// "v=spf1 mx:iredmail.org ip4:172.105.68.48 ip6:2a01:7e01::f03c:93ff:fe25:7e10 ip4:172.104.245.227 -all"
+	// gmail.com: "v=spf1 redirect=_spf.google.com"
 
 	// 记录总的查询次数。
-	// var totalQueries int
-
-	var mqs []SPFMech
+	result.TotalQueries = 1
 
 	// 将 SPF 记录 split 后根据 tag 的不同做分类
 	mechs := strings.Fields(result.Txt)
@@ -85,8 +90,6 @@ func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
 		if strings.HasPrefix(mech, "+") || strings.HasPrefix(mech, "-") || strings.HasPrefix(mech, "~") || strings.HasPrefix(mech, "?") {
 			mq.Qualifier = mech[0:1]
 			mech = mech[1:]
-		} else {
-			mq.Qualifier = "+" // defaults to "+" if missing.
 		}
 
 		mechInLower := strings.ToLower(mech)
@@ -97,6 +100,7 @@ func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
 		} else if mechInLower == "mx" {
 			mq.Mech = "mx"
 			mq.Value = domain
+			// result.mxs = append(result.mxs, domain)
 		} else if mechInLower == "ptr" {
 			// TODO handle `ptr`
 			continue
@@ -117,6 +121,7 @@ func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
 
 				switch mechName {
 				case "ip4", "a", "mx", "include", "exists":
+					// FIXME 实际处理 `exists`
 					_, value, _ := strings.Cut(mechInLower, ":")
 					mq.Mech = mechName
 					mq.Value = value
@@ -128,10 +133,62 @@ func QuerySPF(domain string) (found bool, result ResultSPF, err error) {
 			}
 		}
 
-		mqs = append(mqs, mq)
+		result.Mechs = append(result.Mechs, mq)
 	}
 
-	// TODO 解析完了所有的 mechanisms，启动并发查询。
+	// FIXME 并发查询
+	for _, mq := range result.Mechs {
+		if slices.Contains(result.finished, mq) {
+			continue
+		}
+
+		result.TotalQueries++
+		result.finished = append(result.finished, mq)
+
+		switch mq.Mech {
+		case "a":
+			result.finished = append(result.finished, mq)
+
+			found, ra, err := QueryA(mq.Value)
+			if err != nil || !found {
+				continue
+			}
+
+			for _, ip := range ra.IPs {
+				result.IPActions[ip] = mq.Qualifier
+			}
+		case "mx":
+			found, rmx, err := QueryMX(mq.Value)
+			if err != nil || !found {
+				continue
+			}
+
+			// 递归解析
+			for _, hostMX := range rmx.Hosts {
+				result.TotalQueries++
+
+				found, ra, err := QueryA(hostMX.Hostname)
+				if err != nil || !found {
+					continue
+				}
+
+				for _, ip := range ra.IPs {
+					result.IPActions[ip] = mq.Qualifier
+				}
+			}
+		case "include":
+			pp.Println("include")
+			found, rspf, err := QuerySPF(mq.Value)
+			if err != nil || !found {
+				continue
+			}
+
+			result.TotalQueries += rspf.TotalQueries
+			for k, v := range rspf.IPActions {
+				result.IPActions[k] = v
+			}
+		}
+	}
 
 	return
 }
