@@ -29,7 +29,8 @@ type logger struct {
 	// Write to log file immediately if size is 0.
 	bufferSize int
 
-	rotateWriter io.Writer
+	rotateWriter          io.Writer
+	printAfterInitialized bool // print logger settings after initialized
 }
 
 func (l *logger) applyOptions(opts ...Option) {
@@ -144,6 +145,18 @@ func NewFileLogger(pth string, opts ...Option) (logger LoggerWithWriter, err err
 	}
 
 	l.sl.DoNothingOnPanicFatal()
+
+	// 打印 logger 的内部设置
+	if l.printAfterInitialized {
+		l.Info("[logger] Level: %s", l.level)
+		l.Info("[logger] Max Backups: %d", l.maxBackups)
+		l.Info("[logger] Max Size: %d", l.maxSize)
+		l.Info("[logger] Rotate Interval: %s", l.rotateInterval)
+		l.Info("[logger] Compress: %t", l.compress)
+		l.Info("[logger] Buffer Size: %d", l.bufferSize)
+		l.Info("[logger] File Perm: %o", l.filePerm)
+		l.Info("[logger] Time Format: %s", l.timeFormat)
+	}
 
 	return l, nil
 }

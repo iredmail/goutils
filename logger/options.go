@@ -64,3 +64,9 @@ func WithFilePerm(perm os.FileMode) Option {
 		l.filePerm = perm
 	}
 }
+
+func WithPrintAfterInitialized() Option {
+	return func(l *logger) {
+		l.printAfterInitialized = true
+	}
+}
