@@ -1,11 +1,9 @@
 package goutils
 
 import (
-	"slices"
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
-	"golang.org/x/exp/maps"
 )
 
 // ParseDBSorts 解析字符串中的排序字段，例：field1:asc,field2:desc
@@ -36,8 +34,10 @@ func (ds *DBSorts) Add(field string, asc bool) {
 	}
 }
 
-func (ds *DBSorts) Has(field string) bool {
-	return slices.Contains(maps.Keys(ds.sorts), field)
+func (ds *DBSorts) Has(field string) (found bool) {
+	found, _ = ds.sorts[field]
+
+	return
 }
 
 func (ds *DBSorts) Value(field string) (exist, value bool) {
