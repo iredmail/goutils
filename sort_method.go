@@ -12,9 +12,13 @@ type SortMethod struct {
 	Desc bool
 }
 
+func (sm SortMethod) IsValid() bool {
+	return sm.Name != ""
+}
+
 type SortMethods []SortMethod
 
-func (sms SortMethods) HasName(name string) bool {
+func (sms SortMethods) Has(name string) bool {
 	for _, sm := range sms {
 		if sm.Name == name {
 			return true
@@ -22,6 +26,39 @@ func (sms SortMethods) HasName(name string) bool {
 	}
 
 	return false
+}
+
+func (sms SortMethods) Get(name string) (found bool, sm SortMethod) {
+	for _, sm = range sms {
+		if sm.Name == name {
+			return true, sm
+		}
+	}
+
+	return
+}
+
+// StrToSortMethod 将单个以冒号分隔定义的排序方法转换为 SortMethod。
+// 例如：`field`, `field1:asc`, `field2:desc`。
+func StrToSortMethod(s string) (sm SortMethod) {
+	name, order, found := strings.Cut(s, ":")
+	name = strings.TrimSpace(name)
+	order = strings.TrimSpace(order)
+
+	// 无效的排序字段
+	if len(name) == 0 {
+		return
+	}
+
+	sm.Name = name
+
+	if found {
+		if order == "desc" {
+			sm.Desc = true
+		}
+	}
+
+	return
 }
 
 // StrToSortMethods 将以冒号、逗号分隔定义的排序方法转换为 SortMethod 列表。
