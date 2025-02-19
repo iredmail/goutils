@@ -1,5 +1,7 @@
 # https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
 run:
+  #go: "1.23.4"
+
   # default concurrency is a available CPU number
   #concurrency: 4
 
@@ -21,8 +23,6 @@ run:
 output:
   print-issued-lines: true
   print-linter-name: true
-  uniq-by-line: true
-  max-same-issues: 100
   sort-results: true
 
 linters:
@@ -34,6 +34,7 @@ linters:
     - cyclop
     - depguard
     - dogsled
+    - dupl
     - dupword
     - errorlint
     #- exhaustivestruct
@@ -49,21 +50,21 @@ linters:
     - gocyclo
     - godox
     - godot
-    #- goerr113
     - gofumpt
     #- golint
-    - gomnd
-    - mnd
     - gomoddirectives
     - goprintffuncname
     - gosec
+    - mnd
     #- govet
     #- ifshort
     - interfacebloat
     #- interfacer
     - ineffassign
     - lll
-    #- maintidx
+    # 对于类似“添加邮件用户”这样的操作，流程性的代码很多，但都无法省略，
+    # 会导致 maintidx 认为代码复杂度太高，因此这里禁用它。
+    - maintidx
     #- maligned
     - nakedret
     - nestif
@@ -78,19 +79,21 @@ linters:
     - wastedassign
     - wrapcheck
     - wsl
+    - tagalign
   fast: true
 
 linters-settings:
   staticcheck:
     checks: ["all", "-SA*"]
   govet:
-    check-shadowing: false
-    enable:
-      - atomicalign
+    enable-all: true
 
 issues:
+  uniq-by-line: true
   exclude-rules:
     # Exclude some staticcheck messages
     - linters:
         - staticcheck
       text: "SA1016:"
+  exclude-dirs:
+    - external/
