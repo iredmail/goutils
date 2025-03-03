@@ -80,8 +80,8 @@ github.com/jcmturner/gokrb5/v8 v8.4.4 h1:x1Sv4HaTpepFkXbt2IkL29DXRf8sOfZXo8eRKh6
 github.com/jcmturner/gokrb5/v8 v8.4.4/go.mod h1:1btQEpgT6k+unzCwX1KdWMEwPPkkgBtP+F6aCACiMrs=
 github.com/jcmturner/rpc/v2 v2.0.3 h1:7FXXj8Ti1IaVFpSAziCZWNzbNuZmnvw/i6CqLNdWfZY=
 github.com/jcmturner/rpc/v2 v2.0.3/go.mod h1:VUJYCIDm3PVOEHw8sgt091/20OJjskO/YJki3ELg/Hc=
-github.com/jhillyerd/enmime/v2 v2.0.0 h1:I39PYf0peLGroKq+uX2yGB1ExH/78HcRJy4VmERQAVk=
-github.com/jhillyerd/enmime/v2 v2.0.0/go.mod h1:wQkz7BochDzSukAz5ajAQaXOB7pEg5Vh5QWs7m1uAPw=
+github.com/jhillyerd/enmime/v2 v2.1.0 h1:c8Qwi5Xq5EdtMN6byQWoZ/8I2RMTo6OJ7Xay+s1oPO0=
+github.com/jhillyerd/enmime/v2 v2.1.0/go.mod h1:EJ74dcRbBcqHSP2TBu08XRoy6y3Yx0cevwb1YkGMEmQ=
 github.com/k0kubun/pp/v3 v3.4.1 h1:1WdFZDRRqe8UsR61N/2RoOZ3ziTEqgTPVqKrHeb779Y=
 github.com/k0kubun/pp/v3 v3.4.1/go.mod h1:+SiNiqKnBfw1Nkj82Lh5bIeKQOAkPy6Xw9CAZUZ8npI=
 github.com/klauspost/compress v1.17.11 h1:In6xLpyWOi1+C7tXUUWv2ot1QvBjxevKAaI6IXrJmUc=

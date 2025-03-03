@@ -13,7 +13,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gookit/slog v0.5.7
 	github.com/iredmail/ldappool v0.0.0-20250124072951-38dd4b77911c
-	github.com/jhillyerd/enmime/v2 v2.0.0
+	github.com/jhillyerd/enmime/v2 v2.1.0
 	github.com/k0kubun/pp/v3 v3.4.1
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.25.2
