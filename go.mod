@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.24.0
+go 1.24.1
 
 require (
 	github.com/Luzifer/go-openssl/v4 v4.2.4
@@ -14,7 +14,6 @@ require (
 	github.com/gookit/slog v0.5.7
 	github.com/iredmail/ldappool v0.0.0-20250124072951-38dd4b77911c
 	github.com/jhillyerd/enmime/v2 v2.1.0
-	github.com/k0kubun/pp/v3 v3.4.1
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.25.2
 	github.com/stretchr/testify v1.10.0
