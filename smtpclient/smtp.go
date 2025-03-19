@@ -166,13 +166,16 @@ func SendmailWithComposerInBackground(c Config, composer *Composer, l logger.Log
 				fmt.Printf("Failed in sending email: %v\n", err)
 			}
 		} else {
-			if l != nil {
-				var addrs []string
-				for _, addr := range composer.GetTo() {
-					addrs = append(addrs, addr.Address)
-				}
+			var addrs []string
 
+			for _, addr := range composer.GetAllRecipients() {
+				addrs = append(addrs, addr.Address)
+			}
+
+			if l != nil {
 				l.Info("Email sent: subject='%s', recipients='%s'", composer.GetSubject(), strings.Join(addrs, ","))
+			} else {
+				fmt.Printf("Email sent: subject='%s', recipients='%s'", composer.GetSubject(), strings.Join(addrs, ","))
 			}
 		}
 	}()
