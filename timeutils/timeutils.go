@@ -55,3 +55,22 @@ func DayStartEndEpochs(t time.Time) (start, end int64) {
 
 	return
 }
+
+func MonthStartEndEpochs(ts ...time.Time) (start, end int64) {
+	var t time.Time
+	if len(ts) > 0 {
+		t = ts[0]
+	} else {
+		t = time.Now()
+	}
+
+	start = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC).Unix()
+
+	// 获取下个月的第一天
+	nextMonth := time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+
+	// 获取当前月份的最后一天
+	end = nextMonth.AddDate(0, 0, -1).UTC().Unix()
+
+	return
+}

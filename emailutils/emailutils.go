@@ -29,13 +29,16 @@ var (
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
 func IsEmail(s string) bool {
-	_, err := mail.ParseAddress(strings.TrimSpace(s))
+	if s == "" {
+		return false
+	}
 
+	_, err := mail.ParseAddress(strings.TrimSpace(s))
 	if err != nil {
 		return false
 	}
 
-	// net/mail 认为 `user@domain` 是合法的邮件地址。
+	// `net/mail` 认为 `user@domain`（不是 `user@domain.com`）是合法的邮件地址。
 	_, domain, found := strings.Cut(s, "@")
 	if !found {
 		return false

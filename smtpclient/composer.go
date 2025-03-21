@@ -197,3 +197,11 @@ func (c *Composer) GetTo() []mail.Address  { return c.to }
 func (c *Composer) GetCc() []mail.Address  { return c.cc }
 func (c *Composer) GetBcc() []mail.Address { return c.bcc }
 func (c *Composer) GetSubject() string     { return c.subject }
+
+func (c *Composer) GetAllRecipients() (addrs []mail.Address) {
+	addrs = c.GetTo()
+	addrs = append(addrs, c.GetCc()...)
+	addrs = append(addrs, c.GetBcc()...)
+
+	return
+}
