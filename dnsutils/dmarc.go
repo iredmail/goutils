@@ -13,11 +13,20 @@ type ResultDMARC struct {
 	Duration time.Duration
 	TTL      uint32
 	Params   map[string]string
+	Error    error
 }
 
-func QueryDMARC(domain string) (found bool, result ResultDMARC, err error) {
+// TODO 完成 QueryDMARC
+
+func QueryDMARC(domain string) (found bool, result ResultDMARC) {
 	foundTxt, answers, duration, err := queryTXT("_dmarc." + domain)
-	if err != nil || !foundTxt {
+	if err != nil {
+		result.Error = err
+
+		return
+	}
+
+	if !foundTxt {
 		return
 	}
 

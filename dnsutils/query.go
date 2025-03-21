@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/miekg/dns"
@@ -79,14 +80,135 @@ func queryTXT(domain string, dnsServers ...string) (found bool, answers []dns.RR
 	return queryDomain(domain, dns.TypeTXT, dnsServers...)
 }
 
-func QueryA(domain string, dnsServers ...string) (found bool, result ResultA, err error) {
+// QueryAll 查询指定邮件域名的所有相关 DNS 记录。注意：只返回原始记录，不进行任何处理。
+func QueryAll(domain string, dnsServers ...string) (result ResultAll) {
+	result.Domain = domain
+
+	var wg sync.WaitGroup
+	wg.Add(6) // A, AAAA, MX, SPF, DKIM, DMARC
+
+	go func() {
+		defer wg.Done()
+
+		found, resultA := QueryA(domain, dnsServers...)
+		if resultA.Error != nil {
+			return
+		}
+
+		if found {
+			result.mu.Lock()
+			defer result.mu.Unlock()
+
+			result.ResultA = resultA
+			result.Duration += resultA.Duration
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		found, resultAAAA := QueryAAAA(domain, dnsServers...)
+		if resultAAAA.Error != nil {
+			return
+		}
+
+		if found {
+			result.mu.Lock()
+			defer result.mu.Unlock()
+
+			result.ResultAAAA = resultAAAA
+			result.Duration += resultAAAA.Duration
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		found, resultMX := QueryMX(domain)
+		if resultMX.Error != nil {
+			return
+		}
+
+		if found {
+			result.mu.Lock()
+			defer result.mu.Unlock()
+
+			result.ResultMX = resultMX
+			result.Duration += resultMX.Duration
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		found, resultSPF, err := QuerySPF(domain)
+		if err != nil {
+			return
+		}
+		if found {
+			result.mu.Lock()
+			defer result.mu.Unlock()
+
+			result.ResultSPF = resultSPF
+			result.Duration += resultSPF.Duration
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		found, resultDKIM := QueryDKIM(domain, "dkim")
+		if resultDKIM.Error != nil {
+			return
+		}
+
+		if found {
+			result.mu.Lock()
+			defer result.mu.Unlock()
+
+			result.ResultDKIM = resultDKIM
+			result.Duration += resultDKIM.Duration
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		found, resultDMARC := QueryDMARC(domain)
+		if resultDMARC.Error != nil {
+			return
+		}
+
+		if found {
+			result.mu.Lock()
+			defer result.mu.Unlock()
+
+			result.ResultDMARC = resultDMARC
+			result.Duration += resultDMARC.Duration
+		}
+	}()
+
+	// TODO MTASTS
+
+	wg.Wait()
+
+	return
+}
+
+func QueryA(domain string, dnsServers ...string) (found bool, result ResultA) {
 	found, answers, rtt, err := queryDomain(domain, dns.TypeA, dnsServers...)
-	if err != nil || !found {
+	if err != nil {
+		result.Error = err
+
+		return
+	}
+
+	if !found {
 		return
 	}
 
 	result.Domain = domain
-	result.RTT = rtt
+	result.Duration = rtt
 
 	for _, ans := range answers {
 		if a, ok := ans.(*dns.A); ok {
@@ -99,14 +221,20 @@ func QueryA(domain string, dnsServers ...string) (found bool, result ResultA, er
 	return
 }
 
-func QueryAAAA(domain string, dnsServers ...string) (found bool, result ResultAAAA, err error) {
+func QueryAAAA(domain string, dnsServers ...string) (found bool, result ResultAAAA) {
 	found, answers, rtt, err := queryDomain(domain, dns.TypeAAAA, dnsServers...)
-	if err != nil || !found {
+	if err != nil {
+		result.Error = err
+
+		return
+	}
+
+	if !found {
 		return
 	}
 
 	result.Domain = domain
-	result.RTT = rtt
+	result.Duration = rtt
 
 	for _, ans := range answers {
 		if a, ok := ans.(*dns.AAAA); ok {
@@ -118,14 +246,20 @@ func QueryAAAA(domain string, dnsServers ...string) (found bool, result ResultAA
 	return
 }
 
-func QueryMX(domain string) (found bool, result ResultMX, err error) {
-	found, answers, rtt, err := queryDomain(domain, dns.TypeMX)
-	if err != nil || !found {
+func QueryMX(domain string) (found bool, result ResultMX) {
+	found, answers, duration, err := queryDomain(domain, dns.TypeMX)
+	if err != nil {
+		result.Error = err
+
+		return
+	}
+
+	if !found {
 		return
 	}
 
 	result.Domain = domain
-	result.RTT = rtt
+	result.Duration = duration
 
 	var hosts []HostMX
 	for _, ans := range answers {
@@ -133,12 +267,26 @@ func QueryMX(domain string) (found bool, result ResultMX, err error) {
 			// Remove trailing dot.
 			hostname := strings.TrimRight(mx.Mx, ".")
 
-			hosts = append(hosts, HostMX{
+			hostMX := HostMX{
 				Hostname: hostname,
 				TTL:      mx.Hdr.Ttl,
 				Priority: mx.Preference,
-			})
+			}
 
+			// Resolve to IP addresses.
+			foundA, resultA := QueryA(hostname)
+			result.Duration += resultA.Duration
+			if foundA {
+				hostMX.IP4 = resultA.IPs
+			}
+
+			foundAAAA, resultAAAA := QueryAAAA(hostname)
+			result.Duration += resultAAAA.Duration
+			if foundAAAA {
+				hostMX.IP6 = resultAAAA.IPs
+			}
+
+			hosts = append(hosts, hostMX)
 			result.Hostnames = append(result.Hostnames, hostname)
 		}
 	}

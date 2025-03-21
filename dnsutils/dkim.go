@@ -7,20 +7,26 @@ import (
 )
 
 // TODO QueryDKIM 查询域名的 DKIM 记录。格式为：`<selector>._domainkey.<domain>`。
-func QueryDKIM(domain, selector string) (result ResultDKIM, err error) {
+func QueryDKIM(domain, selector string) (found bool, result ResultDKIM) {
 	if selector == "" {
-		err = errors.New("selector is missing")
+		result.Error = errors.New("selector is missing")
 
 		return
 	}
 
-	found, answers, rtt, err := queryTXT(domain)
-	if err != nil || !found {
+	found, answers, duration, err := queryTXT(domain)
+	if err != nil {
+		result.Error = err
+
+		return
+	}
+
+	if !found {
 		return
 	}
 
 	result.Domain = domain
-	result.RTT = rtt
+	result.Duration = duration
 
 	// 一个域名一般只有一个 DKIM 记录，这里只取第一个。
 	for _, ans := range answers {

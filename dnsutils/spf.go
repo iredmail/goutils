@@ -22,6 +22,7 @@ type ResultSPF struct {
 	Duration     time.Duration // 总耗时
 	TTL          uint32        // Time-To-Live
 	TotalQueries int           // 总共执行了多少次 DNS 查询
+	Error        error
 
 	mechs []SPFMech
 
@@ -49,7 +50,13 @@ func newResultSPF() ResultSPF {
 // FYI http://www.open-spf.org/SPF_Record_Syntax/
 func QuerySPF(domain string) (foundRecord bool, result ResultSPF, err error) {
 	foundTxt, answers, duration, err := queryTXT(domain)
-	if err != nil || !foundTxt {
+	if err != nil {
+		result.Error = err
+
+		return
+	}
+
+	if !foundTxt {
 		return
 	}
 
@@ -160,8 +167,8 @@ func QuerySPF(domain string) (foundRecord bool, result ResultSPF, err error) {
 			result.TotalQueries++
 			result.finished = append(result.finished, mq)
 
-			found, ra, err := QueryA(mq.Value)
-			result.Duration += ra.RTT
+			found, ra := QueryA(mq.Value)
+			result.Duration += ra.Duration
 
 			if err != nil || !found {
 				continue
@@ -173,9 +180,9 @@ func QuerySPF(domain string) (foundRecord bool, result ResultSPF, err error) {
 		case "mx":
 			result.TotalQueries++
 
-			found, rmx, err := QueryMX(mq.Value)
-			result.Duration += rmx.RTT
-			if err != nil || !found {
+			found, rmx := QueryMX(mq.Value)
+			result.Duration += rmx.Duration
+			if rmx.Error != nil || !found {
 				continue
 			}
 
@@ -183,10 +190,10 @@ func QuerySPF(domain string) (foundRecord bool, result ResultSPF, err error) {
 			for _, hostMX := range rmx.Hosts {
 				result.TotalQueries++
 
-				found, ra, err := QueryA(hostMX.Hostname)
-				result.Duration += ra.RTT
+				found, ra := QueryA(hostMX.Hostname)
+				result.Duration += ra.Duration
 
-				if err != nil || !found {
+				if ra.Error != nil || !found {
 					continue
 				}
 
