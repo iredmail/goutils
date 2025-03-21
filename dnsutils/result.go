@@ -37,12 +37,6 @@ type ResultDKIM struct {
 	DKIM   string
 }
 
-type ResultDMARC struct {
-	Domain string
-	RTT    time.Duration
-	TTL    uint32
-}
-
 type ResultMTASTS struct {
 	Domain string
 	RTT    time.Duration
