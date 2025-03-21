@@ -44,7 +44,7 @@ func newClientAndMsg() (*dns.Client, *dns.Msg) {
 	return client, msg
 }
 
-func queryDomain(domain string, dnsType uint16, dnsServers ...string) (found bool, answers []dns.RR, rtt time.Duration, err error) {
+func queryDomain(domain string, dnsType uint16, dnsServers ...string) (found bool, answers []dns.RR, duration time.Duration, err error) {
 	domain = strings.ToLower(domain)
 
 	client, msg := newClientAndMsg()
@@ -58,10 +58,12 @@ func queryDomain(domain string, dnsType uint16, dnsServers ...string) (found boo
 		srv = getRandomServer()
 	}
 
+	start := time.Now()
 	r, _, err := client.Exchange(msg, srv)
 	if err != nil {
 		return
 	}
+	duration = time.Since(start)
 
 	if r.Rcode != dns.RcodeSuccess {
 		return
@@ -73,7 +75,7 @@ func queryDomain(domain string, dnsType uint16, dnsServers ...string) (found boo
 	return
 }
 
-func queryTXT(domain string, dnsServers ...string) (found bool, answers []dns.RR, rtt time.Duration, err error) {
+func queryTXT(domain string, dnsServers ...string) (found bool, answers []dns.RR, duration time.Duration, err error) {
 	return queryDomain(domain, dns.TypeTXT, dnsServers...)
 }
 
