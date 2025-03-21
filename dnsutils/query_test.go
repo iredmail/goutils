@@ -4,7 +4,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/k0kubun/pp/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,8 +57,6 @@ func TestQueryAll(t *testing.T) {
 	domain := "iredmail.org"
 
 	result := QueryAll(domain)
-	pp.Println(result.Duration.String())
-	pp.Println(result)
 	assert.Nil(t, result.ResultA.Error)
 	assert.Nil(t, result.ResultAAAA.Error)
 	assert.Nil(t, result.ResultMX.Error)
