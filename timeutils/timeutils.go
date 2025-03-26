@@ -56,6 +56,15 @@ func DayStartEndEpochs(t time.Time) (start, end int64) {
 	return
 }
 
+// EpochsExpiringMonth 返回当前这个月的起始以及下个月最后一天的结尾。
+func EpochsExpiringMonth() (startThisMonth, endNextMonth int64) {
+	t := time.Now().UTC()
+	startThisMonth = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC).Unix()
+	endNextMonth = time.Date(t.Year(), t.Month()+2, 1, 0, 0, 0, 0, time.UTC).Unix()
+
+	return
+}
+
 func MonthStartEndEpochs(ts ...time.Time) (start, end int64) {
 	var t time.Time
 	if len(ts) > 0 {
