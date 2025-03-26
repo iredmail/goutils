@@ -56,6 +56,12 @@ func DayStartEndEpochs(t time.Time) (start, end int64) {
 	return
 }
 
+func EpochEndOfCurrentMonth() int64 {
+	now := time.Now().UTC()
+
+	return time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, time.UTC).Unix()
+}
+
 func MonthStartEndEpochs(ts ...time.Time) (start, end int64) {
 	var t time.Time
 	if len(ts) > 0 {
