@@ -74,6 +74,41 @@ func (oi OSInfo) ToMap() (m map[string]any, err error) {
 	return
 }
 
+// HasPGSQLLastLogin 检查当前操作系统版本提供的 Dovecot 包是否支持将 last login time 保存在
+// PostgreSQL 数据库。
+//
+// 注意：
+//   - Dovecot 2.3.16 及后续版本才支持使用 PostgreSQL 存储 last login time。
+//   - Dovecot 所有版本都支持使用 MySQL / MariaDB 存储 last login time。
+//   - 此函数不需要 root 权限。
+func (oi OSInfo) HasPGSQLLastLogin() bool {
+	// 排除不支持的版本，后续的新版本都支持。
+	switch oi.Distribution {
+	case "Debian":
+		// Debian 12 (Bookworm) 及后续版本都支持。
+		if slices.Contains([]string{"10", "11"}, oi.DistributionVersion) {
+			return false
+		}
+	case "Ubuntu":
+		// Ubuntu 22.04 及后续版本都支持。
+		if slices.Contains([]string{"18.04", "20.04"}, oi.DistributionVersion) {
+			return false
+		}
+	case "RedHat", "CentOS", "Rocky", "AlmaLinux":
+		// RHEL 9 及后续版本都支持。
+		if slices.Contains([]string{"7", "8"}, oi.DistributionMajorVersion) {
+			return false
+		}
+	case "OpenBSD":
+		// OpenBSD 7.3 及后续版本都支持。
+		if slices.Contains([]string{"7.1", "7.2"}, oi.DistributionVersion) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func GetOSInfo() (oi OSInfo, err error) {
 	oi.Architecture = runtime.GOARCH // 386, amd64, arm, arm64
 	oi.CPUCores = runtime.NumCPU()
