@@ -6,7 +6,8 @@ import (
 	"github.com/miekg/dns"
 )
 
-// TODO QueryDKIM 查询域名的 DKIM 记录。格式为：`<selector>._domainkey.<domain>`。
+// TODO QueryDKIM
+// QueryDKIM 查询域名的 DKIM 记录。格式为：`<selector>._domainkey.<domain>`。
 func QueryDKIM(domain, selector string) (found bool, result ResultDKIM) {
 	if selector == "" {
 		result.Error = errors.New("selector is missing")

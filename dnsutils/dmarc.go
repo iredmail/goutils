@@ -16,8 +16,7 @@ type ResultDMARC struct {
 	Error    error
 }
 
-// TODO 完成 QueryDMARC
-
+// TODO QueryDMARC
 func QueryDMARC(domain string) (found bool, result ResultDMARC) {
 	foundTxt, answers, duration, err := queryTXT("_dmarc." + domain)
 	if err != nil {
