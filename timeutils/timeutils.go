@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// 将 epoch 秒数转换为 YYYY-MM-DD 格式的日期字符串。
+// 如果 epoch 为 0，则返回空字符串。
 func EpochToDay(epoch int64) string {
 	if epoch <= 0 {
 		return ""
@@ -14,6 +16,8 @@ func EpochToDay(epoch int64) string {
 	return time.Unix(epoch, 0).UTC().Format("2006-01-02")
 }
 
+// 将 epoch 秒数转换为 'YYYY-MM-DD HH:MM:SS' 格式的日期字符串。
+// 如果 epoch 为 0，则返回空字符串。
 func EpochToDatetime(epoch int64) string {
 	if epoch <= 0 {
 		return ""
