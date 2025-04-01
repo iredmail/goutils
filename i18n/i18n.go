@@ -92,24 +92,35 @@ func walkLocaleDirPath(localesPath string) (localLanguages []string, err error) 
 }
 
 func IsLanguageSupported(lang string) bool {
-	if bundleFS == nil {
-		return false
-	}
-
 	tag, _, err := language.ParseAcceptLanguage(lang)
 	if err != nil {
 		return false
 	}
 
-	return bundleFS.IsLanguageSupported(tag[0])
+	if bundlePath != nil {
+		if bundlePath.IsLanguageSupported(tag[0]) {
+			return true
+		}
+	}
+
+	if bundleFS != nil {
+		return bundleFS.IsLanguageSupported(tag[0])
+	}
+
+	return false
 }
 
 func Translate(lang string, s string) string {
-	if bundleFS == nil {
+	if bundleFS == nil && bundlePath == nil {
 		return s
 	}
 
-	t := spreak.NewKeyLocalizer(bundleFS, lang)
+	var t *spreak.KeyLocalizer
+	if slices.Contains(supportedLocalLanguages, lang) {
+		t = spreak.NewKeyLocalizer(bundlePath, lang)
+	} else {
+		t = spreak.NewKeyLocalizer(bundleFS, lang)
+	}
 
 	return t.Get(s)
 }
