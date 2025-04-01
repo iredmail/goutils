@@ -70,9 +70,9 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath ...
 }
 
 func walkLocaleDirPath(localesPath string) (localLanguages []string, err error) {
-	err = filepath.WalkDir(localesPath, func(path string, d fs.DirEntry, err error) error {
-		if d != nil && d.IsDir() {
-			return nil
+	err = filepath.WalkDir(localesPath, func(_ string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
 		}
 
 		if filepath.Ext(d.Name()) != ".json" {
