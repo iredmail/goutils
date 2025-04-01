@@ -27,7 +27,7 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 	return err
 }
 
-func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath ...string) (localLanguages []string, err error) {
+func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath string) (localLanguages []string, err error) {
 	opts := []spreak.BundleOption{
 		spreak.WithDomainFs(spreak.NoDomain, fsLocales),
 	}
@@ -46,18 +46,18 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath ...
 		return
 	}
 
-	if !goutils.DestExists(localesPath[0]) {
+	if !goutils.DestExists(localesPath) {
 		return
 	}
 
-	supportedLocalLanguages, err = walkLocaleDirPath(localesPath[0])
+	supportedLocalLanguages, err = walkLocaleDirPath(localesPath)
 	if err != nil {
 		return
 	}
 
 	localLanguages = append(localLanguages, supportedLocalLanguages...)
 	opts = []spreak.BundleOption{
-		spreak.WithDomainPath(spreak.NoDomain, localesPath[0]),
+		spreak.WithDomainPath(spreak.NoDomain, localesPath),
 	}
 
 	for _, localLanguage := range supportedLocalLanguages {
