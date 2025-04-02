@@ -12,15 +12,19 @@ import (
 	"golang.org/x/text/language"
 )
 
+const (
+	domainFS    = "fs"
+	domainLocal = "local"
+)
+
 var (
-	bundleFS                *spreak.Bundle
-	bundlePath              *spreak.Bundle
+	bundle                  *spreak.Bundle
 	supportedLocalLanguages []string
 )
 
 func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
-	bundleFS, err = spreak.NewBundle(
-		spreak.WithDomainFs(spreak.NoDomain, fsLocales),
+	bundle, err = spreak.NewBundle(
+		spreak.WithDomainFs(domainFS, fsLocales),
 		spreak.WithLanguage(supportedLanguages...),
 	)
 
@@ -29,16 +33,11 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 
 func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath string) (localLanguages []string, err error) {
 	opts := []spreak.BundleOption{
-		spreak.WithDomainFs(spreak.NoDomain, fsLocales),
+		spreak.WithDomainFs(domainFS, fsLocales),
 	}
 
 	for _, l := range supportedLanguages {
 		opts = append(opts, spreak.WithLanguage(l))
-	}
-
-	bundleFS, err = spreak.NewBundle(opts...)
-	if err != nil {
-		return
 	}
 
 	// Load path locales
@@ -56,15 +55,13 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath str
 	}
 
 	localLanguages = append(localLanguages, supportedLocalLanguages...)
-	opts = []spreak.BundleOption{
-		spreak.WithDomainPath(spreak.NoDomain, localesPath),
-	}
-
+	opts = append(opts, spreak.WithDomainPath(domainLocal, localesPath))
 	for _, localLanguage := range supportedLocalLanguages {
 		opts = append(opts, spreak.WithLanguage(localLanguage))
 	}
 
-	bundlePath, err = spreak.NewBundle(opts...)
+	supportedLocalLanguages = append(supportedLocalLanguages, supportedLocalLanguages...)
+	bundle, err = spreak.NewBundle(opts...)
 
 	return
 }
@@ -92,49 +89,41 @@ func walkLocaleDirPath(localesPath string) (localLanguages []string, err error) 
 }
 
 func IsLanguageSupported(lang string) bool {
+	if bundle == nil {
+		return false
+	}
+
 	tag, _, err := language.ParseAcceptLanguage(lang)
 	if err != nil {
 		return false
 	}
 
-	if bundlePath != nil {
-		if bundlePath.IsLanguageSupported(tag[0]) {
-			return true
-		}
-	}
-
-	if bundleFS != nil {
-		return bundleFS.IsLanguageSupported(tag[0])
-	}
-
-	return false
+	return bundle.IsLanguageSupported(tag[0])
 }
 
 func Translate(lang string, s string) string {
-	if bundleFS == nil && bundlePath == nil {
+	if bundle == nil {
 		return s
 	}
 
-	var t *spreak.KeyLocalizer
-	if slices.Contains(supportedLocalLanguages, lang) {
-		t = spreak.NewKeyLocalizer(bundlePath, lang)
-	} else {
-		t = spreak.NewKeyLocalizer(bundleFS, lang)
+	t := spreak.NewKeyLocalizerForDomain(bundle, domainLocal, lang)
+	if t.HasDomain(domainLocal) {
+		return t.Get(s)
 	}
 
-	return t.Get(s)
+	return spreak.NewKeyLocalizerForDomain(bundle, domainFS, lang).Get(s)
 }
 
 func TranslateF(lang string, s string, args ...any) string {
-	if bundleFS == nil && bundlePath == nil {
+	if bundle == nil {
 		return s
 	}
 
 	var t *spreak.KeyLocalizer
 	if slices.Contains(supportedLocalLanguages, lang) {
-		t = spreak.NewKeyLocalizer(bundlePath, lang)
+		t = spreak.NewKeyLocalizerForDomain(bundle, domainLocal, lang)
 	} else {
-		t = spreak.NewKeyLocalizer(bundleFS, lang)
+		t = spreak.NewKeyLocalizerForDomain(bundle, domainFS, lang)
 	}
 
 	return t.Getf(s, args...)
