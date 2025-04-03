@@ -35,6 +35,7 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 	return err
 }
 
+// InitFSAndPath 同时从 fs.FS 和指定目录加在语言包。
 func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath string) (localLanguages []string, err error) {
 	opts := []spreak.BundleOption{
 		spreak.WithDomainFs(domainDefault, fsLocales),
