@@ -13,8 +13,12 @@ import (
 )
 
 const (
-	domainFS    = "fs"
-	domainLocal = "local"
+	// domainDefault 为程序 embed 里提供的默认语言包。
+	domainDefault = "default"
+
+	// domainCustom 为系统管理员自行翻译后放入指定目录的语言包。
+	// 程序应该优先选用自定义语言包。
+	domainCustom = "custom"
 )
 
 var (
@@ -24,7 +28,7 @@ var (
 
 func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 	bundle, err = spreak.NewBundle(
-		spreak.WithDomainFs(domainFS, fsLocales),
+		spreak.WithDomainFs(domainDefault, fsLocales),
 		spreak.WithLanguage(supportedLanguages...),
 	)
 
@@ -33,7 +37,7 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 
 func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath string) (localLanguages []string, err error) {
 	opts := []spreak.BundleOption{
-		spreak.WithDomainFs(domainFS, fsLocales),
+		spreak.WithDomainFs(domainDefault, fsLocales),
 	}
 
 	for _, l := range supportedLanguages {
@@ -55,7 +59,7 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath str
 	}
 
 	localLanguages = append(localLanguages, supportedLocalLanguages...)
-	opts = append(opts, spreak.WithDomainPath(domainLocal, localesPath))
+	opts = append(opts, spreak.WithDomainPath(domainCustom, localesPath))
 	for _, localLanguage := range supportedLocalLanguages {
 		opts = append(opts, spreak.WithLanguage(localLanguage))
 	}
@@ -106,12 +110,12 @@ func Translate(lang string, s string) string {
 		return s
 	}
 
-	t := spreak.NewKeyLocalizerForDomain(bundle, domainLocal, lang)
-	if t.HasDomain(domainLocal) {
+	t := spreak.NewKeyLocalizerForDomain(bundle, domainCustom, lang)
+	if t.HasDomain(domainCustom) {
 		return t.Get(s)
 	}
 
-	return spreak.NewKeyLocalizerForDomain(bundle, domainFS, lang).Get(s)
+	return spreak.NewKeyLocalizerForDomain(bundle, domainDefault, lang).Get(s)
 }
 
 func TranslateF(lang string, s string, args ...any) string {
@@ -121,9 +125,9 @@ func TranslateF(lang string, s string, args ...any) string {
 
 	var t *spreak.KeyLocalizer
 	if slices.Contains(supportedLocalLanguages, lang) {
-		t = spreak.NewKeyLocalizerForDomain(bundle, domainLocal, lang)
+		t = spreak.NewKeyLocalizerForDomain(bundle, domainCustom, lang)
 	} else {
-		t = spreak.NewKeyLocalizerForDomain(bundle, domainFS, lang)
+		t = spreak.NewKeyLocalizerForDomain(bundle, domainDefault, lang)
 	}
 
 	return t.Getf(s, args...)
