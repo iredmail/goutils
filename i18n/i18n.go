@@ -22,8 +22,8 @@ const (
 )
 
 var (
-	bundle                  *spreak.Bundle
-	supportedLocalLanguages []string
+	bundle          *spreak.Bundle
+	customLanguages []string
 )
 
 func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
@@ -36,7 +36,7 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 }
 
 // InitFSAndPath 同时从 fs.FS 和指定目录加在语言包。
-func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath string) (localLanguages []string, err error) {
+func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir string) (_customLanguages []string, err error) {
 	opts := []spreak.BundleOption{
 		spreak.WithDomainFs(domainDefault, fsLocales),
 	}
@@ -46,32 +46,31 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesPath str
 	}
 
 	// Load path locales
-	if len(localesPath) == 0 {
+	if len(localesDir) == 0 {
 		return
 	}
 
-	if !goutils.DestExists(localesPath) {
+	if !goutils.DestExists(localesDir) {
 		return
 	}
 
-	supportedLocalLanguages, err = walkLocaleDirPath(localesPath)
+	_customLanguages, err = walkLocaleDirPath(localesDir)
 	if err != nil {
 		return
 	}
 
-	localLanguages = append(localLanguages, supportedLocalLanguages...)
-	opts = append(opts, spreak.WithDomainPath(domainCustom, localesPath))
-	for _, localLanguage := range supportedLocalLanguages {
+	opts = append(opts, spreak.WithDomainPath(domainCustom, localesDir))
+	for _, localLanguage := range _customLanguages {
 		opts = append(opts, spreak.WithLanguage(localLanguage))
 	}
 
-	supportedLocalLanguages = append(supportedLocalLanguages, supportedLocalLanguages...)
+	customLanguages = slices.Clone(_customLanguages)
 	bundle, err = spreak.NewBundle(opts...)
 
 	return
 }
 
-func walkLocaleDirPath(localesPath string) (localLanguages []string, err error) {
+func walkLocaleDirPath(localesPath string) (customLanguages []string, err error) {
 	err = filepath.WalkDir(localesPath, func(_ string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
@@ -84,7 +83,7 @@ func walkLocaleDirPath(localesPath string) (localLanguages []string, err error) 
 		lang := strings.TrimSuffix(d.Name(), ".json")
 		_, _, err = language.ParseAcceptLanguage(lang)
 		if err == nil {
-			localLanguages = slice.AddMissingElems(localLanguages, lang)
+			customLanguages = slice.AddMissingElems(customLanguages, lang)
 		}
 
 		return nil
@@ -125,7 +124,7 @@ func TranslateF(lang string, s string, args ...any) string {
 	}
 
 	var t *spreak.KeyLocalizer
-	if slices.Contains(supportedLocalLanguages, lang) {
+	if slices.Contains(customLanguages, lang) {
 		t = spreak.NewKeyLocalizerForDomain(bundle, domainCustom, lang)
 	} else {
 		t = spreak.NewKeyLocalizerForDomain(bundle, domainDefault, lang)
