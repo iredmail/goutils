@@ -71,7 +71,7 @@ func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 	return l, nil
 }
 
-func NewSyslogLogger(server, tag string, options ...Option) (logger Logger, err error) {
+func NewSyslogLogger(server, tag string, options ...Option) (logger LoggerWithWriter, err error) {
 	l := newLogger(options...)
 	var syslogLevel syslog.Priority
 
