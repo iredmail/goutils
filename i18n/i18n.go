@@ -39,8 +39,8 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 	return err
 }
 
-// InitFSAndPath 同时从 fs.FS 和指定目录加在语言包。
-func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir string) (_customLanguages []string, invalidCustomLanguages, err error) {
+// InitFSAndDir 同时从 fs.FS 和指定目录加载 JSON 格式的语言翻译文件。
+func InitFSAndDir(fsLocales fs.FS, supportedLanguages []string, localesDir string) (_customLanguages []string, errCustomLocales, err error) {
 	opts := []spreak.BundleOption{
 		spreak.WithDomainFs(domainDefault, fsLocales),
 	}
@@ -58,7 +58,7 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir stri
 		return
 	}
 
-	_customLanguages, invalidCustomLanguages, err = walkLocaleDirPath(localesDir)
+	_customLanguages, errCustomLocales, err = walkLocaleDirPath(localesDir)
 	if err != nil {
 		return
 	}
@@ -77,7 +77,7 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir stri
 	return
 }
 
-func walkLocaleDirPath(localesPath string) (customLanguages []string, invalidCustomLanguages, err error) {
+func walkLocaleDirPath(localesPath string) (customLanguages []string, errCustomLocales, err error) {
 	err = filepath.WalkDir(localesPath, func(pth string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
@@ -99,11 +99,12 @@ func walkLocaleDirPath(localesPath string) (customLanguages []string, invalidCus
 		}
 
 		m := make(map[string]interface{})
+
 		err = json.Unmarshal(jsonBytes, &m)
 		if err != nil {
-			invalidCustomLanguages = errors.Join(
-				invalidCustomLanguages,
-				fmt.Errorf("file %s could not be decoded: %w", d.Name(), err),
+			errCustomLocales = errors.Join(
+				errCustomLocales,
+				fmt.Errorf("%s: %v", d.Name(), err),
 			)
 
 			return nil
