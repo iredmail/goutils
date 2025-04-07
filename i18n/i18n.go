@@ -40,7 +40,7 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 }
 
 // InitFSAndPath 同时从 fs.FS 和指定目录加在语言包。
-func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir string) (_customLanguages []string, warn, err error) {
+func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir string) (_customLanguages []string, invalidCustomLanguages, err error) {
 	opts := []spreak.BundleOption{
 		spreak.WithDomainFs(domainDefault, fsLocales),
 	}
@@ -58,7 +58,7 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir stri
 		return
 	}
 
-	_customLanguages, warn, err = walkLocaleDirPath(localesDir)
+	_customLanguages, invalidCustomLanguages, err = walkLocaleDirPath(localesDir)
 	if err != nil {
 		return
 	}
@@ -77,7 +77,7 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir stri
 	return
 }
 
-func walkLocaleDirPath(localesPath string) (customLanguages []string, warn, err error) {
+func walkLocaleDirPath(localesPath string) (customLanguages []string, invalidCustomLanguages, err error) {
 	err = filepath.WalkDir(localesPath, func(pth string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
@@ -101,7 +101,7 @@ func walkLocaleDirPath(localesPath string) (customLanguages []string, warn, err 
 		m := make(map[string]interface{})
 		err = json.Unmarshal(jsonBytes, &m)
 		if err != nil {
-			warn = errors.Join(warn, fmt.Errorf("file %s could not be decoded: unexpected end of JSON input", d.Name()))
+			invalidCustomLanguages = errors.Join(invalidCustomLanguages, fmt.Errorf("file %s could not be decoded: unexpected end of JSON input", d.Name()))
 
 			return nil
 		}
