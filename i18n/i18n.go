@@ -1,7 +1,11 @@
 package i18n
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -36,7 +40,7 @@ func Init(fsLocales fs.FS, supportedLanguages ...any) (err error) {
 }
 
 // InitFSAndPath 同时从 fs.FS 和指定目录加在语言包。
-func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir string) (_customLanguages []string, err error) {
+func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir string) (_customLanguages []string, warn, err error) {
 	opts := []spreak.BundleOption{
 		spreak.WithDomainFs(domainDefault, fsLocales),
 	}
@@ -54,8 +58,12 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir stri
 		return
 	}
 
-	_customLanguages, err = walkLocaleDirPath(localesDir)
+	_customLanguages, warn, err = walkLocaleDirPath(localesDir)
 	if err != nil {
+		return
+	}
+	
+	if len(_customLanguages) == 0 {
 		return
 	}
 
@@ -70,8 +78,8 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir stri
 	return
 }
 
-func walkLocaleDirPath(localesPath string) (customLanguages []string, err error) {
-	err = filepath.WalkDir(localesPath, func(_ string, d fs.DirEntry, err error) error {
+func walkLocaleDirPath(localesPath string) (customLanguages []string, warn, err error) {
+	err = filepath.WalkDir(localesPath, func(pth string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}
@@ -82,9 +90,24 @@ func walkLocaleDirPath(localesPath string) (customLanguages []string, err error)
 
 		lang := strings.TrimSuffix(d.Name(), ".json")
 		_, _, err = language.ParseAcceptLanguage(lang)
-		if err == nil {
-			customLanguages = slice.AddMissingElems(customLanguages, lang)
+		if err != nil {
+			return err
 		}
+
+		jsonBytes, err := os.ReadFile(pth)
+		if err != nil {
+			return err
+		}
+
+		m := make(map[string]interface{})
+		err = json.Unmarshal(jsonBytes, &m)
+		if err != nil {
+			warn = errors.Join(warn, fmt.Errorf("file %s could not be decoded: unexpected end of JSON input", d.Name()))
+
+			return nil
+		}
+
+		customLanguages = slice.AddMissingElems(customLanguages, lang)
 
 		return nil
 	})
