@@ -15,6 +15,7 @@ require (
 	github.com/iredmail/ldappool v0.0.0-20250124072951-38dd4b77911c
 	github.com/jhillyerd/enmime/v2 v2.1.0
 	github.com/lib/pq v1.10.9
+	github.com/miekg/dns v1.1.63
 	github.com/shirou/gopsutil/v4 v4.25.2
 	github.com/stretchr/testify v1.10.0
 	github.com/vorlif/spreak v0.6.0
@@ -60,10 +61,12 @@ require (
 	github.com/valyala/fasthttp v1.59.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
+	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.37.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/term v0.30.0 // indirect
+	golang.org/x/tools v0.31.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.61.13 // indirect
