@@ -101,7 +101,10 @@ func walkLocaleDirPath(localesPath string) (customLanguages []string, invalidCus
 		m := make(map[string]interface{})
 		err = json.Unmarshal(jsonBytes, &m)
 		if err != nil {
-			invalidCustomLanguages = errors.Join(invalidCustomLanguages, fmt.Errorf("file %s could not be decoded: unexpected end of JSON input", d.Name()))
+			invalidCustomLanguages = errors.Join(
+				invalidCustomLanguages,
+				fmt.Errorf("file %s could not be decoded: %w", d.Name(), err),
+			)
 
 			return nil
 		}
