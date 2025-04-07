@@ -62,17 +62,16 @@ func InitFSAndPath(fsLocales fs.FS, supportedLanguages []string, localesDir stri
 	if err != nil {
 		return
 	}
-	
-	if len(_customLanguages) == 0 {
-		return
+
+	if len(_customLanguages) > 0 {
+		opts = append(opts, spreak.WithDomainPath(domainCustom, localesDir))
+		for _, localLanguage := range _customLanguages {
+			opts = append(opts, spreak.WithLanguage(localLanguage))
+		}
+
+		customLanguages = slices.Clone(_customLanguages)
 	}
 
-	opts = append(opts, spreak.WithDomainPath(domainCustom, localesDir))
-	for _, localLanguage := range _customLanguages {
-		opts = append(opts, spreak.WithLanguage(localLanguage))
-	}
-
-	customLanguages = slices.Clone(_customLanguages)
 	bundle, err = spreak.NewBundle(opts...)
 
 	return
