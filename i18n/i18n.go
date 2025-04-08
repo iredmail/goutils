@@ -58,7 +58,7 @@ func InitFSAndDir(fsLocales fs.FS, supportedLanguages []string, localesDir strin
 		return
 	}
 
-	_customLanguages, errCustomLocales, err = walkLocaleDirPath(localesDir)
+	_customLanguages, errCustomLocales, err = walkLocaleDir(localesDir)
 	if err != nil {
 		return
 	}
@@ -77,8 +77,8 @@ func InitFSAndDir(fsLocales fs.FS, supportedLanguages []string, localesDir strin
 	return
 }
 
-func walkLocaleDirPath(localesPath string) (customLanguages []string, errCustomLocales, err error) {
-	err = filepath.WalkDir(localesPath, func(pth string, d fs.DirEntry, err error) error {
+func walkLocaleDir(localesDir string) (customLanguages []string, errCustomLocales, err error) {
+	err = filepath.WalkDir(localesDir, func(pth string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
 		}
@@ -104,7 +104,7 @@ func walkLocaleDirPath(localesPath string) (customLanguages []string, errCustomL
 		if err != nil {
 			errCustomLocales = errors.Join(
 				errCustomLocales,
-				fmt.Errorf("%s: %v", d.Name(), err),
+				fmt.Errorf("%s: %v", filepath.Join(localesDir, d.Name()), err),
 			)
 
 			return nil
