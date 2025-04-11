@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// 将 epoch 秒数转换为 YYYY-MM-DD 格式的日期字符串。
+// 如果 epoch 为 0，则返回空字符串。
 func EpochToDay(epoch int64) string {
 	if epoch <= 0 {
 		return ""
@@ -14,6 +16,8 @@ func EpochToDay(epoch int64) string {
 	return time.Unix(epoch, 0).UTC().Format("2006-01-02")
 }
 
+// 将 epoch 秒数转换为 'YYYY-MM-DD HH:MM:SS' 格式的日期字符串。
+// 如果 epoch 为 0，则返回空字符串。
 func EpochToDatetime(epoch int64) string {
 	if epoch <= 0 {
 		return ""
@@ -76,7 +80,7 @@ func MonthStartEndEpochs(ts ...time.Time) (start, end int64) {
 	start = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC).Unix()
 
 	// 获取下个月的第一天
-	nextMonth := time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+	nextMonth := time.Date(t.Year(), t.Month()+1, 1, 23, 59, 59, 0, time.UTC)
 
 	// 获取当前月份的最后一天
 	end = nextMonth.AddDate(0, 0, -1).UTC().Unix()
