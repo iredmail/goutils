@@ -1,9 +1,8 @@
 package slice
 
 import (
+	"cmp"
 	"slices"
-
-	"golang.org/x/exp/constraints"
 )
 
 // AddMissingElems 添加 slice `s` 里缺失的所有 `elems` 元素。
@@ -33,7 +32,7 @@ func DeleteElems[T comparable](s []T, elems ...T) (newS []T) {
 }
 
 // DeduplicateAndSort 移除 slice `s` 里的所有重复元素，并按升序排序。
-func DeduplicateAndSort[T constraints.Ordered](s []T) (newS []T) {
+func DeduplicateAndSort[T cmp.Ordered](s []T) (newS []T) {
 	m := make(map[T]bool)
 
 	for _, elem := range s {
