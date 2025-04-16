@@ -25,8 +25,13 @@ func WithDirCache(dir string) Option {
 	}
 }
 
-func WithSQLiteCache(conn *sql.DB, tableName string) Option {
-	cache, err := NewSQLiteCache(conn, tableName)
+func WithSQLiteCache(conn *sql.DB, tableName ...string) Option {
+	table := "autocert_cache"
+	if len(tableName) == 0 {
+		table = tableName[0]
+	}
+
+	cache, err := NewSQLiteCache(conn, table)
 	if err != nil {
 		panic(err)
 	}
