@@ -18,6 +18,9 @@ import (
 // New 初始化 ssl cert，一共分为两种模式：
 // - 使用固定文件（cfg.SSLKeyFile, cfg.SSLCertFile）
 // - autocert
+// FIXME 将 New() 拆分成两个：
+//   - NewFixedCertFiles(): 使用固定的 cert/key 文件
+//   - NewAutoCert()：使用 autocert
 func New(options ...Option) (*Manager, error) {
 	m := &Manager{
 		// 不管是否有 cert/key 文件，确保 `autocertMgr` 指针不为 nil。否则会触发 panic。
@@ -68,15 +71,15 @@ func New(options ...Option) (*Manager, error) {
 		return m, nil
 	}
 
-	if m.autoCertCacheDir != "" {
+	if m.cacheDir != "" {
 		// 尝试创建 cache 目录
-		if err := goutils.CreateDirIfNotExist(m.autoCertCacheDir, 0700); err != nil {
-			err = fmt.Errorf("failed in creating autocert cache directory: %s, %v", m.autoCertCacheDir, err)
+		if err := goutils.CreateDirIfNotExist(m.cacheDir, 0700); err != nil {
+			err = fmt.Errorf("failed in creating autocert cache directory: %s, %v", m.cacheDir, err)
 
 			return m, err
 		}
 
-		m.autocertMgr.Cache = autocert.DirCache(m.autoCertCacheDir)
+		m.autocertMgr.Cache = autocert.DirCache(m.cacheDir)
 	}
 
 	m.autocertMgr.HostPolicy = autocert.HostWhitelist(m.certDomains...)
@@ -99,10 +102,10 @@ type Manager struct {
 	FixedCert   *tls.Certificate
 	autocertMgr *autocert.Manager
 
-	autoCertCacheDir string
-	certDomains      []string
-	sslCertFile      string
-	sslKeyFile       string
+	cacheDir    string // 使用 autocert.DirCache()
+	certDomains []string
+	sslCertFile string
+	sslKeyFile  string
 }
 
 // Certificate 在存储证书的目录中查找包含主机名列表的证书

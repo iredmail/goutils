@@ -21,7 +21,7 @@ func WithCertDomain(domains ...string) Option {
 
 func WithDirCache(dir string) Option {
 	return func(m *Manager) {
-		m.autoCertCacheDir = dir
+		m.cacheDir = dir
 	}
 }
 
