@@ -67,12 +67,15 @@ func NewSQLiteCache(conn *sql.DB, tableName string) (cache *Cache, err error) {
 
 	// Create SQLite table if not exists.
 	_, err = conn.Exec(fmt.Sprintf(`
-		CREATE TABLE IF NOT EXISTS %s (
-			key        VARCHAR(255) NOT NULL PRIMARY KEY, 
-			data       BLOB,
-			created_at INTETER DEFAULT 0,
-			updated_at INTETER DEFAULT 0
-	);`, tableName))
+        CREATE TABLE IF NOT EXISTS %s (
+            key        VARCHAR(255) NOT NULL DEFAULT '' PRIMARY KEY,
+            data       BLOB,
+            created_at INTETER DEFAULT 0,
+            updated_at INTETER DEFAULT 0
+        );
+        CREATE INDEX IF NOT EXISTS idx_%s_created_at ON %s (key);`,
+		tableName, tableName, tableName,
+	))
 
 	if err != nil {
 		return
