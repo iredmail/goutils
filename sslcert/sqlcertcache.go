@@ -26,43 +26,6 @@ type Cache struct {
 	deleteQuery string // Delete()
 }
 
-// NewSQLiteCache creates an cache instance that can be used with autocert.Cache.
-// It returns any errors that could happen while connecting to SQL.
-func NewSQLiteCache(conn *sql.DB, tableName string) (cache *Cache, err error) {
-	tableName = strings.TrimSpace(tableName)
-	if tableName == "" {
-		err = ErrEmptyTableName
-
-		return
-	}
-
-	// Create SQLite table if not exists.
-	_, err = conn.Exec(fmt.Sprintf(`
-		CREATE TABLE IF NOT EXISTS %s (
-			key        VARCHAR(255) NOT NULL PRIMARY KEY, 
-			data       BLOB NOT NULL,
-			created_at INTETER NOT NULL DEFAULT 0,
-			updated_at INTETER NOT NULL DEFAULT 0
-	);`, tableName))
-
-	if err != nil {
-		return
-	}
-
-	cache = &Cache{
-		conn:     conn,
-		getQuery: fmt.Sprintf(`SELECT data FROM %s WHERE key = $1`, tableName),
-		putQuery: fmt.Sprintf(`
-			INSERT INTO %s (key, data, created_at)
-		            VALUES ($1, $2, NOW())
-			ON CONFLICT (key) DO UPDATE SET data = $2
-		`, tableName),
-		deleteQuery: fmt.Sprintf(`DELETE FROM %s WHERE key = $1`, tableName),
-	}
-
-	return
-}
-
 // Get returns a certificate data for the specified key.
 // If there's no such key, Get returns ErrCacheMiss.
 func (c *Cache) Get(ctx context.Context, key string) (data []byte, err error) {
@@ -88,6 +51,43 @@ func (c *Cache) Put(ctx context.Context, key string, data []byte) (err error) {
 // If there's no such key in the cache, Delete returns nil.
 func (c *Cache) Delete(ctx context.Context, key string) (err error) {
 	_, err = c.conn.ExecContext(ctx, c.deleteQuery, key)
+
+	return
+}
+
+// NewSQLiteCache creates an cache instance that can be used with autocert.Cache.
+// It returns any errors that could happen while connecting to SQL.
+func NewSQLiteCache(conn *sql.DB, tableName string) (cache *Cache, err error) {
+	tableName = strings.TrimSpace(tableName)
+	if tableName == "" {
+		err = ErrEmptyTableName
+
+		return
+	}
+
+	// Create SQLite table if not exists.
+	_, err = conn.Exec(fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s (
+			key        VARCHAR(255) NOT NULL PRIMARY KEY, 
+			data       BLOB,
+			created_at INTETER DEFAULT 0,
+			updated_at INTETER DEFAULT 0
+	);`, tableName))
+
+	if err != nil {
+		return
+	}
+
+	cache = &Cache{
+		conn:     conn,
+		getQuery: fmt.Sprintf(`SELECT data FROM %s WHERE key = $1`, tableName),
+		putQuery: fmt.Sprintf(`
+			INSERT INTO %s (key, data, created_at)
+		            VALUES ($1, $2, unixepoch())
+			ON CONFLICT (key) DO UPDATE SET data = $2, updated_at = unixepoch()
+		`, tableName),
+		deleteQuery: fmt.Sprintf(`DELETE FROM %s WHERE key = $1`, tableName),
+	}
 
 	return
 }
