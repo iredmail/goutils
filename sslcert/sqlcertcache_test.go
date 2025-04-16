@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,22 +11,20 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func getConnection() *sql.DB {
-	conn, err := sql.Open("sqlite", "file:test.db?cache=shared&mode=memory")
+var conn *sql.DB
+
+func init() {
+	var err error
+
+	conn, err = sql.Open("sqlite", "file:test.db?cache=shared&mode=memory")
 	if err != nil {
 		panic(err)
 	}
-
-	_, _ = conn.Exec("drop table if exists autocert_cache")
-	_, _ = conn.Exec("drop table if exists cert_store")
-
-	return conn
 }
 
 func TestNewSQLiteCache(t *testing.T) {
 	tbl := "NewSQLiteCache"
 
-	conn := getConnection()
 	cache, err := NewSQLiteCache(conn, tbl)
 	assert.NotNil(t, cache)
 	assert.Nil(t, err)
@@ -39,7 +36,6 @@ func TestNewSQLiteCache(t *testing.T) {
 }
 
 func TestGetUnknownKey(t *testing.T) {
-	conn := getConnection()
 	cache, _ := NewSQLiteCache(conn, "GetUnknownKey")
 	data, err := cache.Get(context.Background(), "my-key")
 	assert.Equal(t, err, autocert.ErrCacheMiss)
@@ -49,10 +45,9 @@ func TestGetUnknownKey(t *testing.T) {
 func TestGetAfterPut(t *testing.T) {
 	tbl := "GetAfterPut"
 
-	conn := getConnection()
 	cache, _ := NewSQLiteCache(conn, tbl)
 
-	actual, _ := os.ReadFile("./sqlcertcache_test.go")
+	actual := []byte{1}
 	err := cache.Put(context.Background(), "my-key", actual)
 	assert.Nil(t, err)
 
@@ -67,7 +62,6 @@ func TestGetAfterPut(t *testing.T) {
 }
 
 func TestGetAfterDelete(t *testing.T) {
-	conn := getConnection()
 	cache, _ := NewSQLiteCache(conn, "GetAfterDelete")
 
 	actual := []byte{1, 2, 3, 4}
@@ -83,7 +77,6 @@ func TestGetAfterDelete(t *testing.T) {
 }
 
 func TestDeleteUnknownKey(t *testing.T) {
-	conn := getConnection()
 	cache, _ := NewSQLiteCache(conn, "DeleteUnknownKey")
 
 	var err error
@@ -97,7 +90,6 @@ func TestDeleteUnknownKey(t *testing.T) {
 }
 
 func TestPutOverwrite(t *testing.T) {
-	conn := getConnection()
 	cache, _ := NewSQLiteCache(conn, "PutOverwrite")
 
 	data1 := []byte{1, 2, 3, 4}
@@ -116,7 +108,6 @@ func TestPutOverwrite(t *testing.T) {
 func TestDifferentTableName(t *testing.T) {
 	tbl := "DifferentTableName"
 
-	conn := getConnection()
 	cache, _ := NewSQLiteCache(conn, tbl)
 
 	actual := []byte{1, 2, 3, 4}
@@ -128,6 +119,7 @@ func TestDifferentTableName(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, count, 1)
 
+	// 查询不存在的 sql 表
 	err = conn.QueryRow("SELECT COUNT(*) FROM cert_store").Scan(&count)
 	assert.NotNil(t, err)
 }
@@ -135,7 +127,6 @@ func TestDifferentTableName(t *testing.T) {
 func TestGetCancelledContext(t *testing.T) {
 	tbl := "GetCancelledContext"
 
-	conn := getConnection()
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
