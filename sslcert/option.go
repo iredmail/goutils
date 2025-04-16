@@ -1,6 +1,7 @@
 package sslcert
 
 import (
+	"database/sql"
 	"strings"
 
 	"github.com/iredmail/goutils/emailutils"
@@ -18,9 +19,20 @@ func WithCertDomain(domains ...string) Option {
 	}
 }
 
-func WithAutoCertCacheDir(dir string) Option {
+func WithDirCache(dir string) Option {
 	return func(m *Manager) {
 		m.autoCertCacheDir = dir
+	}
+}
+
+func WithSQLiteCache(conn *sql.DB, tableName string) Option {
+	cache, err := NewSQLiteCache(conn, tableName)
+	if err != nil {
+		panic(err)
+	}
+
+	return func(m *Manager) {
+		m.autocertMgr.Cache = cache
 	}
 }
 

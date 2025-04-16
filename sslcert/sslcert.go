@@ -35,8 +35,6 @@ func New(options ...Option) (*Manager, error) {
 		option(m)
 	}
 
-	m.autocertMgr.Cache = autocert.DirCache(m.autoCertCacheDir)
-
 	if goutils.DestExists(m.sslCertFile) && goutils.DestExists(m.sslKeyFile) {
 		cert, err := tls.LoadX509KeyPair(m.sslCertFile, m.sslKeyFile)
 		if err != nil {
@@ -65,16 +63,20 @@ func New(options ...Option) (*Manager, error) {
 		return m, err
 	}
 
-	// 尝试创建 cache 目录
-	if err := goutils.CreateDirIfNotExist(m.autoCertCacheDir, 0700); err != nil {
-		err = fmt.Errorf("failed in creating autocert cache directory: %s, %v", m.autoCertCacheDir, err)
-
-		return m, err
-	}
-
 	// 不支持空域名使用 autocert
 	if len(m.certDomains) == 0 {
 		return m, nil
+	}
+
+	if m.autoCertCacheDir != "" {
+		// 尝试创建 cache 目录
+		if err := goutils.CreateDirIfNotExist(m.autoCertCacheDir, 0700); err != nil {
+			err = fmt.Errorf("failed in creating autocert cache directory: %s, %v", m.autoCertCacheDir, err)
+
+			return m, err
+		}
+
+		m.autocertMgr.Cache = autocert.DirCache(m.autoCertCacheDir)
 	}
 
 	m.autocertMgr.HostPolicy = autocert.HostWhitelist(m.certDomains...)
