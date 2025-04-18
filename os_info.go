@@ -114,7 +114,7 @@ func (oi OSInfo) HasPGSQLLastLogin() bool {
 }
 
 type DiskInfo struct {
-	Mounted        string `json:"mounted"`
+	Mountpoint     string `json:"mountpoint"`
 	Total          string `json:"total"`
 	Used           string `json:"used"`
 	Free           string `json:"free"`
@@ -325,7 +325,7 @@ func GetDiskInfo() (dis []DiskInfo, err error) {
 		}
 
 		dis = append(dis, DiskInfo{
-			Mounted:        p.Mountpoint,
+			Mountpoint:     p.Mountpoint,
 			Total:          humanize.IBytes(usage.Total),
 			Used:           humanize.IBytes(usage.Used),
 			Free:           humanize.IBytes(usage.Free),
@@ -334,7 +334,7 @@ func GetDiskInfo() (dis []DiskInfo, err error) {
 	}
 
 	slices.SortFunc(dis, func(a, b DiskInfo) int {
-		return cmp.Compare(a.Mounted, b.Mounted)
+		return cmp.Compare(a.Mountpoint, b.Mountpoint)
 	})
 
 	return
