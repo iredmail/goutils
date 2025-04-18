@@ -114,11 +114,11 @@ func (oi OSInfo) HasPGSQLLastLogin() bool {
 }
 
 type DiskInfo struct {
-	Mounted     string `json:"mounted"`
-	Total       string `json:"total"`
-	Used        string `json:"used"`
-	Free        string `json:"free"`
-	UsedPercent int    `json:"used_percent"`
+	Mounted        string `json:"mounted"`
+	Total          string `json:"total"`
+	Used           string `json:"used"`
+	Free           string `json:"free"`
+	UsedPercentage int    `json:"used_percentage"`
 }
 
 func GetOSInfo() (oi OSInfo, err error) {
@@ -325,11 +325,11 @@ func GetDiskInfo() (dis []DiskInfo, err error) {
 		}
 
 		dis = append(dis, DiskInfo{
-			Mounted:     p.Mountpoint,
-			Total:       humanize.IBytes(usage.Total),
-			Used:        humanize.IBytes(usage.Used),
-			Free:        humanize.IBytes(usage.Free),
-			UsedPercent: int(usage.UsedPercent),
+			Mounted:        p.Mountpoint,
+			Total:          humanize.IBytes(usage.Total),
+			Used:           humanize.IBytes(usage.Used),
+			Free:           humanize.IBytes(usage.Free),
+			UsedPercentage: int(usage.UsedPercent),
 		})
 	}
 
