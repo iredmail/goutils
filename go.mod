@@ -13,7 +13,7 @@ require (
 	github.com/gofiber/fiber/v2 v2.52.6
 	github.com/google/uuid v1.6.0
 	github.com/gookit/slog v0.5.8
-	github.com/iredmail/ldappool v0.0.0-20250415022052-4c37d9f48d79
+	github.com/iredmail/ldappool v0.0.0-20250421015245-ad7e580c1236
 	github.com/jhillyerd/enmime/v2 v2.1.0
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.25.3
