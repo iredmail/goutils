@@ -3,10 +3,6 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-24.04
-    strategy:
-      matrix:
-        #go: ['1.16.5', '1.17.0-beta1', '1.17.0-rc1']
-        go: ['>=1.24.2']
 
     steps:
       - uses: actions/checkout@v4
@@ -15,7 +11,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: stable
 
       - run: make testv
 
