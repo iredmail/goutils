@@ -98,7 +98,7 @@ func CreateDirIfNotExist(pth string, mode os.FileMode) error {
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Destination doesn't exist. Create it.
-			err := os.MkdirAll(pth, mode)
+			err = os.MkdirAll(pth, mode)
 
 			if err != nil {
 				return fmt.Errorf("failed in creating directory %s. error=%v", pth, err)
