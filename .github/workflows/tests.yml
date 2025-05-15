@@ -18,9 +18,8 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v8
         with:
-          #version: v2.5.2
           version: latest
-          args: --print-issued-lines --issues-exit-code=0
+          args: --config=$GITHUB_WORKSPACE/.golangci.yml
 
     #- name: Gosec
     #  uses: securego/gosec@master
