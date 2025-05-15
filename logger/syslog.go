@@ -2,7 +2,6 @@ package logger
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"log/syslog"
 )
@@ -27,26 +26,16 @@ func (h *SyslogHandler) Enabled(_ context.Context, level slog.Level) bool {
 }
 
 func (h *SyslogHandler) Handle(_ context.Context, r slog.Record) error {
-	msg := r.Message
-	var attrs []string
-	r.Attrs(func(a slog.Attr) bool {
-		attrs = append(attrs, fmt.Sprintf("%s=%v", a.Key, a.Value))
-		return true
-	})
-	if len(attrs) > 0 {
-		msg += " " + fmt.Sprint(attrs)
-	}
-
 	var err error
 	switch r.Level {
 	case slog.LevelDebug:
-		err = h.writer.Debug(msg)
+		err = h.writer.Debug(r.Message)
 	case slog.LevelWarn:
-		err = h.writer.Warning(msg)
+		err = h.writer.Warning(r.Message)
 	case slog.LevelError:
-		err = h.writer.Err(msg)
+		err = h.writer.Err(r.Message)
 	default:
-		err = h.writer.Info(msg) // default Info
+		err = h.writer.Info(r.Message) // default Info
 	}
 
 	return err
