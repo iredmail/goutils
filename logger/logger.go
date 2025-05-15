@@ -31,12 +31,8 @@ func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 	l.sl = slog.New(slog.NewTextHandler(
 		os.Stdout,
 		&slog.HandlerOptions{
-			Level: level,
-			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-				fmt.Println(a)
-
-				return a
-			},
+			Level:       level,
+			ReplaceAttr: l.formatTime,
 		}),
 	)
 
@@ -101,7 +97,10 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 	l.w = tj
 	l.sl = slog.New(slog.NewTextHandler(
 		tj,
-		&slog.HandlerOptions{Level: level}),
+		&slog.HandlerOptions{
+			Level:       level,
+			ReplaceAttr: l.formatTime,
+		}),
 	)
 
 	return l, nil
@@ -169,6 +168,15 @@ func (l *logger) ParseLevel() (level slog.Level, priority syslog.Priority, err e
 	}
 
 	return
+}
+
+func (l *logger) formatTime(groups []string, a slog.Attr) slog.Attr {
+	if a.Key == slog.TimeKey && l.timeFormat != "" {
+		t := a.Value.Time()
+		a.Value = slog.StringValue(t.Format(l.timeFormat))
+	}
+
+	return a
 }
 
 //
