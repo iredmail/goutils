@@ -34,20 +34,20 @@ func (l *logger) parseLogLevel() (level slog.Level, priority syslog.Priority, er
 	l.level = strings.ToLower(l.level)
 
 	switch l.level {
-	case "debug":
-		level = slog.LevelDebug
-		priority = syslog.LOG_DEBUG
+	case "info":
+		level = slog.LevelInfo
+		priority = syslog.LOG_INFO
 	case "error":
 		level = slog.LevelError
 		priority = syslog.LOG_ERR
 	case "warn":
 		level = slog.LevelWarn
 		priority = syslog.LOG_WARNING
-	case "info":
-		level = slog.LevelInfo
-		priority = syslog.LOG_INFO
+	case "debug":
+		level = slog.LevelDebug
+		priority = syslog.LOG_DEBUG
 	default:
-		err = fmt.Errorf("invalid level: %s", l.level)
+		err = fmt.Errorf("invalid log level: %s", l.level)
 	}
 
 	return
