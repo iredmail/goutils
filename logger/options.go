@@ -1,9 +1,5 @@
 package logger
 
-import (
-	"os"
-)
-
 type Option func(l *logger)
 
 func WithLevel(level string) Option {
@@ -19,9 +15,11 @@ func WithLevel(level string) Option {
 	}
 }
 
+// WithMaxSize sets the maximum size of the log file in megabytes.
+// If it's 0 or not set, defaults to 300 (MB).
 func WithMaxSize(maxSize int) Option {
 	if maxSize == 0 {
-		maxSize = 100 * 1024 * 1024 // 100 MB
+		maxSize = 300 * 1024 * 1024 // 100 MB
 	}
 
 	return func(l *logger) {
@@ -32,12 +30,6 @@ func WithMaxSize(maxSize int) Option {
 func WithRotateInterval(interval string) Option {
 	return func(l *logger) {
 		l.rotateInterval = interval
-	}
-}
-
-func WithBufferSize(bufferSize int) Option {
-	return func(l *logger) {
-		l.bufferSize = bufferSize
 	}
 }
 
@@ -58,15 +50,3 @@ func WithTimeFormat(timeFormat string) Option {
 		l.timeFormat = timeFormat
 	}
 }
-
-func WithFilePerm(perm os.FileMode) Option {
-	return func(l *logger) {
-		l.filePerm = perm
-	}
-}
-
-//func WithPrintAfterInitialized() Option {
-//	return func(l *logger) {
-//		l.printAfterInitialized = true
-//	}
-//}

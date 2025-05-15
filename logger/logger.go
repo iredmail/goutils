@@ -52,8 +52,9 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 		MaxBackups: int(l.maxBackups),
 		Compress:   l.compress,
 	}
+
 	if l.maxSize == 0 {
-		tj.MaxSize = 300 //MB
+		tj.MaxSize = 300 // MB
 	}
 
 	if l.rotateInterval != "" {
