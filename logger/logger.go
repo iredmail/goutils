@@ -3,19 +3,138 @@ package logger
 import (
 	"fmt"
 	"io"
+	"log/slog"
 	"log/syslog"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/gookit/slog"
-	"github.com/gookit/slog/handler"
-	"github.com/gookit/slog/rotatefile"
+	"github.com/DeRuina/timberjack"
 )
+
+func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
+	l := &logger{
+		w:     os.Stdout,
+		level: "info",
+	}
+
+	for _, opt := range opts {
+		opt(l)
+	}
+
+	level, _, err := l.ParseLevel()
+	if err != nil {
+		return nil, err
+	}
+
+	l.sl = slog.New(slog.NewTextHandler(
+		os.Stdout,
+		&slog.HandlerOptions{
+			Level: level,
+			ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				fmt.Println(a)
+
+				return a
+			},
+		}),
+	)
+
+	return l, nil
+}
+
+func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
+	l := &logger{
+		level: "info",
+	}
+
+	for _, opt := range opts {
+		opt(l)
+	}
+
+	tj := &timberjack.Logger{
+		Filename:   pth,
+		MaxSize:    l.maxSize,
+		MaxBackups: int(l.maxBackups),
+		Compress:   l.compress,
+	}
+
+	if l.rotateInterval != "" {
+		if len(l.rotateInterval) < 2 {
+			return nil, fmt.Errorf("invalid rotate interval: %s", l.rotateInterval)
+		}
+
+		lastChar := l.rotateInterval[len(l.rotateInterval)-1]
+		lowerLastChar := strings.ToLower(string(lastChar))
+
+		switch lowerLastChar {
+		case "w", "d":
+			// time.ParseDuration() 不支持 w、d，因此需要转换成 h。
+			prefix, err := strconv.Atoi(l.rotateInterval[:len(l.rotateInterval)-1])
+			if err != nil {
+				return nil, err
+			}
+
+			if lowerLastChar == "w" {
+				l.rotateInterval = fmt.Sprintf("%dh", prefix*7*24)
+			} else {
+				l.rotateInterval = fmt.Sprintf("%dh", prefix*24)
+			}
+		case "h", "m", "s":
+			break
+		default:
+			return nil, fmt.Errorf("unsuppored rotate interval type: %s", lowerLastChar)
+		}
+
+		var err error
+		tj.RotationInterval, err = time.ParseDuration(l.rotateInterval)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	level, _, err := l.ParseLevel()
+	if err != nil {
+		return nil, err
+	}
+
+	l.w = tj
+	l.sl = slog.New(slog.NewTextHandler(
+		tj,
+		&slog.HandlerOptions{Level: level}),
+	)
+
+	return l, nil
+}
+
+func NewSyslogLogger(server, tag string, options ...Option) (LoggerWithWriter, error) {
+	l := &logger{
+		level: "info",
+	}
+
+	for _, opt := range options {
+		opt(l)
+	}
+
+	_, priority, err := l.ParseLevel()
+	if err != nil {
+		return nil, err
+	}
+
+	h, err := newSyslogHandler(server, tag, priority)
+	if err != nil {
+		return nil, err
+	}
+
+	l.w = h.writer
+	l.sl = slog.New(h)
+
+	return l, nil
+}
 
 type logger struct {
 	sl *slog.Logger
+	w  io.Writer
 
 	level          string // log level: info, warn, error, debug
 	maxSize        int
@@ -28,220 +147,28 @@ type logger struct {
 	// Buffer size defaults to (8 * 1024).
 	// Write to log file immediately if size is 0.
 	bufferSize int
-
-	rotateWriter          io.Writer
-	printAfterInitialized bool // print logger settings after initialized
 }
 
-func (l *logger) applyOptions(opts ...Option) {
-	for _, opt := range opts {
-		opt(l)
-	}
-}
-
-func newLogger(opts ...Option) *logger {
-	sl := slog.New()
-	l := &logger{
-		sl:             sl,
-		level:          "info",
-		timeFormat:     time.DateTime,
-		rotateInterval: "1w",
-		compress:       true,
-		filePerm:       0700,
-	}
-
-	l.applyOptions(opts...)
-
-	return l
-}
-
-func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
-	l := newLogger(opts...)
-
-	// custom log format
-	logFormatter := genLogFormatter(l.timeFormat)
-
-	h := handler.NewConsoleHandler(parseLevels(l.level))
-	h.SetFormatter(logFormatter)
-	l.sl.AddHandler(h)
-	l.rotateWriter = h.Output
-
-	l.sl.DoNothingOnPanicFatal()
-
-	return l, nil
-}
-
-func NewSyslogLogger(server, tag string, options ...Option) (logger LoggerWithWriter, err error) {
-	l := newLogger(options...)
-	var syslogLevel syslog.Priority
-
-	level := slog.LevelByName(l.level)
-	if level == slog.DebugLevel {
-		syslogLevel = syslog.LOG_DEBUG
-		// 当 log level 为 debug 时开启 caller，方便快速定位打印日志位置
-		// logTemplate = "{{datetime}} {{level}} {{message}} [{{caller}}]\n"
-	} else {
-		syslogLevel = syslog.LOG_INFO
-		// logTemplate = "{{datetime}} {{level}} {{message}}\n"
-	}
-
-	// custom log format
-	logFormatter := genLogFormatter(l.timeFormat)
-
-	if len(server) == 0 {
-		// Use local syslog socket by default.
-		server = "/dev/log"
-	}
-
-	if strings.HasPrefix(server, "/") {
-		h, err := handler.NewSysLogHandler(syslogLevel|syslog.LOG_MAIL, tag)
-		if err != nil {
-			return nil, err
-		}
-		h.SetFormatter(logFormatter)
-		l.sl.AddHandler(h)
-	} else {
-		w, err := syslog.Dial("tcp", server, syslogLevel|syslog.LOG_MAIL, tag)
-		if err != nil {
-			return nil, err
-		}
-		h := handler.NewBufferedHandler(w, l.bufferSize, level)
-		h.SetFormatter(logFormatter)
-		l.sl.AddHandler(h)
-	}
-
-	l.sl.DoNothingOnPanicFatal()
-
-	return l, nil
-}
-
-func NewFileLogger(pth string, opts ...Option) (logger LoggerWithWriter, err error) {
-	// enable compress by default
-	l := newLogger(opts...)
-	if l.maxBackups == 0 {
-		l.maxBackups = 12
-	}
-
-	logFormatter := genLogFormatter(l.timeFormat)
-
-	if l.maxSize > 0 {
-		h, err := handlerRotateFile(l, pth)
-		if err != nil {
-			return nil, err
-		}
-
-		h.SetFormatter(logFormatter)
-		l.sl.AddHandler(h)
-		l.rotateWriter = h.Writer()
-	} else if l.rotateInterval != "" {
-		h, err := handlerRotateTime(l, pth)
-		if err != nil {
-			return nil, err
-		}
-
-		h.SetFormatter(logFormatter)
-		l.sl.AddHandler(h)
-		l.rotateWriter = h.Writer()
-	}
-
-	l.sl.DoNothingOnPanicFatal()
-
-	// 打印 logger 的内部设置
-	if l.printAfterInitialized {
-		l.Info("[logger] Level: %s", l.level)
-		l.Info("[logger] Max Backups: %d", l.maxBackups)
-		l.Info("[logger] Max Size: %d", l.maxSize)
-		l.Info("[logger] Rotate Interval: %s", l.rotateInterval)
-		l.Info("[logger] Compress: %t", l.compress)
-		l.Info("[logger] Buffer Size: %d", l.bufferSize)
-		l.Info("[logger] File Perm: %o", l.filePerm)
-		l.Info("[logger] Time Format: %s", l.timeFormat)
-	}
-
-	return l, nil
-}
-
-func genLogFormatter(timeFormat string) *slog.TextFormatter {
-	logTemplate := "{{datetime}} {{level}} {{message}}\n"
-	// custom log format
-	logFormatter := slog.NewTextFormatter(logTemplate)
-	logFormatter.EnableColor = false
-	logFormatter.FullDisplay = true
-	logFormatter.TimeFormat = timeFormat
-
-	return logFormatter
-}
-
-func handlerRotateFile(log *logger, logFile string) (*handler.SyncCloseHandler, error) {
-	return handler.NewSizeRotateFileHandler(
-		logFile,
-		log.maxSize,
-		handler.WithLogLevels(parseLevels(log.level)),
-		handler.WithBuffSize(log.bufferSize),
-		handler.WithBackupNum(log.maxBackups),
-		handler.WithCompress(log.compress),
-		handler.WithFilePerm(log.filePerm),
-	)
-}
-
-// handlerRotateTime
-// rotateInterval: 1w, 1d, 1h, 1m, 1s
-func handlerRotateTime(log *logger, logFile string) (*handler.SyncCloseHandler, error) {
-	if len(log.rotateInterval) < 2 {
-		return nil, fmt.Errorf("invalid rotate interval: %s", log.rotateInterval)
-	}
-
-	lastChar := log.rotateInterval[len(log.rotateInterval)-1]
-	lowerLastChar := strings.ToLower(string(lastChar))
-
-	switch lowerLastChar {
-	case "w", "d":
-		// time.ParseDuration() 不支持 w、d，因此需要转换成 h。
-		prefix, err := strconv.Atoi(log.rotateInterval[:len(log.rotateInterval)-1])
-		if err != nil {
-			return nil, err
-		}
-
-		if lowerLastChar == "w" {
-			log.rotateInterval = fmt.Sprintf("%dh", prefix*7*24)
-		} else {
-			log.rotateInterval = fmt.Sprintf("%dh", prefix*24)
-		}
-	case "h", "m", "s":
-		break
-	default:
-		return nil, fmt.Errorf("unsuppored rotate interval type: %s", lowerLastChar)
-	}
-
-	rotateIntervalDuration, err := time.ParseDuration(log.rotateInterval)
-	if err != nil {
-		return nil, err
-	}
-
-	// Set file permission to 0700 instead of default 0664.
-	rotatefile.DefaultFilePerm = 0700
-
-	return handler.NewTimeRotateFileHandler(
-		logFile,
-		rotatefile.RotateTime(rotateIntervalDuration.Seconds()),
-		handler.WithLogLevels(parseLevels(log.level)),
-		handler.WithBuffSize(log.bufferSize),
-		handler.WithBackupNum(log.maxBackups),
-		handler.WithCompress(log.compress),
-		handler.WithFilePerm(log.filePerm),
-	)
-}
-
-func parseLevels(level string) []slog.Level {
-	var levels []slog.Level
-	switch strings.ToLower(level) {
+func (l *logger) ParseLevel() (level slog.Level, priority syslog.Priority, err error) {
+	l.level = strings.ToLower(l.level)
+	switch l.level {
 	case "debug":
-		levels = append(levels, slog.InfoLevel, slog.WarnLevel, slog.ErrorLevel, slog.DebugLevel)
+		level = slog.LevelDebug
+		priority = syslog.LOG_DEBUG
+	case "error":
+		level = slog.LevelError
+		priority = syslog.LOG_ERR
+	case "warn":
+		level = slog.LevelWarn
+		priority = syslog.LOG_WARNING
+	case "info":
+		level = slog.LevelInfo
+		priority = syslog.LOG_INFO
 	default:
-		levels = append(levels, slog.InfoLevel, slog.WarnLevel, slog.ErrorLevel)
+		err = fmt.Errorf("invalid level: %s", l.level)
 	}
 
-	return levels
+	return
 }
 
 //
@@ -249,26 +176,22 @@ func parseLevels(level string) []slog.Level {
 //
 
 func (l *logger) Info(msg string, args ...interface{}) {
-	l.sl.Infof(msg, args...)
+	l.sl.Info(fmt.Sprintf(msg, args...))
 }
 
 func (l *logger) Error(msg string, args ...interface{}) {
-	l.sl.Errorf(msg, args...)
+	l.sl.Error(fmt.Sprintf(msg, args...))
 }
 
 func (l *logger) Warn(msg string, args ...interface{}) {
-	l.sl.Warnf(msg, args...)
+	l.sl.Warn(fmt.Sprintf(msg, args...))
 }
 
 func (l *logger) Debug(msg string, args ...interface{}) {
-	l.sl.Debugf(msg, args...)
+	l.sl.Debug(fmt.Sprintf(msg, args...))
 }
 
 // Write Only supported file target mode.
 func (l *logger) Write(p []byte) (int, error) {
-	if l.rotateWriter == nil {
-		return 0, nil
-	}
-
-	return l.rotateWriter.Write(p)
+	return l.w.Write(p)
 }
