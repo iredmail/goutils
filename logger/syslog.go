@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"log/syslog"
+	"strings"
 )
 
 // SyslogHandler Implement interface slog.Handler
@@ -13,7 +14,13 @@ type SyslogHandler struct {
 }
 
 func newSyslogHandler(server, tag string, level slog.Level, priority syslog.Priority) (*SyslogHandler, error) {
-	writer, err := syslog.Dial("tcp", server, priority|syslog.LOG_MAIL, tag)
+	network := "tcp"
+
+	if server == "" || strings.HasPrefix(server, "/") {
+		network = "unixgram"
+	}
+
+	writer, err := syslog.Dial(network, server, priority|syslog.LOG_MAIL, tag)
 	if err != nil {
 		return nil, err
 	}

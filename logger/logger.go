@@ -30,8 +30,9 @@ type logger struct {
 	bufferSize int
 }
 
-func (l *logger) ParseLevel() (level slog.Level, priority syslog.Priority, err error) {
+func (l *logger) parseLogLevel() (level slog.Level, priority syslog.Priority, err error) {
 	l.level = strings.ToLower(l.level)
+
 	switch l.level {
 	case "debug":
 		level = slog.LevelDebug
@@ -81,10 +82,10 @@ func (l *logger) Debug(msg string, args ...interface{}) {
 	l.sl.Debug(fmt.Sprintf(msg, args...))
 }
 
-// Write Only supported file target mode.
 func (l *logger) Write(p []byte) (int, error) {
 	return l.w.Write(p)
 }
+
 func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 	l := &logger{
 		w:     os.Stdout,
@@ -95,7 +96,7 @@ func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 		opt(l)
 	}
 
-	level, _, err := l.ParseLevel()
+	level, _, err := l.parseLogLevel()
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +164,7 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 		}
 	}
 
-	level, _, err := l.ParseLevel()
+	level, _, err := l.parseLogLevel()
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +188,7 @@ func NewSyslogLogger(server, tag string, options ...Option) (LoggerWithWriter, e
 		opt(l)
 	}
 
-	level, priority, err := l.ParseLevel()
+	level, priority, err := l.parseLogLevel()
 	if err != nil {
 		return nil, err
 	}
