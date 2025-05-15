@@ -28,13 +28,11 @@ func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 		return nil, err
 	}
 
-	l.sl = slog.New(slog.NewTextHandler(
-		os.Stdout,
-		&slog.HandlerOptions{
-			Level:       level,
-			ReplaceAttr: l.formatTime,
-		}),
-	)
+	l.sl = slog.New(&CustomHandler{
+		w:          os.Stdout,
+		level:      level,
+		timeFormat: l.timeFormat,
+	})
 
 	return l, nil
 }
@@ -53,6 +51,9 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 		MaxSize:    l.maxSize,
 		MaxBackups: int(l.maxBackups),
 		Compress:   l.compress,
+	}
+	if l.maxSize == 0 {
+		tj.MaxSize = 300 //MB
 	}
 
 	if l.rotateInterval != "" {
@@ -95,13 +96,11 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 	}
 
 	l.w = tj
-	l.sl = slog.New(slog.NewTextHandler(
-		tj,
-		&slog.HandlerOptions{
-			Level:       level,
-			ReplaceAttr: l.formatTime,
-		}),
-	)
+	l.sl = slog.New(&CustomHandler{
+		w:          tj,
+		level:      level,
+		timeFormat: l.timeFormat,
+	})
 
 	return l, nil
 }
@@ -115,12 +114,12 @@ func NewSyslogLogger(server, tag string, options ...Option) (LoggerWithWriter, e
 		opt(l)
 	}
 
-	_, priority, err := l.ParseLevel()
+	level, priority, err := l.ParseLevel()
 	if err != nil {
 		return nil, err
 	}
 
-	h, err := newSyslogHandler(server, tag, priority)
+	h, err := newSyslogHandler(server, tag, level, priority)
 	if err != nil {
 		return nil, err
 	}

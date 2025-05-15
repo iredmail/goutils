@@ -10,20 +10,20 @@ import (
 // SyslogHandler Implement interface slog.Handler
 type SyslogHandler struct {
 	writer *syslog.Writer
-	attrs  []slog.Attr
+	level  slog.Level
 }
 
-func newSyslogHandler(server, tag string, priority syslog.Priority) (*SyslogHandler, error) {
+func newSyslogHandler(server, tag string, level slog.Level, priority syslog.Priority) (*SyslogHandler, error) {
 	writer, err := syslog.Dial("tcp", server, priority|syslog.LOG_MAIL, tag)
 	if err != nil {
 		return nil, err
 	}
 
-	return &SyslogHandler{writer: writer}, nil
+	return &SyslogHandler{writer: writer, level: level}, nil
 }
 
 func (h *SyslogHandler) Enabled(_ context.Context, level slog.Level) bool {
-	return level >= slog.LevelDebug
+	return level >= h.level
 }
 
 func (h *SyslogHandler) Handle(_ context.Context, r slog.Record) error {
@@ -52,13 +52,10 @@ func (h *SyslogHandler) Handle(_ context.Context, r slog.Record) error {
 	return err
 }
 
-func (h *SyslogHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	newHandler := *h
-	newHandler.attrs = append(newHandler.attrs, attrs...)
-
-	return &newHandler
+func (h *SyslogHandler) WithAttrs(_ []slog.Attr) slog.Handler {
+	return h
 }
 
-func (h *SyslogHandler) WithGroup(name string) slog.Handler {
+func (h *SyslogHandler) WithGroup(_ string) slog.Handler {
 	return h
 }
