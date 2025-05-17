@@ -55,3 +55,28 @@ func (h *SyslogHandler) WithAttrs(_ []slog.Attr) slog.Handler {
 func (h *SyslogHandler) WithGroup(_ string) slog.Handler {
 	return h
 }
+
+func NewSyslogLogger(server, tag string, options ...Option) (LoggerWithWriter, error) {
+	l := &logger{
+		level: "info",
+	}
+
+	for _, opt := range options {
+		opt(l)
+	}
+
+	level, priority, err := l.parseLogLevel()
+	if err != nil {
+		return nil, err
+	}
+
+	h, err := newSyslogHandler(server, tag, level, priority)
+	if err != nil {
+		return nil, err
+	}
+
+	l.w = h.writer
+	l.sl = slog.New(h)
+
+	return l, nil
+}

@@ -178,28 +178,3 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 
 	return l, nil
 }
-
-func NewSyslogLogger(server, tag string, options ...Option) (LoggerWithWriter, error) {
-	l := &logger{
-		level: "info",
-	}
-
-	for _, opt := range options {
-		opt(l)
-	}
-
-	level, priority, err := l.parseLogLevel()
-	if err != nil {
-		return nil, err
-	}
-
-	h, err := newSyslogHandler(server, tag, level, priority)
-	if err != nil {
-		return nil, err
-	}
-
-	l.w = h.writer
-	l.sl = slog.New(h)
-
-	return l, nil
-}
