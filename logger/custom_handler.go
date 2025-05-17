@@ -30,7 +30,7 @@ func (c *CustomHandler) Handle(_ context.Context, r slog.Record) error {
 	if c.timeFormat != "" {
 		b.WriteString(time.Now().Format(c.timeFormat) + " ")
 	} else {
-		b.WriteString(time.Now().String() + " ")
+		b.WriteString(time.Now().Format(time.DateTime) + " ")
 	}
 
 	b.WriteString(r.Level.String() + " ")
