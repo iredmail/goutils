@@ -53,15 +53,6 @@ func (l *logger) parseLogLevel() (level slog.Level, priority syslog.Priority, er
 	return
 }
 
-func (l *logger) formatTime(groups []string, a slog.Attr) slog.Attr {
-	if a.Key == slog.TimeKey && l.timeFormat != "" {
-		t := a.Value.Time()
-		a.Value = slog.StringValue(t.Format(l.timeFormat))
-	}
-
-	return a
-}
-
 //
 // 实现 Logger 接口。
 //
@@ -88,8 +79,9 @@ func (l *logger) Write(p []byte) (int, error) {
 
 func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 	l := &logger{
-		w:     os.Stdout,
-		level: "info",
+		w:          os.Stdout,
+		level:      "info",
+		timeFormat: time.DateTime, // 默认时间格式
 	}
 
 	for _, opt := range opts {
@@ -112,7 +104,8 @@ func NewStdoutLogger(opts ...Option) (LoggerWithWriter, error) {
 
 func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 	l := &logger{
-		level: "info",
+		level:      "info",
+		timeFormat: time.DateTime, // 默认时间格式
 	}
 
 	for _, opt := range opts {
