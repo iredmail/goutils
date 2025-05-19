@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
+	"github.com/iredmail/goutils/slice"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/host"
 	"github.com/shirou/gopsutil/v4/mem"
@@ -62,8 +63,10 @@ type OSInfo struct {
 	UptimeMinutes uint64 `json:"uptime_minutes"`
 
 	// Net
-	IPAddresses  []string `json:"ip_addresses"`
-	MacAddresses []string `json:"mac_addresses"`
+	IPAddresses   []string `json:"ip_addresses"`
+	IPv4Addresses []string `json:"ipv4_addresses"`
+	IPv6Addresses []string `json:"ipv6_addresses"`
+	MacAddresses  []string `json:"mac_addresses"`
 }
 
 func (oi OSInfo) ToMap() (m map[string]any, err error) {
@@ -274,17 +277,21 @@ func GetOSInfo() (oi OSInfo, err error) {
 			if err != nil {
 				return oi, err
 			}
+
 			for _, addr := range addrs {
-				if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+				ipNet, ok := addr.(*net.IPNet)
+				if ok && !ipNet.IP.IsLoopback() {
 					ip := ipNet.IP.String()
-					if !slices.Contains(oi.IPAddresses, ip) {
-						oi.IPAddresses = append(oi.IPAddresses, ip)
+					oi.IPAddresses = slice.AddMissingElems(oi.IPAddresses, ip)
+
+					if ipNet.IP.To4() != nil {
+						oi.IPv4Addresses = slice.AddMissingElems(oi.IPv4Addresses, ip)
+					} else {
+						oi.IPv6Addresses = slice.AddMissingElems(oi.IPv6Addresses, ip)
 					}
 
 					maddr := iface.HardwareAddr.String()
-					if !slices.Contains(oi.MacAddresses, maddr) {
-						oi.MacAddresses = append(oi.MacAddresses, maddr)
-					}
+					oi.MacAddresses = slice.AddMissingElems(oi.MacAddresses, maddr)
 
 					break
 				}

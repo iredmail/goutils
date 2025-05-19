@@ -106,6 +106,12 @@ func IsIPv4(address string) bool {
 	return ip.To4() != nil
 }
 
+func IsIPv6(address string) bool {
+	ip := net.ParseIP(address)
+
+	return ip.To16() != nil
+}
+
 func IsHttpEndpoint(endpoint string) bool {
 	_, err := url.ParseRequestURI(endpoint)
 	if err != nil {

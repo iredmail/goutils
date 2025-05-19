@@ -13,6 +13,7 @@ func TestNet(t *testing.T) {
 
 	assert.True(t, IsIPv4("192.168.2.4"))
 	assert.False(t, IsIPv4("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
+	assert.True(t, IsIPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
 
 	assert.True(t, IsCIDR("192.168.0.0/24"))
 	assert.False(t, IsCIDR("192.168.0.0"))
