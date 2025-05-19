@@ -272,31 +272,27 @@ func GetOSInfo() (oi OSInfo, err error) {
 	}
 
 	for _, iface := range interfaces {
-		if iface.Flags&net.FlagUp != 0 && iface.Flags&net.FlagLoopback == 0 {
-			addrs, err := iface.Addrs()
-			if err != nil {
-				return oi, err
-			}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return oi, err
+		}
 
-			for _, addr := range addrs {
-				ipNet, ok := addr.(*net.IPNet)
-				if ok && !ipNet.IP.IsLoopback() {
-					ip := ipNet.IP.String()
-					oi.IPAddresses = slice.AddMissingElems(oi.IPAddresses, ip)
+		for _, addr := range addrs {
+			ipNet, ok := addr.(*net.IPNet)
+			if ok {
+				ip := ipNet.IP.String()
+				oi.IPAddresses = slice.AddMissingElems(oi.IPAddresses, ip)
 
-					if ipNet.IP.To4() != nil {
-						oi.IPv4Addresses = slice.AddMissingElems(oi.IPv4Addresses, ip)
-					} else {
-						oi.IPv6Addresses = slice.AddMissingElems(oi.IPv6Addresses, ip)
-					}
-
-					maddr := iface.HardwareAddr.String()
-					oi.MacAddresses = slice.AddMissingElems(oi.MacAddresses, maddr)
-
-					break
+				if ipNet.IP.To4() != nil {
+					oi.IPv4Addresses = slice.AddMissingElems(oi.IPv4Addresses, ip)
+				} else {
+					oi.IPv6Addresses = slice.AddMissingElems(oi.IPv6Addresses, ip)
 				}
 			}
 		}
+
+		maddr := iface.HardwareAddr.String()
+		oi.MacAddresses = slice.AddMissingElems(oi.MacAddresses, maddr)
 	}
 
 	uptime, err := host.Uptime()
