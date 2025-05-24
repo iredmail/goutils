@@ -2,6 +2,8 @@ module github.com/iredmail/goutils
 
 go 1.24.3
 
+replace github.com/olekukonko/tablewriter => github.com/olekukonko/tablewriter v0.0.5
+
 require (
 	github.com/DeRuina/timberjack v1.1.0
 	github.com/Luzifer/go-openssl/v4 v4.2.4
