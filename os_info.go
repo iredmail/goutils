@@ -57,16 +57,32 @@ type OSInfo struct {
 	PkgMgr string `json:"pkg_mgr"`
 
 	// Uptime
-	BootTime      uint64 `json:"boot_time"`
-	UptimeDays    uint64 `json:"uptime_days"`
-	UptimeHours   uint64 `json:"uptime_hours"`
-	UptimeMinutes uint64 `json:"uptime_minutes"`
+	BootTime uint64 `json:"boot_time"`
 
 	// Net
 	IPAddresses   []string `json:"ip_addresses"`
 	IPv4Addresses []string `json:"ipv4_addresses"`
 	IPv6Addresses []string `json:"ipv6_addresses"`
 	MacAddresses  []string `json:"mac_addresses"`
+}
+
+type HostUptime struct {
+	Days    uint64 `json:"days"`
+	Hours   uint64 `json:"hours"`
+	Minutes uint64 `json:"minutes"`
+}
+
+func (oi OSInfo) Uptime() (hu HostUptime) {
+	uptime, err := host.Uptime()
+	if err != nil {
+		return
+	}
+
+	hu.Days = uptime / (60 * 60 * 24)
+	hu.Hours = (uptime - (hu.Days * 60 * 60 * 24)) / (60 * 60)
+	hu.Minutes = ((uptime - (hu.Days * 60 * 60 * 24)) - (hu.Hours * 60 * 60)) / 60
+
+	return
 }
 
 func (oi OSInfo) ToMap() (m map[string]any, err error) {
@@ -294,14 +310,6 @@ func GetOSInfo() (oi OSInfo, err error) {
 		maddr := iface.HardwareAddr.String()
 		oi.MacAddresses = slice.AddMissingElems(oi.MacAddresses, maddr)
 	}
-
-	uptime, err := host.Uptime()
-	if err != nil {
-		return
-	}
-	oi.UptimeDays = uptime / (60 * 60 * 24)
-	oi.UptimeHours = (uptime - (oi.UptimeDays * 60 * 60 * 24)) / (60 * 60)
-	oi.UptimeMinutes = ((uptime - (oi.UptimeDays * 60 * 60 * 24)) - (oi.UptimeHours * 60 * 60)) / 60
 
 	return
 }
