@@ -48,20 +48,29 @@ func YMDYesterday() (ymd int) {
 	return
 }
 
-func DayStartEndEpochs(t time.Time) (start, end int64) {
-	year, month, day := t.Date()
-	start = time.Date(year, month, day, 0, 0, 0, 0, time.UTC).Unix()
-	end = time.Date(year, month, day, 23, 59, 59, int(time.Second-time.Nanosecond), time.UTC).Unix()
-
-	return
-}
-
 // EpochsExpiringMonth 返回当前时间（start）及未来一个月（31天）的时间。
 func EpochsExpiringMonth() (start, end int64) {
 	t := time.Now().UTC()
 
 	start = t.Unix()
 	end = t.AddDate(0, 0, 31).Unix() // 当前时间 + 31 天
+
+	return
+}
+
+// DayStartEndEpochs 返回指定时间当天的起止 epoch 范围。如果 t 不指定则返回当天时间。
+func DayStartEndEpochs(tt ...time.Time) (start, end int64) {
+	var t time.Time
+
+	if len(tt) == 0 {
+		t = time.Now().UTC()
+	} else {
+		t = tt[0]
+	}
+
+	year, month, day := t.Date()
+	start = time.Date(year, month, day, 0, 0, 0, 0, time.UTC).Unix()
+	end = time.Date(year, month, day, 23, 59, 59, int(time.Second-time.Nanosecond), time.UTC).Unix()
 
 	return
 }
