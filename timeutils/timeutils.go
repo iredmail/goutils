@@ -66,21 +66,41 @@ func EpochsExpiringMonth() (start, end int64) {
 	return
 }
 
-func MonthStartEndEpochs(ts ...time.Time) (start, end int64) {
-	var t time.Time
-	if len(ts) > 0 {
-		t = ts[0]
-	} else {
-		t = time.Now()
+func MonthStartEndEpochs(year, month int) (start, end int64) {
+	if year == 0 {
+		now := time.Now().UTC()
+		year = now.Year()
 	}
 
-	start = time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC).Unix()
+	// 验证月份是否有效
+	if month < 1 || month > 12 {
+		month = 1
+	}
 
-	// 获取下个月的第一天
-	nextMonth := time.Date(t.Year(), t.Month()+1, 1, 0, 0, 0, 0, time.UTC)
+	// 获取当月第一天00:00:00的时间
+	firstDayOfMonth := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.UTC)
+	start = firstDayOfMonth.Unix()
 
-	// 获取当前月份的最后一天
-	end = nextMonth.AddDate(0, 0, -1).UTC().Unix()
+	// 获取下个月第一天00:00:00的时间，然后减去1秒得到当月最后一秒
+	firstDayOfNextMonth := time.Date(year, time.Month(month)+1, 1, 0, 0, 0, 0, time.UTC)
+	end = firstDayOfNextMonth.Add(-time.Second).Unix()
+
+	return
+}
+
+func YearStartEndEpochs(year int) (start, end int64) {
+	if year == 0 {
+		now := time.Now().UTC()
+		year = now.Year()
+	}
+
+	// 获取当年第一天00:00:00的时间
+	firstDayOfMonth := time.Date(year, 1, 1, 0, 0, 0, 0, time.UTC)
+	start = firstDayOfMonth.Unix()
+
+	// 获取第二年第一天00:00:00的时间
+	lastDayOfMonth := time.Date(year+1, 1, 1, 0, 0, 0, 0, time.UTC)
+	end = lastDayOfMonth.Unix() - 1
 
 	return
 }
