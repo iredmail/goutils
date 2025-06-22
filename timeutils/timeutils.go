@@ -66,10 +66,17 @@ func EpochsExpiringMonth() (start, end int64) {
 	return
 }
 
+// MonthStartEndEpochs 返回指定年月的 epoch 时间范围。
+// 如果 year 为 0，则使用当前时间的年份。如果 month 为 0，则使用当前时间的月份。如果月份错误，则月份设为 1。
 func MonthStartEndEpochs(year, month int) (start, end int64) {
+	now := time.Now().UTC()
+
 	if year == 0 {
-		now := time.Now().UTC()
 		year = now.Year()
+	}
+
+	if month == 0 {
+		month = int(now.Month())
 	}
 
 	// 验证月份是否有效
