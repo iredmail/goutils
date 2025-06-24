@@ -308,7 +308,9 @@ func GetOSInfo() (oi OSInfo, err error) {
 		}
 
 		maddr := iface.HardwareAddr.String()
-		oi.MacAddresses = slice.AddMissingElems(oi.MacAddresses, maddr)
+		if maddr != "" {
+			oi.MacAddresses = slice.AddMissingElems(oi.MacAddresses, maddr)
+		}
 	}
 
 	return
