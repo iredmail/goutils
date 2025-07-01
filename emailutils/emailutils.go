@@ -195,6 +195,7 @@ func StripExtension(email string) string {
 // ParseAddress 是 `mail.ParseAddress()` 的简单封装：
 // - 去除首尾的引号
 // - 将邮件地址转换为小写
+// - 尝试解析 ISO-8859-9 编码的邮件地址
 // 注意：
 //   - 自 Go 1.22.2 起，邮件地址的域名部分可以用 `[IP]` 格式。
 //   - `mail.ParseAddress()` 处理的是 RFC 5322 address，是经过 base64 encode 后的字符串。
