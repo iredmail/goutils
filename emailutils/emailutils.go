@@ -3,6 +3,8 @@ package emailutils
 import (
 	"errors"
 	"fmt"
+	"io"
+	"mime"
 	"net"
 	"net/mail"
 	"regexp"
@@ -11,6 +13,7 @@ import (
 	"unicode"
 
 	"github.com/iredmail/goutils"
+	"golang.org/x/text/encoding/charmap"
 )
 
 var (
@@ -199,6 +202,31 @@ func ParseAddress(address string) (addr *mail.Address, err error) {
 	// FIXME 考虑用第三方库代替，否则配置参数里的 archiving_domain 归档邮件域名不能用内部 IP 地址。
 	addr, err = mail.ParseAddress(address)
 	if err != nil {
+		lowered := strings.TrimSpace(strings.ToLower(address))
+
+		if strings.HasPrefix(lowered, "=?iso-8859-9?") {
+			wd := new(mime.WordDecoder)
+
+			// Register a custom charset reader for ISO-8859-9
+			wd.CharsetReader = func(charset string, input io.Reader) (io.Reader, error) {
+				if strings.EqualFold(charset, "iso-8859-9") {
+					return charmap.ISO8859_9.NewDecoder().Reader(input), nil
+				}
+
+				return nil, fmt.Errorf("unsupported charset: %s", charset)
+			}
+
+			decoded, err := wd.DecodeHeader(address)
+			if err != nil {
+				return nil, err
+			}
+
+			addr, err = mail.ParseAddress(decoded)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		// 移除错误信息前面的 `mail: ` 字符
 		return nil, errors.New(strings.TrimPrefix(err.Error(), "mail: "))
 	}
