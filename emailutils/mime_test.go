@@ -1,6 +1,10 @@
 package emailutils
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestDecodeHeader(t *testing.T) {
 	tests := []struct {
@@ -61,4 +65,9 @@ func TestDecodeHeader(t *testing.T) {
 			}
 		})
 	}
+
+	// decoded: `中文 中文 中文 <user@domain.com>`
+	v, err := DecodeHeader("=?iso-8859-9?Q?Yavuz_Ma=FElak?= <user@domain.tr>")
+	assert.Nil(t, err)
+	assert.Equal(t, "Yavuz Maşlak <user@domain.tr>", v)
 }

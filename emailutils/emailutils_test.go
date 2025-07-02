@@ -80,6 +80,11 @@ func TestParseAddress(t *testing.T) {
 		assert.Equal(t, expected, addr.String())
 	}
 
+	addr, err := ParseAddress("=?iso-8859-9?Q?Javuz_Ma=FElak?= <user@domain.tr>")
+	assert.Nil(t, err)
+	assert.Equal(t, "Javuz Maşlak", addr.Name)
+	assert.Equal(t, "user@domain.tr", addr.Address)
+
 	// 使用 IP 地址作为域名。
 	/*
 		expected = `"Name" <u@[172.16.1.1]>`
