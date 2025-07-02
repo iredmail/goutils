@@ -19,7 +19,12 @@ func EpochToDatetime(epoch int64) string {
 		return ""
 	}
 
-	return time.Unix(epoch, 0).UTC().Format("2006-01-02 15:04:05")
+	t := time.Unix(epoch, 0).UTC()
+	if t.IsZero() {
+		return ""
+	}
+
+	return t.Format(time.DateTime)
 }
 
 func TimeToDay(t time.Time) string {
