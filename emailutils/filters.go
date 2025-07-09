@@ -9,6 +9,8 @@ import (
 // 注意：邮件地址扩展会被保留。
 func FilterValidEmails(addrs []string) (valid []string, invalid []string) {
 	for _, addr := range addrs {
+		addr = strings.TrimSpace(addr)
+
 		if IsEmail(addr) {
 			valid = append(valid, ToLowerWithExt(addr))
 		} else {
