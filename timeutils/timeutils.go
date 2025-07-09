@@ -1,6 +1,7 @@
 package timeutils
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -129,4 +130,16 @@ func YearStartEndEpochs(year int) (start, end int64) {
 	end = lastDayOfMonth.Unix() - 1
 
 	return
+}
+
+// EpochDaysToday 返回自 1970-01-01 到今天的天数。
+func EpochDaysToday() int {
+	now := time.Now().UTC()
+	duration := now.Sub(time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC))
+
+	return int(duration.Hours() / 24)
+}
+
+func EpochDaysTodayStr() string {
+	return fmt.Sprintf("%d", EpochDaysToday())
 }
