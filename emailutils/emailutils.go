@@ -197,7 +197,6 @@ func StripExtension(email string) string {
 //
 // 注意：
 //   - 自 Go 1.22.2 起，邮件地址的域名部分可以用 `[IP]` 格式。
-//   - `mail.ParseAddress()` 处理的是 RFC 5322 address，是经过 base64 encode 后的字符串。
 func ParseAddress(address string) (addr *mail.Address, err error) {
 	address = strings.ReplaceAll(strings.TrimSpace(address), "\n", " ")
 
