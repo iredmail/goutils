@@ -85,6 +85,27 @@ func TestParseAddress(t *testing.T) {
 	assert.Equal(t, "Javuz Maşlak", addr.Name)
 	assert.Equal(t, "user@domain.tr", addr.Address)
 
+	// Name 和 Address 之间有换行。Microsoft 发出的邮件常有这样的格式。
+	s := `Microsoft account team
+	<account-security-noreply@accountprotection.microsoft.com>`
+	addr, err = ParseAddress(s)
+	assert.Nil(t, err)
+	assert.Equal(t, "Microsoft account team", addr.Name)
+	assert.Equal(t, "account-security-noreply@accountprotection.microsoft.com", addr.Address)
+
+	s = `"=?utf-8?Q?=E5=BC=80=E6=99=AE=E7=A5=A8=E5=8A=A0=E5=BE=AE=E4=BF=A1:17376744614
+ =E6=99=95=E6=9B=B4=E5=AE=B9=E7=A0=B8=E5=85=85=E7=BA=B9=E5=8D=89=E7=BB=85=E6=84=8Finfo@iredmail.orginfo@iredmail.org?=" <cwlqlwqgq@ohwtf.com>`
+	addr, err = ParseAddress(s)
+	assert.Nil(t, err)
+	assert.Equal(t, "cwlqlwqgq@ohwtf.com", addr.Address)
+
+	s = `GameStop & Comenity Capital Bank 
+ <GameStop-apply@e.breadfinancial.com>`
+	addr, err = ParseAddress(s)
+	assert.Nil(t, err)
+	assert.Equal(t, "GameStop & Comenity Capital Bank", addr.Name)
+	assert.Equal(t, "GameStop-apply@e.breadfinancial.com", addr.Address)
+
 	// 使用 IP 地址作为域名。
 	/*
 		expected = `"Name" <u@[172.16.1.1]>`
