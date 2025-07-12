@@ -217,21 +217,12 @@ func ParseAddress(address string) (addr *mail.Address, err error) {
 				return nil, fmt.Errorf("invalid email format (no angle-addr)")
 			}
 
-			name := strings.TrimSpace(decoded[:nameStart])
-			email := strings.Trim(decoded[nameStart:], " <>")
-
-			// 如果 Name 包含逗号，用双引号包裹
-			if strings.Contains(name, ",") {
-				name = `"` + name + `"`
+			addr = &mail.Address{
+				Name:    strings.TrimSpace(decoded[:nameStart]),
+				Address: strings.Trim(decoded[nameStart:], " <>"),
 			}
 
-			// 重新组合成标准格式
-			formatted := name + " <" + email + ">"
-
-			addr, err = mail.ParseAddress(formatted)
-			if err != nil {
-				return nil, err
-			}
+			return addr, nil
 		} else {
 			// 移除错误信息前面的 `mail: ` 字符
 			return nil, errors.New(strings.TrimPrefix(err.Error(), "mail: "))
