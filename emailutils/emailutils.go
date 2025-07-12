@@ -203,17 +203,32 @@ func ParseAddress(address string) (addr *mail.Address, err error) {
 	// FIXME 考虑用第三方库代替，否则配置参数里的 archiving_domain 归档邮件域名不能用内部 IP 地址。
 	addr, err = mail.ParseAddress(address)
 	if err != nil {
-		// handle iso-8859-9 character set (Turkish)
-		lowered := strings.TrimSpace(strings.ToLower(address))
+		if strings.Contains(err.Error(), "charset not supported") {
+			var decoded string
 
-		var decoded string
-		if strings.HasPrefix(lowered, "=?iso-8859-9?") {
 			decoded, err = DecodeHeader(address)
 			if err != nil {
 				return nil, err
 			}
 
-			addr, err = mail.ParseAddress(decoded)
+			// 提取 Display Name 和 Email
+			nameStart := strings.Index(decoded, "<")
+			if nameStart == -1 {
+				return nil, fmt.Errorf("invalid email format (no angle-addr)")
+			}
+
+			name := strings.TrimSpace(decoded[:nameStart])
+			email := strings.Trim(decoded[nameStart:], " <>")
+
+			// 如果 Name 包含逗号，用双引号包裹
+			if strings.Contains(name, ",") {
+				name = `"` + name + `"`
+			}
+
+			// 重新组合成标准格式
+			formatted := name + " <" + email + ">"
+
+			addr, err = mail.ParseAddress(formatted)
 			if err != nil {
 				return nil, err
 			}

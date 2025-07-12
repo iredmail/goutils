@@ -80,6 +80,7 @@ func TestParseAddress(t *testing.T) {
 		assert.Equal(t, expected, addr.String())
 	}
 
+	// iso-8859-9
 	addr, err := ParseAddress("=?iso-8859-9?Q?Javuz_Ma=FElak?= <user@domain.tr>")
 	assert.Nil(t, err)
 	assert.Equal(t, "Javuz Maşlak", addr.Name)
@@ -121,6 +122,12 @@ func TestParseAddress(t *testing.T) {
 			assert.Equal(t, expected, addr.String())
 		}
 	*/
+
+	// gb2312，且 display name 里带逗号
+	addr, err = ParseAddress("=?GB2312?B?zuTD97+tIFd1LCBNaW5na2Fp?= <user@domain.com>")
+	assert.Nil(t, err)
+	assert.Equal(t, "武明凯 Wu, Mingkai", addr.Name)
+	assert.Equal(t, "user@domain.com", addr.Address)
 }
 
 func TestFilterValidEmails(t *testing.T) {

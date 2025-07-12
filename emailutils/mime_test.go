@@ -38,6 +38,12 @@ func TestDecodeHeader(t *testing.T) {
 			expected: "台灣 (Taiwan) 測試",
 			wantErr:  false,
 		},
+		{
+			name:     "GB2312 Simplified Chinese",
+			input:    "=?GB2312?B?zuTD97+tIFd1LCBNaW5na2Fp?=",
+			expected: "武明凯 Wu, Mingkai",
+			wantErr:  false,
+		},
 		// Other existing tests
 		{
 			name:     "Unencoded text",
