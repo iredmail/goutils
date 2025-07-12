@@ -128,8 +128,19 @@ func TestParseAddress(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "武明凯 Wu, Mingkai", addr.Name)
 	assert.Equal(t, "user@domain.com", addr.Address)
-}
 
+	// Name 里有多个 `<`
+	addr, err = ParseAddress("Display < Name <user@domain.com>")
+	assert.Nil(t, err)
+	assert.Equal(t, "Display < Name", addr.Name)
+	assert.Equal(t, "user@domain.com", addr.Address)
+
+	// Name 里有逗号
+	addr, err = ParseAddress("Display, Name <user@domain.com>")
+	assert.Nil(t, err)
+	assert.Equal(t, "Display, Name", addr.Name)
+	assert.Equal(t, "user@domain.com", addr.Address)
+}
 func TestFilterValidEmails(t *testing.T) {
 	emails := []string{"a", "b.io", "user@c.io", "d@", "e@f.com", "g+ext@h.com"}
 	valid, invalid := FilterValidEmails(emails)
