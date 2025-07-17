@@ -83,30 +83,32 @@ func GeneratePassword(scheme string, plainPassword string) (hash string, err err
 	switch scheme {
 	case SchemePlain:
 		hash = "{PLAIN}" + plainPassword
-	case SchemeCrypt:
-		// TODO
+	// case SchemeCrypt:
+	// TODO
 	case SchemeMD5:
 		hash = GenerateMD5Password(plainPassword)
 	case SchemePlainMD5:
 		hash, err = GeneratePlainMD5Password(plainPassword)
-	case SchemeSHA:
-		// TODO
+	// case SchemeSHA:
+	// TODO
 	case SchemeSSHA:
 		hash, err = GenerateSSHAPassword(plainPassword)
 	case SchemeSHA512:
 		hash, err = GenerateSHA512Password(plainPassword)
 	case SchemeSSHA512:
 		hash, err = GenerateSSHA512Password(plainPassword)
-	case SchemeSHA512Crypt:
-		// TODO
+	// case SchemeSHA512Crypt:
+	// TODO
 	case SchemeBcrypt:
 		hash, err = GenerateBcryptPassword(plainPassword)
 	case SchemeArgon2ID:
 		hash, err = GenArgon2IDPassword(plainPassword, true)
-		// case SchemeCramMD5:
-		// TODO
-		// case SchemeNTLM:
-		// TODO
+	// case SchemeCramMD5:
+	// TODO
+	// case SchemeNTLM:
+	// TODO
+	default:
+		err = respcode.ErrUnsupportedPasswordScheme
 	}
 
 	return
