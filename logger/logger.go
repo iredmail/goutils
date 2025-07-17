@@ -113,10 +113,11 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 	}
 
 	tj := &timberjack.Logger{
-		Filename:   pth,
-		MaxSize:    l.maxSize,
-		MaxBackups: int(l.maxBackups),
-		Compress:   l.compress,
+		Filename:         pth,
+		MaxSize:          l.maxSize,
+		MaxBackups:       int(l.maxBackups),
+		Compress:         l.compress,
+		BackupTimeFormat: "20060102-15:04:05",
 	}
 
 	if l.maxSize == 0 {
