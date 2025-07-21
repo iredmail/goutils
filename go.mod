@@ -3,7 +3,7 @@ module github.com/iredmail/goutils
 go 1.24.5
 
 require (
-	github.com/DeRuina/timberjack v1.3.1
+	github.com/DeRuina/timberjack v1.3.2
 	github.com/Luzifer/go-openssl/v4 v4.2.4
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/alexedwards/argon2id v1.0.0
