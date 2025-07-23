@@ -23,10 +23,12 @@ func FilterValidEmails(addrs []string) (valid []string, invalid []string) {
 
 func FilterValidDomains(domains []string) (valid []string, invalid []string) {
 	for _, d := range domains {
+		d = strings.ToLower(strings.TrimSpace(d))
+
 		if IsDomain(d) {
-			valid = append(valid, strings.ToLower(d))
+			valid = append(valid, d)
 		} else {
-			invalid = append(invalid, strings.ToLower(d))
+			invalid = append(invalid, d)
 		}
 	}
 
