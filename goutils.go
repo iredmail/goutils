@@ -59,17 +59,6 @@ func NotEmpty(v any) bool {
 	return false
 }
 
-func Intersect[T comparable](s1, s2 []T) []T {
-	set := make([]T, 0)
-	for _, v := range s1 {
-		if slices.Contains(s2, v) {
-			set = append(set, v)
-		}
-	}
-
-	return set
-}
-
 func GetStructJSONTags(v any) (tags []string) {
 	rv := reflect.ValueOf(v)
 	for i := range rv.NumField() {
