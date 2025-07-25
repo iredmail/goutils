@@ -15,7 +15,7 @@ func NewMySQLConn(c SQLConnConfig) (db *sql.DB, err error) {
 	//	- parseTime=true format time.
 	//	- timeout: Timeout for establishing connections, aka dial timeout.
 	//	- writeTimeout: I/O write timeout.
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&multiStatements=true",
 		c.DBUser,
 		c.DBPassword,
 		c.DBHost,
