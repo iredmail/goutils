@@ -116,7 +116,8 @@ func InsertSQLSchemaVersion(gdb *goqu.Database, version int) (err error) {
 // 注意：
 //   - `subFSSQLFiles` 是使用 fs.Sub 方法提取需要升级的 sql 文件所在的子目录。
 //   - 版本之间的改动应该包含所有的 SQL 变化，包括新建表，否则跨版本升级时，会出现对还不存在的表做改动的情况。
-func UpgradeSQLSchema(dbName string, gdb *goqu.Database, subFSSQLFiles fs.FS, latestVersion int) error {
+//   - `sqlFilenameExtension` 是 SQL 文件的后缀名，默认为 ".sql"。如果不需要后缀名，可以传入空字符串。
+func UpgradeSQLSchema(dbName string, gdb *goqu.Database, subFSSQLFiles fs.FS, latestVersion int, sqlFilenameExtension string) error {
 	hasTable, err := HasSystemTable(dbName, gdb)
 	if err != nil {
 		return err
@@ -151,9 +152,14 @@ func UpgradeSQLSchema(dbName string, gdb *goqu.Database, subFSSQLFiles fs.FS, la
 		return nil
 	}
 
+	ext := sqlFilenameExtension
+	if ext == "" {
+		ext = ".sql"
+	}
+
 	for i := localVersion; i < latestVersion; i++ {
 		newVersion := i + 1
-		pth := fmt.Sprintf("%d.sql", newVersion)
+		pth := fmt.Sprintf("%d%s", newVersion, ext)
 
 		sqlRaw, err := fs.ReadFile(subFSSQLFiles, pth)
 		if err != nil {
