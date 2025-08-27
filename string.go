@@ -44,14 +44,28 @@ func GenRandomString(length int) string {
 	return string(ret)
 }
 
+// SplitLines 按行拆分字符串，并去除每行的首尾空白字符。
 func SplitLines(s string) (lines []string) {
-	newLines := strings.Split(s, "\n")
+	// Handle both Unix-style (\n) and Windows-style (\r\n) newlines
+	// by first replacing Windows-style newlines with Unix-style ones.
+	s = strings.ReplaceAll(s, "\r\n", "\n")
 
-	for _, i := range newLines {
+	for _, i := range strings.Split(s, "\n") {
 		lines = append(lines, strings.TrimSpace(i))
 	}
 
 	return
+}
+
+// RemoveSpacesAndNewLines 去除字符串中的多余的空白字符和换行符，并使用指定的分隔符连接剩余的字段。
+func RemoveSpacesAndNewLines(s, sep string) string {
+	fields := strings.Fields(s)
+
+	if sep == "" {
+		sep = " "
+	}
+
+	return strings.Join(fields, sep)
 }
 
 // StringSliceToLower 将 slice 里的元素都转换为小写。
