@@ -58,14 +58,14 @@ func SplitLines(s string) (lines []string) {
 }
 
 // RemoveSpacesAndNewLines 去除字符串中的多余的空白字符和换行符，并使用指定的分隔符连接剩余的字段。
-func RemoveSpacesAndNewLines(s, sep string) string {
+func RemoveSpacesAndNewLines(s string, sep ...string) string {
 	fields := strings.Fields(s)
 
-	if sep == "" {
-		sep = " "
+	if len(sep) > 0 {
+		return strings.Join(fields, sep[0])
+	} else {
+		return strings.Join(fields, "")
 	}
-
-	return strings.Join(fields, sep)
 }
 
 // StringSliceToLower 将 slice 里的元素都转换为小写。
