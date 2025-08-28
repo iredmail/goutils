@@ -17,7 +17,7 @@ require (
 	github.com/jhillyerd/enmime/v2 v2.2.0
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.25.7
-	github.com/stretchr/testify v1.11.0
+	github.com/stretchr/testify v1.11.1
 	github.com/vorlif/spreak v0.6.0
 	golang.org/x/crypto v0.40.0
 	golang.org/x/text v0.27.0
