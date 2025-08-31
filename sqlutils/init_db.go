@@ -15,9 +15,9 @@ var (
 	// 参考：
 	// https://www.sqlite.org/pragma.html
 	// https://phiresky.github.io/blog/2020/sqlite-performance-tuning/
+	// https://www.agwa.name/blog/post/sqlite_durability
 	SQLiteDefaultPragmas = map[string]string{
 		"busy_timeout": "10000",
-		"synchronous":  "NORMAL",
 		"auto_vacuum":  "FULL",
 		"journal_mode": "WAL",
 		// WAL mode is always consistent with synchronous=NORMAL, but WAL mode
@@ -26,7 +26,7 @@ var (
 		// crash. Transactions are durable across application crashes
 		// regardless of the synchronous setting or journal mode. The
 		// synchronous=NORMAL setting is a good choice for most applications running in WAL mode.
-		// {"schema.synchronous", "full"},
+		"synchronous": "FULL",
 	}
 
 	DefaultMaxIdleConnections int = 20
