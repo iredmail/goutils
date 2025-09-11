@@ -135,8 +135,8 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 		}
 
 		// 创建文件
-		if err := os.WriteFile(pth, content, mode); err != nil {
-			return fmt.Errorf("failed in creating file %s: %v", pth, err)
+		if err2 := os.WriteFile(pth, content, mode); err2 != nil {
+			return fmt.Errorf("failed in creating file %s: %v", pth, err2)
 		}
 
 		return nil
