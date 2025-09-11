@@ -130,8 +130,8 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 	if os.IsNotExist(err) {
 		// Check and create (if not exist) parent directory
 		dir := filepath.Dir(pth)
-		if err := CreateDirIfNotExist(dir, 0700); err != nil {
-			return err
+		if err2 := CreateDirIfNotExist(dir, 0700); err2 != nil {
+			return err2
 		}
 
 		// 创建文件
