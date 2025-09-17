@@ -117,7 +117,8 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 		MaxSize:          l.maxSize,
 		MaxBackups:       int(l.maxBackups),
 		Compress:         l.compress,
-		BackupTimeFormat: "20060102-15:04:05",
+		BackupTimeFormat: "2006-01-02-15:04:05",
+		AppendAfterExt:   true,
 	}
 
 	if l.maxSize == 0 {
