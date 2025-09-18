@@ -19,9 +19,9 @@ require (
 	github.com/shirou/gopsutil/v4 v4.25.8
 	github.com/stretchr/testify v1.11.1
 	github.com/vorlif/spreak v0.6.0
-	golang.org/x/crypto v0.41.0
+	golang.org/x/crypto v0.42.0
 	golang.org/x/text v0.29.0
-	modernc.org/sqlite v1.38.2
+	modernc.org/sqlite v1.39.0
 )
 
 require (
@@ -43,7 +43,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
-	github.com/olekukonko/cat v0.0.0-20250908003013-b0de306c343b // indirect
+	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
 	github.com/olekukonko/errors v1.1.0 // indirect
 	github.com/olekukonko/ll v0.1.1 // indirect
 	github.com/olekukonko/tablewriter v1.0.9 // indirect
@@ -57,14 +57,14 @@ require (
 	github.com/tklauser/go-sysconf v0.3.15 // indirect
 	github.com/tklauser/numcpus v0.10.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.65.0 // indirect
+	github.com/valyala/fasthttp v1.66.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
-	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/exp v0.0.0-20250911091902-df9299821621 // indirect
+	golang.org/x/net v0.44.0 // indirect
 	golang.org/x/sys v0.36.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.66.8 // indirect
+	modernc.org/libc v1.66.9 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )
