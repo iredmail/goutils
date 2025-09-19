@@ -113,12 +113,15 @@ func NewFileLogger(pth string, opts ...Option) (LoggerWithWriter, error) {
 	}
 
 	tj := &timberjack.Logger{
-		Filename:         pth,
-		MaxSize:          l.maxSize,
-		MaxBackups:       int(l.maxBackups),
-		Compress:         l.compress,
-		BackupTimeFormat: "2006-01-02-15:04:05",
-		AppendAfterExt:   true,
+		Filename:           pth,
+		MaxSize:            l.maxSize,
+		MaxBackups:         int(l.maxBackups),
+		BackupTimeFormat:   "2006-01-02-15:04:05",
+		AppendTimeAfterExt: true,
+	}
+
+	if l.compress {
+		tj.Compression = "gzip"
 	}
 
 	if l.maxSize == 0 {

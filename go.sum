@@ -4,8 +4,8 @@ github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 h1:mFRzDkZVAjdal+
 github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358/go.mod h1:chxPXzSsl7ZWRAuOIE23GDNzjWuZquvFlgA8xmpunjU=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
-github.com/DeRuina/timberjack v1.3.6 h1:dSK2WYsutmG68Z7VUiC1P6vPBHomvU54oEhX93eMzjg=
-github.com/DeRuina/timberjack v1.3.6/go.mod h1:oir/YwhAK3URX7u4CDuMzdVQtLQqc1l3M/vJ6WBsjZs=
+github.com/DeRuina/timberjack v1.3.7 h1:+eP0+cxzwOh8RMg5ByHHZ/abrtDiEk/F5B7JYwCvUJ0=
+github.com/DeRuina/timberjack v1.3.7/go.mod h1:RLoeQrwrCGIEF8gO5nV5b/gMD0QIy7bzQhBUgpp1EqE=
 github.com/Luzifer/go-openssl/v4 v4.2.4 h1:3Eu3gSeZpr8Ha+IofVnSWttCL1xejRr/lda4l4TZRWk=
 github.com/Luzifer/go-openssl/v4 v4.2.4/go.mod h1:ykquxaR0R1Vor83/FAtGBJZZO5zswuSQTVx1FQc1bJY=
 github.com/Masterminds/semver/v3 v3.4.0 h1:Zog+i5UMtVoCU8oKka5P7i9q9HgrJeGzI9SA1Xbatp0=
