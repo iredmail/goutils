@@ -5,6 +5,8 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+
+	"github.com/dustin/go-humanize"
 )
 
 // IsEmpty
@@ -96,4 +98,8 @@ func GetStructFieldNames(obj any) (names []string) {
 
 func CalculateTotalPages(total, pageSize float64) int {
 	return int(math.Ceil(total / pageSize))
+}
+
+func FileSizeFormat(size int64) string {
+	return humanize.IBytes(uint64(size))
 }
