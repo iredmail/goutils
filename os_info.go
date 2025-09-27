@@ -242,6 +242,10 @@ func GetOSInfo() (oi OSInfo, err error) {
 				oi.OSFamily = "RedHat"
 				oi.DistributionRelease = "AlmaLinux"
 				oi.PkgMgr = "dnf"
+			case "openEuler":
+				oi.Distribution = "openEuler"
+				oi.OSFamily = "RedHat"
+				oi.PkgMgr = "dnf"
 			}
 		}
 
