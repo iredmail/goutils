@@ -57,7 +57,7 @@ func SplitLines(s string) (lines []string) {
 	return
 }
 
-// RemoveSpacesAndNewLines 去除字符串中的多余的空白字符和换行符，并使用指定的分隔符连接剩余的字段。
+// RemoveSpacesAndNewLines 去除字符串里的所有空白字符和换行符，并可选地使用指定的分隔符连接剩余的字段。
 func RemoveSpacesAndNewLines(s string, sep ...string) string {
 	fields := strings.Fields(s)
 
