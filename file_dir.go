@@ -128,9 +128,9 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 	}
 
 	if os.IsNotExist(err) {
-		// Check and create (if not exist) parent directory
+		// Check and create (if not exist) parent directory with permission 0755.
 		dir := filepath.Dir(pth)
-		if err2 := CreateDirIfNotExist(dir, 0700); err2 != nil {
+		if err2 := CreateDirIfNotExist(dir, 0755); err2 != nil {
 			return err2
 		}
 
