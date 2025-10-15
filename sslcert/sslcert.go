@@ -97,9 +97,9 @@ type Manager struct {
 	// 2. autocert
 	//
 
-	IsAutocert bool // 是否使用 autocert 生成和管理证书
+	IsAutocert bool             // 是否使用 autocert 生成和管理证书
+	FixedCert  *tls.Certificate // 管理员自己提供的证书
 
-	FixedCert   *tls.Certificate
 	autocertMgr *autocert.Manager
 
 	cacheDir    string // 使用 autocert.DirCache()
