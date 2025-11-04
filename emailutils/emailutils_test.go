@@ -32,6 +32,7 @@ func TestIsDomain(t *testing.T) {
 	assert.False(t, IsDomain("abcdefg"))
 	assert.False(t, IsDomain("114.114.114.114"))
 	assert.False(t, IsDomain("1234"))
+	assert.False(t, IsDomain(".abc.com"))
 }
 
 func TestIsFQDN(t *testing.T) {

@@ -14,7 +14,9 @@ import (
 )
 
 var (
-	regexDomain = regexp.MustCompile(`^[a-zA-Z0-9\.\-]+\.[a-zA-Z0-9]{2,25}$`)
+	// Domain must start with an alphanumeric character, then may contain alnum, dot or hyphen,
+	// and must end with a dot + 2-25 alphanumeric TLD. This forbids leading dot or hyphen.
+	regexDomain = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z0-9]{2,25}$`)
 
 	// - 以字母或数字开头，长度为 2-25 个字符
 	// - 不能以 `-` 结尾
