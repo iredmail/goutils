@@ -59,6 +59,8 @@ func IsFQDN(s string) bool {
 
 // IsDomain 校验给定字符串是否为格式正确的邮件域名。
 func IsDomain(s string) bool {
+	s = strings.TrimSpace(s)
+
 	if len(s) < 4 || len(s) > 254 {
 		return false
 	}
