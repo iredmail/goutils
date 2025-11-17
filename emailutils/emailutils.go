@@ -139,9 +139,15 @@ func ExtractDomains(emails []string) (domains []string) {
 // ExtractUsernameAndDomain 从给定的 s 里提取用户名和域名。
 // 如果 `s` 不是有效的邮件地址，`isValidEmail` 为 false。
 func ExtractUsernameAndDomain(s string) (username, domain string, isValidEmail bool) {
-	s = StripExtension(s)
+	isValidEmail = IsEmail(s)
+	if !isValidEmail {
+		return
+	}
 
-	return strings.Cut(s, "@")
+	s = StripExtension(s)
+	username, domain, _ = strings.Cut(s, "@")
+
+	return
 }
 
 // ExtractEmailLocalPart 返回邮件地址里的 local part 部分。
