@@ -44,9 +44,15 @@ func IsEmail(s string) bool {
 	_, domain, found := strings.Cut(s, "@")
 	if !found {
 		return false
+	} else {
+		if !IsDomain(domain) {
+			return false
+		}
 	}
 
-	if !IsDomain(domain) {
+	// 排除特殊字符，如：`$`
+	// net/mail 认为这些字符是合法的，但实际使用中容易导致问题。
+	if strings.ContainsAny(s, "$") {
 		return false
 	}
 

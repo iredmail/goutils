@@ -7,11 +7,14 @@ import (
 )
 
 func TestIsEmail(t *testing.T) {
-	// IsEmail
+	// Invalid
 	assert.False(t, IsEmail("abc"))
 	assert.False(t, IsEmail("abc.com"))
 	assert.False(t, IsEmail("user.123@abc@abc.com"))
 	assert.False(t, IsEmail("user@domain"))
+	assert.False(t, IsEmail("win-q1hgaa9hc1g$@b.io")) // $
+
+	// Valid
 	assert.True(t, IsEmail("user@abc.com"))
 	assert.True(t, IsEmail("user+abc@abc.com"))
 	assert.True(t, IsEmail("user.abc@abc.com"))
