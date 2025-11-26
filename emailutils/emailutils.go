@@ -1,7 +1,6 @@
 package emailutils
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/mail"
@@ -223,9 +222,7 @@ func ParseAddress(address string) (addr *mail.Address, err error) {
 		e := err.Error()
 
 		// 尝试处理以下情况
-		if strings.Contains(e, "charset not supported") ||
-			strings.Contains(e, "missing @ in addr-spec") ||
-			strings.Contains(e, "missing '@' or angle-add") {
+		if strings.Contains(e, "charset not supported") {
 			var decoded string
 
 			decoded, err = DecodeHeader(address)
@@ -249,7 +246,7 @@ func ParseAddress(address string) (addr *mail.Address, err error) {
 			return addr, nil
 		} else {
 			// 移除错误信息前面的 `mail: ` 字符
-			return nil, errors.New(strings.TrimPrefix(err.Error(), "mail: "))
+			return nil, err
 		}
 	}
 
