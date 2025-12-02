@@ -143,3 +143,16 @@ func EpochDaysToday() int {
 func EpochDaysTodayStr() string {
 	return fmt.Sprintf("%d", EpochDaysToday())
 }
+
+// DatetimeStrToEpoch 将日期时间字符串转换为 epoch 秒。
+// 如果解析失败，则返回 0。
+func DatetimeStrToEpoch(datetime string) (epoch int64) {
+	t, perr := time.ParseInLocation(time.DateTime, datetime, time.UTC)
+	if perr == nil {
+		epoch = t.Unix()
+	} else {
+		epoch = 0
+	}
+
+	return
+}
