@@ -16,7 +16,7 @@ require (
 	github.com/iredmail/ldappool v0.0.0-20251002025455-851be8b19958
 	github.com/jhillyerd/enmime/v2 v2.2.0
 	github.com/lib/pq v1.10.9
-	github.com/shirou/gopsutil/v4 v4.25.10
+	github.com/shirou/gopsutil/v4 v4.25.11
 	github.com/stretchr/testify v1.11.1
 	github.com/vorlif/spreak v1.0.0
 	golang.org/x/crypto v0.44.0
