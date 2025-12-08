@@ -14,10 +14,11 @@ import (
 	"strings"
 
 	"github.com/dustin/go-humanize"
-	"github.com/iredmail/goutils/slice"
 	"github.com/shirou/gopsutil/v4/disk"
 	"github.com/shirou/gopsutil/v4/host"
 	"github.com/shirou/gopsutil/v4/mem"
+
+	"github.com/iredmail/goutils/slice"
 )
 
 type OSInfo struct {
@@ -118,8 +119,9 @@ func (oi OSInfo) HasPGSQLLastLogin() bool {
 			return false
 		}
 	case "RedHat", "CentOS", "Rocky", "AlmaLinux":
-		// RHEL 9 及后续版本都支持。
-		if slices.Contains([]string{"7", "8"}, oi.DistributionMajorVersion) {
+		// RHEL 10 及后续版本都支持。
+		// 注意：RHEL 9 提供的 Dovecot 2.3.16 为最早支持 PostgreSQL UPSERT 的版本，但是仍然有 bug。
+		if slices.Contains([]string{"7", "8", "9"}, oi.DistributionMajorVersion) {
 			return false
 		}
 	case "OpenBSD":
