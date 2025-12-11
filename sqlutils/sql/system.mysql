@@ -4,5 +4,5 @@ CREATE TABLE IF NOT EXISTS `system` (
     `v`   VARCHAR(255) NOT NULL DEFAULT '',
 
 	PRIMARY KEY (`id`),
-	UNIQUE INDEX idx_system_k (`k`)
+	UNIQUE INDEX `idx_system_k` (`k`)
 ) ENGINE=InnoDB;
