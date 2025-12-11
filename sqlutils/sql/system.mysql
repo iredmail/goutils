@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS `system` (
+    `id`  INT(10) UNSIGNED AUTO_INCREMENT,
+    `k`   VARCHAR(255) NOT NULL DEFAULT '',
+    `v`   VARCHAR(255) NOT NULL DEFAULT '',
+
+	PRIMARY KEY (`id`),
+	UNIQUE INDEX idx_system_k (`k`)
+) ENGINE=InnoDB;

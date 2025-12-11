@@ -1,5 +1,7 @@
 package sqlutils
 
+import _ "embed"
+
 const (
 	// 内部使用的数据库，用于记录一些系统信息，如当前 SQL 表结构版本。
 	tableSystem = "system"
@@ -22,18 +24,6 @@ CREATE TABLE IF NOT EXISTS system (
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_system_k ON system (k);
 `
-
-	schemaSystemMysql = `
-CREATE TABLE IF NOT EXISTS system (
-    id  INT(10) UNSIGNED AUTO_INCREMENT,
-    k   VARCHAR(255) NOT NULL,
-    v   VARCHAR(255) NOT NULL,
-
-	PRIMARY KEY (id),
-	UNIQUE INDEX idx_system_k (k)
-) ENGINE=InnoDB;
-`
-
 	schemaSystemPostgres = `
 CREATE TABLE IF NOT EXISTS system (
     id  SERIAL PRIMARY KEY,
@@ -44,6 +34,9 @@ CREATE TABLE IF NOT EXISTS system (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_system_k ON system (k);
 `
 )
+
+//go:embed sql/system.mysql
+var schemaSystemMysql string
 
 // SQL 表 `system` 保存 key-value 格式的值，这里针对不同数据类型的 value 定义结构体，方便
 // SQL 查询时利用 goqu 做自动转换。
