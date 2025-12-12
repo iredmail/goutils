@@ -7,6 +7,7 @@ import (
 type SQLConnConfig struct {
 	DBHost     string
 	DBPort     string
+	UseSSL     bool
 	DBUser     string
 	DBPassword string
 	DBName     string

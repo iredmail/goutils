@@ -23,6 +23,11 @@ func NewMySQLConn(c SQLConnConfig) (db *sql.DB, err error) {
 		c.DBName,
 	)
 
+	// Add tls=skip-verify if UseSSL is true.
+	if c.UseSSL {
+		dsn += "&tls=skip-verify"
+	}
+
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return
