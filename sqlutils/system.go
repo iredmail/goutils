@@ -24,7 +24,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_system_k ON system (k);
 `
 
 	// MySQL 要求字段名要加反引号，因此合并到一行。
-	schemaSystemMysql = "CREATE TABLE IF NOT EXISTS system (`id` INT(10) UNSIGNED AUTO_INCREMENT, `k` VARCHAR(255) NOT NULL, `v` VARCHAR(255) NOT NULL, PRIMARY KEY (`id`), UNIQUE INDEX idx_system_k (`k`)) ENGINE=InnoDB;"
+	schemaSystemMysql = "CREATE TABLE IF NOT EXISTS `system` (`id` INT(10) UNSIGNED AUTO_INCREMENT, `k` VARCHAR(255) NOT NULL, `v` VARCHAR(255) NOT NULL, PRIMARY KEY (`id`), UNIQUE INDEX idx_system_k (`k`)) ENGINE=InnoDB;"
 
 	schemaSystemPostgres = `
 CREATE TABLE IF NOT EXISTS system (
