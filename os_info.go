@@ -34,7 +34,7 @@ type OSInfo struct {
 	// OS
 	KernelVersion string `json:"kernel_version"`
 	OSFamily      string `json:"os_family"`
-	OSName        string `json:"os_name"`
+	OSName        string `json:"os_name"` // lower case. e.g. debian, ubuntu, openbsd
 	OSVersion     string `json:"os_version"`
 
 	// Host is a docker container.
