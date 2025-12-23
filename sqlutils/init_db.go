@@ -7,6 +7,8 @@ import (
 	"time"
 
 	// 注册的 driver name 是 `sqlite`，不是 `sqlite3`。
+    // 注意：go.mod 文件里使用的 modernc.org/libc 的版本必须和
+    // moderanc.org/sqlite 仓库的 go.mod 里的 libc 版本一致，否则可能编译出错。
 	_ "modernc.org/sqlite" // database/sql driver
 )
 
