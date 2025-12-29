@@ -66,8 +66,8 @@ github.com/hashicorp/go-uuid v1.0.3 h1:2gKiV6YVmrJ1i2CKKa9obLvRieoRGviZFL26PcT/C
 github.com/hashicorp/go-uuid v1.0.3/go.mod h1:6SBZvOh/SIDV7/2o3Jml5SYk/TvGqwFJ/bN7x4byOro=
 github.com/inbucket/html2text v1.0.0 h1:N5kza++4uBBDJ2Z3KUnTRyPNoBcW+YfOgNiNmNB+sgs=
 github.com/inbucket/html2text v1.0.0/go.mod h1:5TrhXQKGU+LXurODaSm55Y9eXoPBRnYiOz4x2XfUoJU=
-github.com/iredmail/ldappool v0.0.0-20251229065628-6629397e8a3f h1:MvesjsbCVVTQ4M89hMo8a077pg95smeF0TZ+cztaRiQ=
-github.com/iredmail/ldappool v0.0.0-20251229065628-6629397e8a3f/go.mod h1:S+U2LJYCEsFvRuk14wsGq+VJE7R/6Y2RV4bsRnzfm90=
+github.com/iredmail/ldappool v0.0.0-20251229065917-50a0d3c826a1 h1:oBdMXVUYo+CVTdYGfummbqQjInelC6EWnPmoYcbwJH0=
+github.com/iredmail/ldappool v0.0.0-20251229065917-50a0d3c826a1/go.mod h1:Ez++XejN/mpViQM0cZNK5ILqyvYS4rndd4XhNHHHFRw=
 github.com/jcmturner/aescts/v2 v2.0.0 h1:9YKLH6ey7H4eDBXW8khjYslgyqG2xZikXP0EQFKrle8=
 github.com/jcmturner/aescts/v2 v2.0.0/go.mod h1:AiaICIRyfYg35RUkr8yESTqvSy7csK90qZ5xfvvsoNs=
 github.com/jcmturner/dnsutils/v2 v2.0.0 h1:lltnkeZGL0wILNvrNiVCR6Ro5PGU/SeBvVO/8c/iPbo=
