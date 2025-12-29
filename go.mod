@@ -13,14 +13,14 @@ require (
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/gofiber/fiber/v2 v2.52.10
 	github.com/google/uuid v1.6.0
-	github.com/iredmail/ldappool v0.0.0-20251203071325-505ceb1984ce
+	github.com/iredmail/ldappool v0.0.0-20251229065628-6629397e8a3f
 	github.com/jhillyerd/enmime/v2 v2.2.0
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.25.11
 	github.com/stretchr/testify v1.11.1
 	github.com/vorlif/spreak v1.0.0
-	golang.org/x/crypto v0.45.0
-	golang.org/x/text v0.31.0
+	golang.org/x/crypto v0.46.0
+	golang.org/x/text v0.32.0
 	modernc.org/sqlite v1.41.0
 )
 
@@ -62,7 +62,7 @@ require (
 	github.com/valyala/fasthttp v1.68.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/exp v0.0.0-20251219203646-944ab1f22d93 // indirect
-	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/sys v0.39.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
