@@ -98,13 +98,13 @@ func QueryLimit(ctx *fiber.Ctx, defaultValue ...int) (limit int) {
 }
 
 func QueryDomain(ctx *fiber.Ctx) (domain string, err error) {
-	domain = ctx.Query("domain")
+	domain = strings.ToLower(strings.TrimSpace(ctx.Query("domain")))
 
 	if !emailutils.IsDomain(domain) {
-		return "", errors.New("INVALID_EMAIL_DOMAIN")
+		err = errors.New("INVALID_EMAIL_DOMAIN")
 	}
 
-	return strings.ToLower(domain), nil
+	return
 }
 
 func QueryEmail(ctx *fiber.Ctx) (addr string, err error) {
