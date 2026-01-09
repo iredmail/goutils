@@ -55,6 +55,7 @@ func DownloadFile(url, dest string, validateCert bool, progresses ...Progresses)
 	if err != nil {
 		return err
 	}
+	defer resp.Body.Close()
 
 	totalSize := resp.ContentLength
 
@@ -63,6 +64,7 @@ func DownloadFile(url, dest string, validateCert bool, progresses ...Progresses)
 	if err != nil {
 		return err
 	}
+	defer out.Close()
 
 	var reader io.Reader = resp.Body
 	if totalSize > 0 && len(progresses) > 0 {
@@ -75,8 +77,6 @@ func DownloadFile(url, dest string, validateCert bool, progresses ...Progresses)
 
 	// Write the body to file
 	_, err = io.Copy(out, reader)
-	_ = resp.Body.Close()
-	_ = out.Close()
 
 	return err
 }
