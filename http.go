@@ -105,20 +105,21 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 	if resp.ContentLength > 0 {
 		total = uint64(resp.ContentLength)
 	}
-	var reader io.Reader = resp.Body
-	gr := &gaugeReader{
-		Reader:  reader,
-		total:   total,
-		gaugers: gaugers,
-	}
-	if len(gaugers) > 0 {
-		reader = gr
-	}
 
-	// Write the body to file
-	_, err = io.Copy(out, reader)
-	if err == nil && len(gaugers) > 0 {
-		gr.completed()
+	if len(gaugers) == 0 {
+		// Write the body to file
+		_, err = io.Copy(out, resp.Body)
+	} else {
+		gr := &gaugeReader{
+			Reader:  resp.Body,
+			total:   total,
+			gaugers: gaugers,
+		}
+		// Write the body to file
+		_, err = io.Copy(out, gr)
+		if err == nil {
+			gr.completed()
+		}
 	}
 
 	return err
