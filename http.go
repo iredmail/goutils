@@ -88,8 +88,6 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 	}
 	defer resp.Body.Close()
 
-	totalSize := resp.ContentLength
-
 	// Create the file
 	out, err := os.Create(dest)
 	if err != nil {
@@ -98,10 +96,10 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 	defer out.Close()
 
 	var reader io.Reader = resp.Body
-	if totalSize > 0 && len(gaugers) > 0 {
+	if len(gaugers) > 0 {
 		reader = &gaugeReader{
 			Reader:  reader,
-			total:   uint64(totalSize),
+			total:   uint64(resp.ContentLength),
 			gaugers: gaugers,
 		}
 	}
