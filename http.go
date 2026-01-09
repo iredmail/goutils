@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type Progresses interface {
+type Gauger interface {
 	Progress(current, total uint64)
 }
 
@@ -17,15 +17,15 @@ type progressReader struct {
 	total      uint64
 	current    uint64
 	lastUpdate int64
-	progresses []Progresses
+	gaugers    []Gauger
 }
 
 func (pr *progressReader) Read(p []byte) (n int, err error) {
 	n, err = pr.Reader.Read(p)
 	pr.current += uint64(n)
 	if pr.current >= pr.total {
-		for _, progress := range pr.progresses {
-			progress.Progress(pr.total, pr.total)
+		for _, gauger := range pr.gaugers {
+			gauger.Progress(pr.total, pr.total)
 		}
 
 		return
@@ -33,8 +33,8 @@ func (pr *progressReader) Read(p []byte) (n int, err error) {
 
 	now := time.Now().UnixNano() / int64(time.Millisecond)
 	if now-pr.lastUpdate > 100 {
-		for _, progress := range pr.progresses {
-			progress.Progress(pr.current, pr.total)
+		for _, gauger := range pr.gaugers {
+			gauger.Progress(pr.current, pr.total)
 		}
 		pr.lastUpdate = now
 	}
@@ -42,7 +42,7 @@ func (pr *progressReader) Read(p []byte) (n int, err error) {
 	return
 }
 
-func DownloadFile(url, dest string, validateCert bool, progresses ...Progresses) (err error) {
+func DownloadFile(url, dest string, validateCert bool, gaugers ...Gauger) (err error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -67,11 +67,11 @@ func DownloadFile(url, dest string, validateCert bool, progresses ...Progresses)
 	defer out.Close()
 
 	var reader io.Reader = resp.Body
-	if totalSize > 0 && len(progresses) > 0 {
+	if totalSize > 0 && len(gaugers) > 0 {
 		reader = &progressReader{
-			Reader:     reader,
-			total:      uint64(totalSize),
-			progresses: progresses,
+			Reader:  reader,
+			total:   uint64(totalSize),
+			gaugers: gaugers,
 		}
 	}
 
