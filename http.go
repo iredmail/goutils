@@ -25,7 +25,7 @@ type gaugeReader struct {
 func (gr *gaugeReader) Read(p []byte) (n int, err error) {
 	n, err = gr.Reader.Read(p)
 	gr.current += uint64(n)
-	if gr.current >= gr.total {
+	if gr.total > 0 && gr.current >= gr.total {
 		for _, gauger := range gr.gaugers {
 			gauger.Progress(gr.total, gr.total)
 		}
@@ -95,11 +95,15 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 	}
 	defer out.Close()
 
+	var total uint64
+	if resp.ContentLength > 0 {
+		total = uint64(resp.ContentLength)
+	}
 	var reader io.Reader = resp.Body
 	if len(gaugers) > 0 {
 		reader = &gaugeReader{
 			Reader:  reader,
-			total:   uint64(resp.ContentLength),
+			total:   total,
 			gaugers: gaugers,
 		}
 	}
