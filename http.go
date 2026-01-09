@@ -8,6 +8,7 @@ import (
 	"time"
 )
 
+// Gauger 定义了用于跟踪下载进度的接口。
 type Gauger interface {
 	Progress(current, total uint64)
 }
