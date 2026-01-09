@@ -12,7 +12,7 @@ type Progresses interface {
 	Progress(current, total uint64)
 }
 
-type processReader struct {
+type progressReader struct {
 	io.Reader
 	total      uint64
 	current    uint64
@@ -20,7 +20,7 @@ type processReader struct {
 	progresses []Progresses
 }
 
-func (pr *processReader) Read(p []byte) (n int, err error) {
+func (pr *progressReader) Read(p []byte) (n int, err error) {
 	n, err = pr.Reader.Read(p)
 	pr.current += uint64(n)
 	if pr.current >= pr.total {
@@ -66,7 +66,7 @@ func DownloadFile(url, dest string, validateCert bool, progresses ...Progresses)
 
 	var reader io.Reader = resp.Body
 	if totalSize > 0 && len(progresses) > 0 {
-		reader = &processReader{
+		reader = &progressReader{
 			Reader:     reader,
 			total:      uint64(totalSize),
 			progresses: progresses,
