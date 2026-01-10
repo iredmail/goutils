@@ -24,11 +24,10 @@ type gaugeReader struct {
 
 func (gr *gaugeReader) Read(p []byte) (n int, err error) {
 	n, err = gr.Reader.Read(p)
-	completed := err == io.EOF
 	gr.current += uint64(n)
 	if gr.total > 0 && gr.current >= gr.total {
 		for _, gauger := range gr.gaugers {
-			gauger.Progress(gr.total, gr.total, completed)
+			gauger.Progress(gr.total, gr.total, false)
 		}
 
 		return
@@ -37,12 +36,18 @@ func (gr *gaugeReader) Read(p []byte) (n int, err error) {
 	now := time.Now().UnixNano() / int64(time.Millisecond)
 	if now-gr.lastUpdate > 100 {
 		for _, gauger := range gr.gaugers {
-			gauger.Progress(gr.current, gr.total, completed)
+			gauger.Progress(gr.current, gr.total, false)
 		}
 		gr.lastUpdate = now
 	}
 
 	return
+}
+
+func (gr *gaugeReader) completed() {
+	for _, gauger := range gr.gaugers {
+		gauger.Progress(gr.current, gr.total, true)
+	}
 }
 
 func DownloadFile(url, dest string, validateCert bool) (err error) {
@@ -100,17 +105,22 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 	if resp.ContentLength > 0 {
 		total = uint64(resp.ContentLength)
 	}
-	var reader io.Reader = resp.Body
-	if len(gaugers) > 0 {
-		reader = &gaugeReader{
-			Reader:  reader,
+
+	if len(gaugers) == 0 {
+		// Write the body to file
+		_, err = io.Copy(out, resp.Body)
+	} else {
+		gr := &gaugeReader{
+			Reader:  resp.Body,
 			total:   total,
 			gaugers: gaugers,
 		}
+		// Write the body to file
+		_, err = io.Copy(out, gr)
+		if err == nil {
+			gr.completed()
+		}
 	}
-
-	// Write the body to file
-	_, err = io.Copy(out, reader)
 
 	return err
 }
