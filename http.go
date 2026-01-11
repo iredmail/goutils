@@ -10,7 +10,8 @@ import (
 
 // Gauger 定义了用于跟踪下载进度的接口。
 type Gauger interface {
-	Progress(current, total uint64, completed bool)
+	Progress(current, total uint64)
+	Completed(current, total uint64)
 }
 
 type gaugeReader struct {
@@ -27,7 +28,7 @@ func (gr *gaugeReader) Read(p []byte) (n int, err error) {
 	gr.current += uint64(n)
 	if gr.total > 0 && gr.current >= gr.total {
 		for _, gauger := range gr.gaugers {
-			gauger.Progress(gr.total, gr.total, false)
+			gauger.Progress(gr.total, gr.total)
 		}
 
 		return
@@ -36,7 +37,7 @@ func (gr *gaugeReader) Read(p []byte) (n int, err error) {
 	now := time.Now().UnixNano() / int64(time.Millisecond)
 	if now-gr.lastUpdate > 100 {
 		for _, gauger := range gr.gaugers {
-			gauger.Progress(gr.current, gr.total, false)
+			gauger.Progress(gr.current, gr.total)
 		}
 		gr.lastUpdate = now
 	}
@@ -46,7 +47,7 @@ func (gr *gaugeReader) Read(p []byte) (n int, err error) {
 
 func (gr *gaugeReader) completed() {
 	for _, gauger := range gr.gaugers {
-		gauger.Progress(gr.current, gr.total, true)
+		gauger.Completed(gr.current, gr.total)
 	}
 }
 
