@@ -10,22 +10,22 @@ import (
 
 // Gauger 定义了用于跟踪下载进度的接口。
 type Gauger interface {
-	Progress(current, total uint64)
-	Completed(current, total uint64)
+	Progress(current, total int64)
+	Completed(current, total int64)
 }
 
 type gaugeReader struct {
 	io.Reader
 
-	total      uint64
-	current    uint64
+	total      int64
+	current    int64
 	lastUpdate int64
 	gaugers    []Gauger
 }
 
 func (gr *gaugeReader) Read(p []byte) (n int, err error) {
 	n, err = gr.Reader.Read(p)
-	gr.current += uint64(n)
+	gr.current += int64(n)
 	if gr.total > 0 && gr.current >= gr.total {
 		for _, gauger := range gr.gaugers {
 			gauger.Progress(gr.total, gr.total)
@@ -102,9 +102,9 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 	}
 	defer func() { _ = out.Close() }()
 
-	var total uint64
+	var total int64
 	if resp.ContentLength > 0 {
-		total = uint64(resp.ContentLength)
+		total = resp.ContentLength
 	}
 
 	if len(gaugers) == 0 {
