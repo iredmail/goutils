@@ -100,6 +100,6 @@ func CalculateTotalPages(total, pageSize float64) int {
 	return int(math.Ceil(total / pageSize))
 }
 
-func FileSizeFormat(size int64) string {
+func FileSizeFormat[T int64 | uint64](size T) string {
 	return humanize.IBytes(uint64(size))
 }
