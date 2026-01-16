@@ -1,7 +1,10 @@
 package goutils
 
 import (
+	"slices"
 	"strings"
+
+	"github.com/doug-martin/goqu/v9"
 )
 
 type SortMethod struct {
@@ -14,6 +17,21 @@ type SortMethod struct {
 
 func (sm SortMethod) IsValid() bool {
 	return sm.Name != ""
+}
+
+func (sm SortMethod) SortField(sd *goqu.SelectDataset, sortFields []string, defaultSM SortMethod) *goqu.SelectDataset {
+	if !slices.Contains(sortFields, sm.Name) {
+		sm.Name = defaultSM.Name
+		sm.Desc = defaultSM.Desc
+	}
+
+	if sm.Desc {
+		sd = sd.Order(goqu.I(sm.Name).Desc())
+	} else {
+		sd = sd.Order(goqu.I(sm.Name).Asc())
+	}
+
+	return sd
 }
 
 type SortMethods []SortMethod
