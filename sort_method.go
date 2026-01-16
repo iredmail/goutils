@@ -20,17 +20,23 @@ func (sm SortMethod) IsValid() bool {
 	return sm.Name != ""
 }
 
-// Order 确保 sm 里指定的排序字段是有效的，无效则用默认的 defaultSM 代替。
-func (sm SortMethod) Order(validNames []string, defaultSM SortMethod) (od exp.OrderedExpression) {
+// Order 确保 sm 里指定的排序字段是有效的，无效则用默认的 defaultSM 代替。没有有效的 sort method 则返回 ok=false。
+func (sm SortMethod) Order(validNames []string, defaultSM SortMethod) (ok bool, ord exp.OrderedExpression) {
 	if !slices.Contains(validNames, sm.Name) {
-		sm.Name = defaultSM.Name
-		sm.Desc = defaultSM.Desc
+		if defaultSM.Name != "" {
+			sm.Name = defaultSM.Name
+			sm.Desc = defaultSM.Desc
+		} else {
+			return false, nil
+		}
 	}
 
+	ok = true
+
 	if sm.Desc {
-		od = goqu.I(sm.Name).Desc()
+		ord = goqu.I(sm.Name).Desc()
 	} else {
-		od = goqu.I(sm.Name).Asc()
+		ord = goqu.I(sm.Name).Asc()
 	}
 
 	return
