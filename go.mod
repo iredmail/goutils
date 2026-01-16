@@ -21,7 +21,7 @@ require (
 	github.com/vorlif/spreak v1.0.0
 	golang.org/x/crypto v0.47.0
 	golang.org/x/text v0.33.0
-	modernc.org/sqlite v1.44.0
+	modernc.org/sqlite v1.44.1
 )
 
 require (
@@ -66,7 +66,7 @@ require (
 	golang.org/x/sys v0.40.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.67.4 // indirect
+	modernc.org/libc v1.67.6 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
 )

@@ -3,6 +3,7 @@ package dbutils
 import (
 	"github.com/doug-martin/goqu/v9"
 	"github.com/doug-martin/goqu/v9/exp"
+
 	"github.com/iredmail/goutils"
 )
 
