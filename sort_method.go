@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/doug-martin/goqu/v9"
+	"github.com/doug-martin/goqu/v9/exp"
 )
 
 type SortMethod struct {
@@ -19,19 +20,20 @@ func (sm SortMethod) IsValid() bool {
 	return sm.Name != ""
 }
 
-func (sm SortMethod) SortField(sd *goqu.SelectDataset, sortFields []string, defaultSM SortMethod) *goqu.SelectDataset {
-	if !slices.Contains(sortFields, sm.Name) {
+// Order 确保 sm 里指定的排序字段是有效的，无效则用默认的 defaultSM 代替。
+func (sm SortMethod) Order(validNames []string, defaultSM SortMethod) (od exp.OrderedExpression) {
+	if !slices.Contains(validNames, sm.Name) {
 		sm.Name = defaultSM.Name
 		sm.Desc = defaultSM.Desc
 	}
 
 	if sm.Desc {
-		sd = sd.Order(goqu.I(sm.Name).Desc())
+		od = goqu.I(sm.Name).Desc()
 	} else {
-		sd = sd.Order(goqu.I(sm.Name).Asc())
+		od = goqu.I(sm.Name).Asc()
 	}
 
-	return sd
+	return
 }
 
 type SortMethods []SortMethod
