@@ -20,6 +20,20 @@ func EpochToDay(epoch int64) string {
 	return t.Format(time.DateOnly)
 }
 
+func EpochToMonth(epoch int64) (month time.Month) {
+	month = 1
+	if epoch <= 0 {
+		return
+	}
+
+	t := time.Unix(epoch, 0).UTC()
+	if t.IsZero() {
+		return
+	}
+
+	return t.Month()
+}
+
 func EpochToDatetime(epoch int64) string {
 	if epoch <= 0 {
 		return ""
