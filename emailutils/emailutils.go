@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/iredmail/goutils"
+	"github.com/iredmail/goutils/slice"
 )
 
 var (
@@ -129,14 +130,11 @@ func ExtractDomains(emails []string) (domains []string) {
 	}
 
 	for _, addr := range emails {
-		d := ExtractDomain(addr)
-
-		if !slices.Contains(domains, d) {
-			domains = append(domains, d)
-		}
+		domains = append(domains, ExtractDomain(addr))
 	}
 
-	slices.Sort(domains)
+	// Remove duplicates.
+	domains = slice.DeduplicateAndSort(domains)
 
 	return
 }
