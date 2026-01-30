@@ -140,10 +140,10 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 		}
 
 		return nil
-	} else {
-		// 其它错误
-		return fmt.Errorf("failed in checking stat of file %s: %v", pth, err)
 	}
+
+	// 其它错误
+	return fmt.Errorf("failed in checking stat of file %s: %v", pth, err)
 }
 
 // ReadFullFileContent 读取指定文件的所有内容，并去除首尾的空白字符。
