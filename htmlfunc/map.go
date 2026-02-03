@@ -40,3 +40,19 @@ func SortMapStrIntByIntDesc(m map[string]int) (kvs []KVStrInt) {
 
 	return
 }
+
+func SortMapStrIntByStrDesc(m map[string]int) (kvs []KVStrInt) {
+	// FIXME 如何将值的类型由 int 改为 int64？
+	for k, v := range m {
+		kvs = append(kvs, KVStrInt{
+			K: k,
+			V: v,
+		})
+	}
+
+	sort.Slice(kvs, func(i, j int) bool {
+		return kvs[i].K > kvs[j].K
+	})
+
+	return
+}
