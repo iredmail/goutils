@@ -83,6 +83,14 @@ func EpochsExpiringMonth() (start, end int64) {
 	return
 }
 
+// Last24HoursStartEndEpochs 返回自现在往后24小时的起止 epoch 范围。
+func Last24HoursStartEndEpochs() (start, end int64) {
+	now := time.Now().UTC()
+	old := now.Add(-24 * time.Hour)
+
+	return old.Unix(), now.Unix()
+}
+
 // DayStartEndEpochs 返回指定时间当天的起止 epoch 范围。如果 t 不指定则返回当天时间。
 func DayStartEndEpochs(tt ...time.Time) (start, end int64) {
 	var t time.Time
