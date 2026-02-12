@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.25.5
+go 1.26.0
 
 require (
 	github.com/DeRuina/timberjack v1.3.9
