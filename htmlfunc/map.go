@@ -20,15 +20,14 @@ func GetMapInt64String(m map[int64]string, key int64) (s string) {
 	return
 }
 
-type KVStrInt struct {
+type KVStrInt64 struct {
 	K string
-	V int
+	V int64
 }
 
-func SortMapStrIntByIntDesc(m map[string]int) (kvs []KVStrInt) {
-	// FIXME 如何将值的类型由 int 改为 int64？
+func SortMapStrInt64ByInt64Desc(m map[string]int64) (kvs []KVStrInt64) {
 	for k, v := range m {
-		kvs = append(kvs, KVStrInt{
+		kvs = append(kvs, KVStrInt64{
 			K: k,
 			V: v,
 		})
@@ -41,10 +40,9 @@ func SortMapStrIntByIntDesc(m map[string]int) (kvs []KVStrInt) {
 	return
 }
 
-func SortMapStrIntByStrDesc(m map[string]int) (kvs []KVStrInt) {
-	// FIXME 如何将值的类型由 int 改为 int64？
+func SortMapStrInt64ByStrDesc(m map[string]int64) (kvs []KVStrInt64) {
 	for k, v := range m {
-		kvs = append(kvs, KVStrInt{
+		kvs = append(kvs, KVStrInt64{
 			K: k,
 			V: v,
 		})
