@@ -35,13 +35,20 @@ func MoveDir(src, dst string) error {
 
 // copyDir recursively copies a directory tree.
 func copyDir(src, dst string) error {
-	info, err := os.Stat(src)
+	stat, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
 
+	sys := stat.Sys().(*syscall.Stat_t)
+
 	// Create the destination directory with the same permissions
-	if err = os.MkdirAll(dst, info.Mode()); err != nil {
+	if err = os.MkdirAll(dst, stat.Mode()); err != nil {
+		return err
+	}
+
+	// Set the owner and group of the destination directory
+	if err = os.Chown(dst, int(sys.Uid), int(sys.Gid)); err != nil {
 		return err
 	}
 
@@ -97,5 +104,12 @@ func copyFile(src, dst string) error {
 		return os.Chmod(dst, info.Mode())
 	}
 
-	return nil
+	stat, err := in.Stat()
+	if err != nil {
+		return err
+	}
+
+	sys := stat.Sys().(*syscall.Stat_t)
+
+	return os.Chown(dst, int(sys.Uid), int(sys.Gid))
 }
