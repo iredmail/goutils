@@ -98,14 +98,13 @@ func copyFile(src, dst string) error {
 		return err
 	}
 
-	// Sync to disk and copy file permissions
-	info, err := os.Stat(src)
-	if err == nil {
-		return os.Chmod(dst, info.Mode())
+	// Copy file permissions and ownership
+	stat, err := os.Stat(src)
+	if err != nil {
+		return err
 	}
 
-	stat, err := in.Stat()
-	if err != nil {
+	if err = os.Chmod(dst, stat.Mode()); err != nil {
 		return err
 	}
 
