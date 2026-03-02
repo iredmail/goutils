@@ -1,7 +1,9 @@
 package ctxutils
 
 import (
+	"fmt"
 	"math"
+	"net/url"
 )
 
 type Pagination struct {
@@ -10,17 +12,15 @@ type Pagination struct {
 	CurrentPage int
 	Limit       int    // Page size limit
 	PageNumbers []int  // 数字为 0 表示省略的范围，可以以省略号表示。
-	URIPrefix   string // 分页数字对应链接的前缀 URI。分页数字将以 `&page=<num>` 格式追加其后。参数在其后。
+	URIPrefix   string // 分页数字对应链接的前缀 URI。分页数字将以 query `&page=<num>` 格式追加其后。参数在其后。
 
 	// 当前页第一条和最后一条项目的序号
 	PageBeginNum int
 	PageLastNum  int
 }
 
-const numNearbyLinks = 1
-
 // GenPagination 根据当前页 `page`，总条目数 `total`，每页条目数 `limit` 生成分页链接。
-func GenPagination(page int, URIPrefix string, total int64, limit int) (p Pagination) {
+func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQueries map[string]string) (p Pagination) {
 	p = Pagination{
 		TotalItems:   total,
 		TotalPages:   int(math.Ceil(float64(total) / float64(limit))),
@@ -31,6 +31,29 @@ func GenPagination(page int, URIPrefix string, total int64, limit int) (p Pagina
 		PageBeginNum: (page-1)*limit + 1,
 		PageLastNum:  page * limit,
 	}
+
+	uv := url.Values{}
+
+	if len(ctxQueries) > 0 {
+		for k, v := range ctxQueries {
+			if uv.Has(k) {
+				// 已经存在则替换旧值
+				uv.Set(k, v)
+			} else {
+				// 不存在则添加
+				uv.Add(k, v)
+			}
+		}
+	}
+
+	// 总是覆盖 `limit` 参数
+	if uv.Has("limit") {
+		uv.Set("limit", fmt.Sprintf("%d", limit))
+	} else {
+		uv.Add("limit", fmt.Sprintf("%d", limit))
+	}
+
+	p.URIPrefix += "?" + uv.Encode()
 
 	if total == 0 {
 		p.PageBeginNum = 0
