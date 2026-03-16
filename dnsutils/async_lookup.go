@@ -109,12 +109,10 @@ func AsyncDNSLookupSRV(domains []string, dnsType string) []ResponseDNSRecords[SR
 	return records
 }
 
-func AsyncDNSLookupRecursiveSPF(domains []string) []ResponseDNSRecords[string] {
+func AsyncDNSLookupRecursiveSPF(domains []string) (records []ResponseDNSRecords[string]) {
 	if len(domains) == 0 {
-		return nil
+		return
 	}
-
-	var records []ResponseDNSRecords[string]
 
 	var wg sync.WaitGroup
 	for _, domain := range domains {
@@ -138,5 +136,5 @@ func AsyncDNSLookupRecursiveSPF(domains []string) []ResponseDNSRecords[string] {
 
 	wg.Wait()
 
-	return records
+	return
 }
