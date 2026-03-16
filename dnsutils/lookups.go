@@ -19,7 +19,10 @@ import (
 
 var (
 	defaultDNSQueryTimeout = 10 * time.Second
-	defaultDNSServers      = []string{
+
+	// defaultDNSServers 包含一些公共 DNS 服务器的地址，格式为 "IP:Port"。
+	// FIXME 用标准库的 `net.LookupNetIP()` 代替 `miekg/dns`。
+	defaultDNSServers = []string{
 		"8.8.8.8:53",
 		"8.8.4.4:53",
 		"1.1.1.1:53",
