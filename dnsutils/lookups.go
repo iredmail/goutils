@@ -17,8 +17,6 @@ import (
 	"github.com/iredmail/goutils/emailutils"
 )
 
-const defaultSelector = "dkim"
-
 var (
 	defaultDNSQueryTimeout = 10 * time.Second
 
@@ -167,9 +165,6 @@ func LookupSPF(domain string) (records []string, err error) {
 }
 
 func LookupDKIM(domain, selector string) (notfound bool, records []string, errStr string) {
-	if selector == "" {
-		selector = defaultSelector
-	}
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 

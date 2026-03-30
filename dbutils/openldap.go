@@ -3,12 +3,10 @@ package dbutils
 import (
 	"crypto/tls"
 
-	"github.com/go-ldap/ldap/v3"
-
 	"github.com/iredmail/ldappool"
 )
 
-func NewOpenLDAPConn(c LDAPConnConfig) (pool ldap.Client, err error) {
+func NewOpenLDAPConn(c LDAPConnConfig) (pool *ldappool.Pool, err error) {
 	opts := []ldappool.Option{
 		ldappool.WithBindCredentials(c.BindDN, c.BindPassword),
 	}

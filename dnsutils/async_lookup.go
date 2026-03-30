@@ -36,10 +36,6 @@ func AsyncDNSLookupDKIM(selector string, domains []string) []ResponseDNSRecords[
 		return nil
 	}
 
-	if selector == "" {
-		selector = defaultSelector
-	}
-
 	var records []ResponseDNSRecords[string]
 	var wg sync.WaitGroup
 	for _, domain := range domains {
