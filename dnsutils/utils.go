@@ -2,32 +2,35 @@ package dnsutils
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 )
 
+const (
+	dkimSelectorMaxLength = 20
+)
+
+// ValidateDKIMSelector 检查 DKIM selector 字符串。
+// 仅允许最多20个字符，且只能包含小写字母、数字和短横线。
 func ValidateDKIMSelector(s string) error {
-	s = strings.TrimSpace(s)
+	s = strings.ToLower(strings.TrimSpace(s))
 
 	if s == "" {
-		return errors.New("dkim selector cannot be empty")
-	}
-	if len(s) > 63 {
-		return errors.New("dkim selector too long")
+		return errors.New("selector cannot be empty")
 	}
 
-	if s[0] == '-' || s[len(s)-1] == '-' {
-		return errors.New("dkim selector cannot start or end with '-'")
+	if len(s) > dkimSelectorMaxLength {
+		return fmt.Errorf("selector too long (max %d characters)", dkimSelectorMaxLength)
 	}
 
 	for _, ch := range s {
 		if (ch >= 'a' && ch <= 'z') ||
-			(ch >= 'A' && ch <= 'Z') ||
 			(ch >= '0' && ch <= '9') ||
 			ch == '-' {
 			continue
 		}
 
-		return errors.New("dkim selector contains invalid characters")
+		return fmt.Errorf("selector contains invalid characters, only lowercase letters, digits and dashes are allowed")
 	}
 
 	return nil
