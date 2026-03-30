@@ -20,7 +20,7 @@ require (
 	github.com/vorlif/spreak v1.0.0
 	golang.org/x/crypto v0.49.0
 	golang.org/x/text v0.35.0
-	modernc.org/sqlite v1.47.0
+	modernc.org/sqlite v1.48.0
 )
 
 require (
@@ -38,7 +38,7 @@ require (
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
 	github.com/inbucket/html2text v1.0.0 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
