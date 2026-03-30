@@ -31,9 +31,13 @@ func AsyncDNSLookupMX(domains []string) []ResponseDNSRecords[MXRecord] {
 	return records
 }
 
-func AsyncDNSLookupDKIM(domains []string) []ResponseDNSRecords[string] {
+func AsyncDNSLookupDKIM(selector string, domains []string) []ResponseDNSRecords[string] {
 	if len(domains) == 0 {
 		return nil
+	}
+
+	if selector == "" {
+		selector = defaultSelector
 	}
 
 	var records []ResponseDNSRecords[string]
@@ -41,9 +45,9 @@ func AsyncDNSLookupDKIM(domains []string) []ResponseDNSRecords[string] {
 	for _, domain := range domains {
 		wg.Add(1)
 		go func() {
-			notfound, _records, err := LookupDKIM(domain)
+			notfound, _records, err := LookupDKIM(domain, selector)
 			records = append(records, ResponseDNSRecords[string]{
-				Domain:   fmt.Sprintf("dkim._domainkey.%s", domain),
+				Domain:   fmt.Sprintf("%s._domainkey.%s", selector, domain),
 				Notfound: notfound,
 				Records:  _records,
 				Error:    err,
