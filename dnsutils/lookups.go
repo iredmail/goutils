@@ -145,11 +145,11 @@ func LookupMX(domain string) (notfound bool, records []MXRecord, errStr string) 
 	return
 }
 
-func LookupDKIM(domain string) (notfound bool, records []string, errStr string) {
+func LookupDKIM(domain, selector string) (notfound bool, records []string, errStr string) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	txts, err := net.DefaultResolver.LookupTXT(ctx, fmt.Sprintf("dkim._domainkey.%s", domain))
+	txts, err := net.DefaultResolver.LookupTXT(ctx, fmt.Sprintf("%s._domainkey.%s", selector, domain))
 	notfound, errStr = IsDNSErrorNoSuchHost(err)
 	if notfound || err != nil {
 		return
