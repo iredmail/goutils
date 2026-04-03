@@ -6,6 +6,12 @@ import (
 	"github.com/go-ldap/ldap/v3"
 )
 
+const (
+	// 通用属性。OpenLDAP 和 AD 都有这些属性。
+
+	AttrMember = "member"
+)
+
 func GetAttrValue(entry *ldap.Entry, attr string) string {
 	return strings.TrimSpace(entry.GetAttributeValue(attr))
 }
