@@ -93,8 +93,10 @@ func DestExists(pth string) bool {
 
 // CreateDirIfNotExist creates target directory with mode `0700` if it
 // does not exist.
-func CreateDirIfNotExist(pth string, mode os.FileMode) error {
-	info, err := os.Stat(pth)
+func CreateDirIfNotExist(pth string, mode os.FileMode) (err error) {
+	var info os.FileInfo
+
+	info, err = os.Stat(pth)
 
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -105,7 +107,7 @@ func CreateDirIfNotExist(pth string, mode os.FileMode) error {
 				return fmt.Errorf("failed in creating directory %s. error=%v", pth, err)
 			}
 		} else {
-			return err
+			return
 		}
 	} else {
 		// 目标路径存在，但不是目录。
@@ -114,7 +116,16 @@ func CreateDirIfNotExist(pth string, mode os.FileMode) error {
 		}
 	}
 
-	return nil
+	return
+}
+
+func CreateDirWithOGMIfNotExist(pth string, mode os.FileMode, ownerUid, ownerGid int) (err error) {
+	err = CreateDirIfNotExist(pth, mode)
+	if err != nil {
+		return
+	}
+
+	return os.Chown(pth, ownerUid, ownerGid)
 }
 
 // CreateFileIfNotExist creates target file with mode `0700` if it doesn't exist.
