@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"encoding/json"
+	"math"
 )
 
 // NullString 用于字符串类型的 SQL 字段，当值为空时必须设置为 SQL NULL 而不是空字符串的情况。
@@ -94,6 +95,14 @@ func NewNullFloat64(v ...float64) NullFloat64 {
 
 func (nf NullFloat64) Float64() float64 {
 	return nf.value
+}
+
+func (nf NullFloat64) Float64Round2Decimals() float64 {
+	if nf.value == 0 {
+		return nf.value
+	} else {
+		return math.Round(nf.value * 100)
+	}
 }
 
 func (nf *NullFloat64) Scan(value interface{}) error {
