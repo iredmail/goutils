@@ -19,3 +19,8 @@ type SQLConnConfig struct {
 	MaxOpenConns int
 	MaxIdleConns int
 }
+
+type DBSize struct {
+	Name string `json:"name" db:"name"`
+	Size int64  `json:"size" db:"size"` // in bytes
+}
