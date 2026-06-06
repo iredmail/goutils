@@ -1,6 +1,10 @@
 package ldaputils
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/go-ldap/ldap/v3"
+)
 
 // ExtractLDAPSuffixFromDN 从 LDAP dn 里提取出 ldap suffix。
 // 示例：cn=abc,dc=example,dc=com -> dc=example,dc=com
@@ -17,4 +21,8 @@ func ExtractLDAPSuffixFromDN(basedn string) (suffix string) {
 	}
 
 	return basedn
+}
+
+func ErrIsNoSuchObject(err error) bool {
+	return ldap.IsErrorWithCode(err, ldap.LDAPResultNoSuchObject)
 }
