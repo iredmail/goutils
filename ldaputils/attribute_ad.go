@@ -13,10 +13,8 @@ import (
 const (
 	// AD attributes
 
-	AttrObjectGUID  = "objectGUID"
-	AttrObjectSid   = "objectSid"
-	AttrWhenCreated = "whenCreated"
-	AttrWhenChanged = "whenChanged"
+	AttrObjectGUID = "objectGUID"
+	AttrObjectSid  = "objectSid"
 )
 
 // EpochToADTimestamp 将 epoch 转换为 AD 使用的时间戳格式。
