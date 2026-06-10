@@ -40,7 +40,7 @@ func FilterValidDomains(domains []string) (valid []string, invalid []string) {
 // - same 和 others 里的邮件地址都已转换为小写并移除地址扩展（+ext），但在 `orig` 的 Value 里保留了地址扩展。
 // - orig 以移除地址扩展后的地址作为 key，以原始邮件地址作为 value。
 func FilterSameDomainEmails(domain string, mails []string) (same []string, others []string, orig map[string]string) {
-	if domain == "" {
+	if domain == "" || len(mails) == 0 {
 		return
 	}
 
