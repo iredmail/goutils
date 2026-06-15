@@ -14,6 +14,13 @@ import (
 )
 
 var (
+	// Email with traditional domain format, supports local part with letters, digits, and special characters.
+	regexEmail = regexp.MustCompile(`[\w\-#][\w\-.+=/&#]*@[\w\-][\w\-.]*\.[a-zA-Z0-9\-]{2,25}$`)
+
+	// Email with IP address literal in domain part, supports both IPv4 and IPv6.
+	// Format: `user@[IP]` where IP can be IPv4 (1.2.3.4) or IPv6 (2001:db8::1)
+	regexEmailWithIPDomain = regexp.MustCompile(`^[\w\-#][\w\-.+=/&#]*@\[[\da-fA-F:.]+\]$`)
+
 	// Domain must start with an alphanumeric character, then may contain alnum, dot or hyphen,
 	// and must end with a dot + 2-25 alphanumeric TLD. This forbids leading dot or hyphen.
 	regexDomain = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.-]*\.[A-Za-z0-9]{2,25}$`)
@@ -30,33 +37,34 @@ var (
 )
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
-func IsEmail(s string) bool {
+// 支持两种类型的域名：
+//   - 传统域名格式：user@example.com
+//   - IP 地址字面量：user@[192.168.1.1] 或 user@[2001:db8::1]
+func IsEmail(s string) (valid bool) {
+	s = strings.TrimSpace(s)
 	if s == "" {
-		return false
+		return
 	}
 
-	_, err := mail.ParseAddress(strings.TrimSpace(s))
-	if err != nil {
-		return false
+	// `@` 只允许出现一次。
+	if strings.Count(s, "@") != 1 {
+		return
 	}
 
-	// `net/mail` 认为 `user@domain`（不是 `user@domain.com`）是合法的邮件地址。
-	_, domain, found := strings.Cut(s, "@")
-	if !found {
-		return false
-	} else {
-		if !IsDomain(domain) {
-			return false
-		}
+	// 检查传统域名格式
+	if regexEmail.MatchString(s) {
+		return true
 	}
 
-	// 排除特殊字符，如：`$`
-	// net/mail 认为这些字符是合法的，但实际使用中容易导致问题。
-	if strings.ContainsAny(s, "$") {
-		return false
+	// 检查 IP 地址字面量格式并验证 IP 的有效性
+	if regexEmailWithIPDomain.MatchString(s) {
+		_, domain, _ := strings.Cut(s, "@")
+		ip := strings.Trim(domain, "[]")
+
+		return goutils.IsIP(ip)
 	}
 
-	return true
+	return
 }
 
 func IsFQDN(s string) bool {
@@ -242,10 +250,9 @@ func ParseAddress(address string) (addr *mail.Address, err error) {
 			}
 
 			return addr, nil
-		} else {
-			// 移除错误信息前面的 `mail: ` 字符
-			return nil, err
 		}
+
+		return nil, err
 	}
 
 	// 去掉首尾的引号。部分 Microsoft Outlook 客户端会带上引号。

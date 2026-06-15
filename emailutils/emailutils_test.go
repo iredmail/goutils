@@ -22,6 +22,13 @@ func TestIsEmail(t *testing.T) {
 	assert.True(t, IsEmail("user@sub3.sub2.sub1.com"))
 	assert.True(t, IsEmail("lcastaã±eda@ruska.com.pe"))
 	assert.True(t, IsEmail("lcastaeda@ruska.com.pe"))
+	assert.True(t, IsEmail("bounces+32777391-f0d7-user=iii.com@em6987.great.com"))
+
+	// IP address as domain part.
+	assert.True(t, IsEmail("user@[192.168.1.1]"))
+	assert.True(t, IsEmail("user@[2001:db8::1]"))
+	assert.False(t, IsEmail("user@[999.168.1.1]"))
+	assert.False(t, IsEmail("user@[]"))
 }
 
 func TestIsDomain(t *testing.T) {
@@ -128,9 +135,9 @@ func TestParseAddress(t *testing.T) {
 	*/
 
 	// gb2312，且 display name 里带逗号
-	addr, err = ParseAddress("=?GB2312?B?zuTD97+tIFd1LCBNaW5na2Fp?= <user@domain.com>")
+	addr, err = ParseAddress("=?gb2312?B?1cW7zbHyIFpoYW5nLCBIdWFuZ2Jpbg==?= <user@domain.com>")
 	assert.Nil(t, err)
-	assert.Equal(t, "武明凯 Wu, Mingkai", addr.Name)
+	assert.Equal(t, "张煌彬 Zhang, Huangbin", addr.Name)
 	assert.Equal(t, "user@domain.com", addr.Address)
 
 	// Name 里有多个 `<`
@@ -144,6 +151,11 @@ func TestParseAddress(t *testing.T) {
 	// assert.Nil(t, err)
 	// assert.Equal(t, "Display, Name", addr.Name)
 	// assert.Equal(t, "user@domain.com", addr.Address)
+
+	addr, err = ParseAddress("Name <bounces+32777391-f0d7-user=iii.com@em6987.great.com>")
+	assert.Nil(t, err)
+	assert.Equal(t, "Name", addr.Name)
+	assert.Equal(t, "bounces+32777391-f0d7-user=iii.com@em6987.great.com", addr.Address)
 
 	// Address 里的地址不是规范的 email
 	// mail.ParseAddress() 认为 `Name <user>` 是合法的。
