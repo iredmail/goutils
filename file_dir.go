@@ -36,7 +36,7 @@ func GetFileStat(pth string) (FileStat, error) {
 	stat, err := os.Lstat(pth)
 	if err != nil {
 		// 不能用 os.IsNotExist(err) 来判断文件是否存在
-		if e, ok := err.(*os.PathError); ok {
+		if e, ok := errors.AsType[*os.PathError](err); ok {
 			// no such file or directory
 			if errors.Is(e.Err, syscall.ENOENT) {
 				return fs, nil
