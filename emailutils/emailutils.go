@@ -9,6 +9,8 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/jhillyerd/enmime/v2"
+
 	"github.com/iredmail/goutils"
 	"github.com/iredmail/goutils/slice"
 )
@@ -211,53 +213,36 @@ func StripExtension(email string) string {
 	return username + "@" + domain
 }
 
-// ParseAddress 是 `mail.ParseAddress()` 的简单封装：
-//   - 去除首尾的引号
+// ParseNameAndAddress 是 `enmime.ParseAddressList()` 的简单封装：
+//   - 去除换行
+//   - 去除邮件地址首尾的引号
 //   - 将邮件地址转换为小写
-//   - 尝试解析 ISO-8859-9 编码的邮件地址
-//   - 在检查前先将地址里的换行符替换为空格（mail.ParseAddress() 无法处理换行符，报错：`no angle-addr`）
 //
 // 注意：
-//   - 自 Go 1.22.2 起，邮件地址的域名部分可以用 `[IP]` 格式。
-func ParseAddress(address string) (addr *mail.Address, err error) {
-	address = strings.ReplaceAll(strings.TrimSpace(address), "\n", " ")
+//   - 返回的邮件地址是小写的，保留了地址扩展（+extension）。
+//   - 暂不支持 `user@[IP]` 格式的邮件地址。
+func ParseNameAndAddress(s string) (addr *mail.Address, err error) {
+	var addrs []*mail.Address
 
-	// FIXME 考虑用第三方库代替，否则配置参数里的 archiving_domain 归档邮件域名不能用内部 IP 地址。
-	addr, err = mail.ParseAddress(address)
+	// 移除 Name 和 Address 之间的换行。
+	// Microsoft 发出的邮件常有这样的格式。
+	s = strings.ReplaceAll(s, "\n", " ")
+
+	addrs, err = enmime.ParseAddressList(s)
 	if err != nil {
-		e := err.Error()
-
-		// 尝试处理以下情况
-		if strings.Contains(e, "charset not supported") {
-			var decoded string
-
-			decoded, err = DecodeHeader(address)
-			if err != nil {
-				return nil, err
-			}
-
-			decoded = strings.TrimSpace(decoded)
-
-			// 提取 Display Name 和 Email
-			nameStart := strings.LastIndex(decoded, "<")
-			if nameStart == -1 {
-				return nil, fmt.Errorf("invalid email format (no angle-addr)")
-			}
-
-			addr = &mail.Address{
-				Name:    strings.TrimSpace(decoded[:nameStart]),
-				Address: strings.Trim(decoded[nameStart:], " <>"),
-			}
-
-			return addr, nil
-		}
-
-		return nil, err
+		return
 	}
 
-	// 去掉首尾的引号。部分 Microsoft Outlook 客户端会带上引号。
+	if len(addrs) == 0 {
+		return nil, fmt.Errorf("no address found")
+	}
+
+	addr = addrs[0]
+
+	// 去掉首尾的引号
+	// 部分 Microsoft Outlook 客户端会带上引号。
 	addr.Name = strings.Trim(addr.Name, `'"`)
-	addr.Address = strings.Trim(addr.Address, `'"`)
+	addr.Address = strings.ToLower(strings.Trim(addr.Address, `'"`))
 
 	return
 }
@@ -271,7 +256,7 @@ func ExtractEmailsFromAddressList(s string) (emails []string, err error) {
 	}
 
 	for _, addr := range addrs {
-		// 去掉���址扩展（并转换为小写）
+		// 去掉地址扩展（并转换为小写）
 		emails = append(emails, StripExtension(addr.Address))
 	}
 

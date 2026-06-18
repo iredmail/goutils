@@ -76,23 +76,30 @@ func TestStripExtension(t *testing.T) {
 	assert.Equal(t, StripExtension("User-123=456@A.iO"), "user-123=456@a.io")
 }
 
-func TestParseAddress(t *testing.T) {
-	// Parse email addresses.
-	expected := `"Name" <u@d.io>`
-	addrs := []string{
-		`Name <u@d.io>`,     // 正常
-		`Name <'u@d.io''>`,  // email 地址带单引号
-		`'Name' <'u@d.io'>`, // 名字和 email 都带单引号
-	}
+func TestParseNameAndAddress(t *testing.T) {
+	name := "Name"
+	email := "u@d.io"
 
-	for _, v := range addrs {
-		addr, err := ParseAddress(v)
-		assert.Nil(t, err)
-		assert.Equal(t, expected, addr.String())
-	}
+	// 正常
+	addr, err := ParseNameAndAddress(`Name <U@D.io>`)
+	assert.Nil(t, err)
+	assert.Equal(t, name, addr.Name)
+	assert.Equal(t, email, addr.Address)
+
+	// email 地址带单引号
+	addr, err = ParseNameAndAddress(`Name <'u@d.io'>`)
+	assert.Nil(t, err)
+	assert.Equal(t, name, addr.Name)
+	assert.Equal(t, email, addr.Address)
+
+	// 名字和 email 都带单引号
+	addr, err = ParseNameAndAddress(`'Name' <'u@d.io'>`)
+	assert.Nil(t, err)
+	assert.Equal(t, name, addr.Name)
+	assert.Equal(t, email, addr.Address)
 
 	// iso-8859-9
-	addr, err := ParseAddress("=?iso-8859-9?Q?Javuz_Ma=FElak?= <user@domain.tr>")
+	addr, err = ParseNameAndAddress("=?iso-8859-9?Q?Javuz_Ma=FElak?= <user@domain.tr>")
 	assert.Nil(t, err)
 	assert.Equal(t, "Javuz Maşlak", addr.Name)
 	assert.Equal(t, "user@domain.tr", addr.Address)
@@ -100,42 +107,43 @@ func TestParseAddress(t *testing.T) {
 	// Name 和 Address 之间有换行。Microsoft 发出的邮件常有这样的格式。
 	s := `Microsoft account team
 	<account-security-noreply@accountprotection.microsoft.com>`
-	addr, err = ParseAddress(s)
+	addr, err = ParseNameAndAddress(s)
 	assert.Nil(t, err)
 	assert.Equal(t, "Microsoft account team", addr.Name)
 	assert.Equal(t, "account-security-noreply@accountprotection.microsoft.com", addr.Address)
 
 	s = `"=?utf-8?Q?=E5=BC=80=E6=99=AE=E7=A5=A8=E5=8A=A0=E5=BE=AE=E4=BF=A1:17376744614
  =E6=99=95=E6=9B=B4=E5=AE=B9=E7=A0=B8=E5=85=85=E7=BA=B9=E5=8D=89=E7=BB=85=E6=84=8Finfo@iredmail.orginfo@iredmail.org?=" <cwlqlwqgq@ohwtf.com>`
-	addr, err = ParseAddress(s)
+	addr, err = ParseNameAndAddress(s)
 	assert.Nil(t, err)
 	assert.Equal(t, "cwlqlwqgq@ohwtf.com", addr.Address)
 
 	s = `GameStop & Comenity Capital Bank 
  <GameStop-apply@e.breadfinancial.com>`
-	addr, err = ParseAddress(s)
+	addr, err = ParseNameAndAddress(s)
 	assert.Nil(t, err)
 	assert.Equal(t, "GameStop & Comenity Capital Bank", addr.Name)
-	assert.Equal(t, "GameStop-apply@e.breadfinancial.com", addr.Address)
+	assert.Equal(t, "gamestop-apply@e.breadfinancial.com", addr.Address)
 
 	// 使用 IP 地址作为域名。
 	/*
-		expected = `"Name" <u@[172.16.1.1]>`
-		addrs = []string{
+		ip := "172.16.1.1"
+
+		addrs := []string{
 			`Name <u@[172.16.1.1]>`,     // 正常
 			`Name <'u@[172.16.1.1]'>`,   // email 地址带单引号
 			`'Name' <'u@[172.16.1.1]'>`, // 名字和 email 都带单引号
 		}
 
 		for _, v := range addrs {
-			addr, err := ParseAddress(v)
+			addr, err = ParseNameAndAddress(v)
 			assert.Nil(t, err)
-			assert.Equal(t, expected, addr.String())
+			assert.Equal(t, ip, addr.String())
 		}
 	*/
 
 	// gb2312，且 display name 里带逗号
-	addr, err = ParseAddress("=?gb2312?B?1cW7zbHyIFpoYW5nLCBIdWFuZ2Jpbg==?= <user@domain.com>")
+	addr, err = ParseNameAndAddress("=?gb2312?B?1cW7zbHyIFpoYW5nLCBIdWFuZ2Jpbg==?= <user@domain.com>")
 	assert.Nil(t, err)
 	assert.Equal(t, "张煌彬 Zhang, Huangbin", addr.Name)
 	assert.Equal(t, "user@domain.com", addr.Address)
@@ -152,14 +160,14 @@ func TestParseAddress(t *testing.T) {
 	// assert.Equal(t, "Display, Name", addr.Name)
 	// assert.Equal(t, "user@domain.com", addr.Address)
 
-	addr, err = ParseAddress("Name <bounces+32777391-f0d7-user=iii.com@em6987.great.com>")
+	addr, err = ParseNameAndAddress("Name <bounces+32777391-f0d7-user=iii.com@em6987.great.com>")
 	assert.Nil(t, err)
 	assert.Equal(t, "Name", addr.Name)
 	assert.Equal(t, "bounces+32777391-f0d7-user=iii.com@em6987.great.com", addr.Address)
 
 	// Address 里的地址不是规范的 email
 	// mail.ParseAddress() 认为 `Name <user>` 是合法的。
-	_, err = ParseAddress("Name <user>")
+	_, err = ParseNameAndAddress("Name <user>")
 	assert.NotNil(t, err)
 }
 
