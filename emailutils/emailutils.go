@@ -247,10 +247,32 @@ func ParseNameAndAddress(s string) (addr *mail.Address, err error) {
 	return
 }
 
+func ParseAddressList(s string) (addrs []*mail.Address, err error) {
+	// 移除 Name 和 Address 之间的换行。
+	// Microsoft 发出的邮件常有这样的格式。
+	s = strings.ReplaceAll(s, "\n", " ")
+
+	addrs, err = enmime.ParseAddressList(s)
+	if err != nil {
+		return
+	}
+
+	for idx, addr := range addrs {
+		// 去掉首尾的引号
+		// 部分 Microsoft Outlook 客户端会带上引号。
+		addr.Name = strings.Trim(addr.Name, `'"`)
+		addr.Address = strings.ToLower(strings.Trim(addr.Address, `'"`))
+
+		addrs[idx] = addr
+	}
+
+	return
+}
+
 // ExtractEmailsFromAddressList 从 `To:`, `Cc:` 等含有多个邮件地址的邮件头的值里提取完整邮件地址。
 // 注意：返回的邮件地址都是小写、不包含地址扩展。
 func ExtractEmailsFromAddressList(s string) (emails []string, err error) {
-	addrs, err := mail.ParseAddressList(s)
+	addrs, err := ParseAddressList(s)
 	if err != nil {
 		return
 	}
