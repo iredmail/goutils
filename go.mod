@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/DeRuina/timberjack v1.3.9
-	github.com/Luzifer/go-openssl/v4 v4.2.4
+	github.com/Luzifer/go-openssl/v4 v4.2.5
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/doug-martin/goqu/v9 v9.19.0
@@ -64,7 +64,7 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/tools v0.46.0 // indirect
+	golang.org/x/tools v0.47.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.73.4 // indirect
