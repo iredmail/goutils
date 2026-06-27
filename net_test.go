@@ -6,15 +6,25 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNet(t *testing.T) {
+func TestIsIP(t *testing.T) {
 	assert.True(t, IsIP("192.168.0.1"))
-	assert.True(t, IsIP("192.168.0.0"))
 	assert.False(t, IsIP("192.168.0.0/24"))
+	assert.False(t, IsIP("192.168.1.0"))
+	assert.False(t, IsIP("192.168.1."))
+	assert.False(t, IsIP("192.168.1"))
+	assert.False(t, IsIP("192.168."))
+	assert.False(t, IsIP("192.168"))
+	assert.False(t, IsIP("192."))
+	assert.False(t, IsIP("192"))
+}
 
+func TestIsIPv46(t *testing.T) {
 	assert.True(t, IsIPv4("192.168.2.4"))
 	assert.False(t, IsIPv4("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
 	assert.True(t, IsIPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
+}
 
+func TestIsCIDR(t *testing.T) {
 	assert.True(t, IsCIDR("192.168.0.0/24"))
 	assert.False(t, IsCIDR("192.168.0.0"))
 }

@@ -43,6 +43,7 @@ func TestIsDomain(t *testing.T) {
 	assert.False(t, IsDomain("114.114.114.114"))
 	assert.False(t, IsDomain("1234"))
 	assert.False(t, IsDomain(".abc.com"))
+	assert.False(t, IsDomain("192.168"))
 }
 
 func TestIsFQDN(t *testing.T) {
@@ -260,6 +261,7 @@ func TestIsTLDDomain(t *testing.T) {
 	assert.False(t, IsTLDDomain("-com"))        // Starts with hyphen
 	assert.False(t, IsTLDDomain("com-"))        // Ends with hyphen
 	assert.False(t, IsTLDDomain("192.168.1.1")) // IP address
+	assert.False(t, IsTLDDomain("192"))         // Cannot be all digits
 	assert.False(t, IsTLDDomain("local host"))  // Space not allowed
 	assert.False(t, IsTLDDomain("A"))           // Single uppercase character (too short)
 }

@@ -31,12 +31,19 @@ var (
 	// - 不能以 `-` 结尾
 	regexTLDDomain = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9\-]{0,23}[a-zA-Z0-9]$`)
 
+	// 只有数字
+	regexAllDigits = regexp.MustCompile(`^\d+$`)
+
 	// FQDN 域名的首字母
 	regexValidDomainFirstChar = regexp.MustCompile(`^[0-9a-zA-Z]{1,1}$`)
 
 	// FQDN 域名
 	regexFQDN = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
 )
+
+func allAreDigits(s string) bool {
+	return regexAllDigits.MatchString(s)
+}
 
 // IsEmail 校验给定字符串是否为格式正确的邮件地址。
 // 支持两种类型的域名：
@@ -74,22 +81,30 @@ func IsFQDN(s string) bool {
 }
 
 // IsDomain 校验给定字符串是否为格式正确的邮件域名。
-func IsDomain(s string) bool {
+func IsDomain(s string) (valid bool) {
 	s = strings.TrimSpace(s)
 
 	if len(s) < 4 || len(s) > 254 {
-		return false
+		return
 	}
 
 	if goutils.IsIPv4(s) {
-		return false
+		return
+	}
+
+	// 最后一部分不能全是数字
+	_, after, found := strings.CutLast(s, ".")
+	if found {
+		if allAreDigits(after) {
+			return
+		}
 	}
 
 	return regexDomain.MatchString(s)
 }
 
 func IsTLDDomain(d string) bool {
-	return regexTLDDomain.MatchString(d)
+	return regexTLDDomain.MatchString(d) && !allAreDigits(d)
 }
 
 func IsWildcardAddr(s string) bool {
