@@ -25,18 +25,20 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
-          args: --config=$GITHUB_WORKSPACE/.golangci.yml
-          version: latest
+            # 使用 Go rc 版本时才使用 `goinstall` 模式。
+            install-mode: goinstall
+            args: --config=$GITHUB_WORKSPACE/.golangci.yml
+            version: latest
 
       - run: make testv
 
       - id: govulncheck
         uses: golang/govulncheck-action@v1
         with:
-           # Syntax of rc version: 1.26rc2
-           #go-package: <pattern>
-           #go-version-input: 1.26.4
-           go-version-input: 1.27rc1
+            # Syntax of rc version: 1.26rc2
+            #go-package: <pattern>
+            #go-version-input: 1.26.4
+            go-version-input: 1.27rc1
 
     #- name: Gosec
     #  uses: securego/gosec@master
