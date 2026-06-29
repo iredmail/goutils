@@ -38,7 +38,8 @@ jobs:
             # Syntax of rc version: 1.26rc2
             #go-package: <pattern>
             #go-version-input: 1.26.4
-            go-version-input: 1.27rc1
+            # 使用 actions/setup-go 的语法
+            go-version-input: '>=1.27.0-rc.1'
 
     #- name: Gosec
     #  uses: securego/gosec@master
