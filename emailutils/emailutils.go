@@ -112,6 +112,7 @@ func IsWildcardAddr(s string) bool {
 
 	return net.ParseIP(s) != nil
 }
+
 func IsWildcardIPv4(s string) bool {
 	s = strings.ReplaceAll(s, "*", "1")
 	ip := net.ParseIP(s)
