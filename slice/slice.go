@@ -3,6 +3,7 @@ package slice
 import (
 	"cmp"
 	"slices"
+	"strings"
 )
 
 // AddMissingElems 添加 slice `s` 里缺失的所有 `elems` 元素。
@@ -87,4 +88,10 @@ func HasAtLeastOneSameElement[T comparable](s1, s2 []T) bool {
 	}
 
 	return false
+}
+
+func ToLower(ss []string) {
+	for i := range len(ss) {
+		ss[i] = strings.ToLower(ss[i])
+	}
 }

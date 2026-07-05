@@ -69,6 +69,7 @@ func RemoveSpacesAndNewLines(s string, sep ...string) string {
 }
 
 // StringSliceToLower 将 slice 里的元素都转换为小写。
+// DEPRECATED: 使用 `slice.ToLower()` 代替。
 func StringSliceToLower(ss []string) {
 	for i := range len(ss) {
 		ss[i] = strings.ToLower(ss[i])

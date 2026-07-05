@@ -57,3 +57,9 @@ func TestGetNewAndRemoved(t *testing.T) {
 	assert.Equal(t, removedInt, []int{1, 2, 3, 4})
 	assert.Equal(t, len(remainedInt), 0)
 }
+
+func TestToLower(t *testing.T) {
+	ss := []string{"A", "B", "c", "D", "E"}
+	ToLower(ss)
+	assert.Equal(t, []string{"a", "b", "c", "d", "e"}, ss)
+}
