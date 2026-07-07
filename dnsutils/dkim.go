@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	defaultDKIMSelector   = "dkim"
-	defaultDKIMKeyLength  = 2048
+	DefaultDKIMSelector   = "dkim"
+	DefaultDKIMKeyLength  = 2048
 	dkimSelectorMaxLength = 20
 )
 
@@ -43,29 +43,8 @@ func ValidateDKIMSelector(s string) error {
 	return nil
 }
 
-func GenDKIMKey(selector string, keyLength int) (finalSelector string, finalKeyLength int, privateKey, publicKey string, err error) {
-	if selector == "" {
-		finalSelector = defaultDKIMSelector
-	} else {
-		finalSelector = selector
-
-		if ValidateDKIMSelector(finalSelector) != nil {
-			err = fmt.Errorf("INVALID_DKIM_SELECTOR")
-
-			return
-		}
-	}
-
-	// 目前只支持 1024、2048 和 4096 位
-	finalKeyLength = keyLength
-	switch keyLength {
-	case 1024, 2048, 4096:
-		// valid lengths
-	default:
-		finalKeyLength = defaultDKIMKeyLength
-	}
-
-	pk, err := rsa.GenerateKey(rand.Reader, finalKeyLength)
+func GenDKIMKey(keyLength int) (privateKey, publicKey string, err error) {
+	pk, err := rsa.GenerateKey(rand.Reader, keyLength)
 	if err != nil {
 		return
 	}
