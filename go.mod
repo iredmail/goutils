@@ -13,7 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/gofiber/fiber/v2 v2.52.14
 	github.com/google/uuid v1.6.0
-	github.com/iredmail/ldappool v0.0.0-20260615015827-ba0c9c461920
+	github.com/iredmail/ldappool v0.0.0-20260709034950-8be9d1ee75fc
 	github.com/jhillyerd/enmime/v2 v2.4.1
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.26.6
