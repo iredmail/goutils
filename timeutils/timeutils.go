@@ -20,6 +20,21 @@ func EpochToDay(epoch int64) string {
 	return t.Format(time.DateOnly)
 }
 
+func EpochToYMD(epoch int64) (ymd int64) {
+	if epoch <= 0 {
+		return
+	}
+
+	t := time.Unix(epoch, 0).UTC()
+	if t.IsZero() {
+		return
+	}
+
+	ymd, _ = strconv.ParseInt(t.Format("20260102"), 10, 64)
+
+	return
+}
+
 func EpochToMonth(epoch int64) (month time.Month) {
 	month = 1
 	if epoch <= 0 {
