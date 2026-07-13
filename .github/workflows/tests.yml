@@ -18,7 +18,7 @@ jobs:
             # Syntax of rc version: '1.26.0-rc.2' (not '1.26rc2')
             #go-version: stable
             #go-version: '>=1.26.4'
-            go-version: '>=1.27.0-rc.1'
+            go-version: '>=1.27.0-rc.2'
 
       - run: git config --global url."https://$GH_ACCESS_TOKEN@github.com/".insteadOf https://github.com/
 
@@ -39,7 +39,7 @@ jobs:
             #go-package: <pattern>
             #go-version-input: 1.26.4
             # 使用 actions/setup-go 的语法
-            go-version-input: '>=1.27.0-rc.1'
+            go-version-input: '>=1.27.0-rc.2'
 
     #- name: Gosec
     #  uses: securego/gosec@master
