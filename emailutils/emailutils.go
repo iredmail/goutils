@@ -432,3 +432,17 @@ func ReplaceEmailsDomain(domain string, mails []string) (replaced []string) {
 
 	return
 }
+
+func GenDotPrefixedAllSubDomains(domain string) (subs []string) {
+	parts := strings.Split(domain, ".")
+	if len(parts) < 2 {
+		return
+	}
+
+	for idx := range parts {
+		addr := "." + strings.Join(parts[idx:], ".")
+		subs = append(subs, addr)
+	}
+
+	return
+}

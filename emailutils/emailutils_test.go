@@ -294,3 +294,20 @@ func TestExtractEmailsInCommaString(t *testing.T) {
 		assert.Equal(t, d.output, emails)
 	}
 }
+
+func TestGenDotPrefixedAllSubDomains(t *testing.T) {
+	assert.Equal(t,
+		GenDotPrefixedAllSubDomains("s3.s2.s1.com"),
+		[]string{".s3.s2.s1.com", ".s2.s1.com", ".s1.com", ".com"})
+
+	assert.Equal(t,
+		[]string{".s2.s1.com", ".s1.com", ".com"},
+		GenDotPrefixedAllSubDomains("s2.s1.com"))
+
+	assert.Equal(t,
+		GenDotPrefixedAllSubDomains("s1.com"),
+		[]string{".s1.com", ".com"})
+
+	assert.Equal(t, []string(nil), GenDotPrefixedAllSubDomains("com"))
+	assert.Equal(t, []string(nil), GenDotPrefixedAllSubDomains(""))
+}
