@@ -9,11 +9,11 @@ require (
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/doug-martin/goqu/v9 v9.19.0
 	github.com/dustin/go-humanize v1.0.1
-	github.com/go-ldap/ldap/v3 v3.4.13
+	github.com/go-ldap/ldap/v3 v3.4.14
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/gofiber/fiber/v2 v2.52.14
 	github.com/google/uuid v1.6.0
-	github.com/iredmail/ldappool v0.0.0-20260713023830-b79e455ac8f4
+	github.com/iredmail/ldappool v0.0.0-20260716021818-8e59b12ed830
 	github.com/jhillyerd/enmime/v2 v2.4.1
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.26.6
@@ -35,7 +35,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
 	github.com/fatih/color v1.19.0 // indirect
-	github.com/go-asn1-ber/asn1-ber v1.5.8-0.20250403174932-29230038a667 // indirect
+	github.com/go-asn1-ber/asn1-ber v1.5.8 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
