@@ -7,9 +7,14 @@ import (
 
 const maxDomainSPFDepth = 10
 
-func IsAllowedIPInSPF(domain string, ip net.IP, depth int) (matched bool, err error) {
-	if domain == "" || ip == nil || depth > maxDomainSPFDepth {
+func GetDomainSPFNetworks(domain string, depth ...int) (networks []string, err error) {
+	if domain == "" || (len(depth) > 0 && depth[0] > maxDomainSPFDepth) {
 		return
+	}
+
+	_depth := 0
+	if len(depth) > 0 {
+		_depth = depth[0]
 	}
 
 	records, err := LookupSPF(domain)
@@ -32,52 +37,107 @@ func IsAllowedIPInSPF(domain string, ip net.IP, depth int) (matched bool, err er
 			mech = mech[1:]
 		}
 
-		matched, err = matchSPFMechanism(mech, domain, ip, depth)
-		if err != nil || matched {
-			return
+		_networks, err := getSPFMechanismNetworks(mech, domain, _depth)
+		if err != nil {
+			return nil, err
+		}
+
+		networks = append(networks, _networks...)
+	}
+
+	return
+}
+
+func IsAllowedIPInSPF(domain string, ip net.IP, depth ...int) (matched bool, err error) {
+	if domain == "" || ip == nil || (len(depth) > 0 && depth[0] > maxDomainSPFDepth) {
+		return
+	}
+
+	_depth := 0
+	if len(depth) > 0 {
+		_depth = depth[0]
+	}
+
+	records, err := LookupSPF(domain)
+	if err != nil || len(records) == 0 {
+		return
+	}
+
+	fields := strings.Fields(records[0])
+	for _, mech := range fields {
+		mech = strings.TrimSpace(mech)
+		if mech == "" || mech == "all" || strings.EqualFold(mech, "v=spf1") {
+			continue
+		}
+
+		// Strip SPF qualifier.
+		if strings.HasPrefix(mech, "+") ||
+			strings.HasPrefix(mech, "-") ||
+			strings.HasPrefix(mech, "~") ||
+			strings.HasPrefix(mech, "?") {
+			mech = mech[1:]
+		}
+
+		_networks, err := getSPFMechanismNetworks(mech, domain, _depth)
+		if err != nil {
+			return false, err
+		}
+
+		for _, network := range _networks {
+			if ipInCIDROrSingle(network, ip) {
+				return true, nil
+			}
 		}
 	}
 
 	return
 }
 
-func matchSPFMechanism(mech, domain string, clientIP net.IP, depth int) (bool, error) {
+func getSPFMechanismNetworks(mech, domain string, depth int) (networks []string, err error) {
 	switch {
 	case strings.HasPrefix(mech, "ip4:"):
-		return ipInCIDROrSingle(strings.TrimPrefix(mech, "ip4:"), clientIP), nil
+		networks = append(networks, strings.TrimPrefix(mech, "ip4:"))
 	case strings.HasPrefix(mech, "ip6:"):
-		return ipInCIDROrSingle(strings.TrimPrefix(mech, "ip6:"), clientIP), nil
+		networks = append(networks, strings.TrimPrefix(mech, "ip6:"))
 	case mech == "a", strings.HasPrefix(mech, "a:"):
 		_domain, prefix := parseSPFDomainAndPrefix(mech, "a", domain)
+		_networks, err := getHostNetworks(_domain, prefix)
+		if err != nil {
+			return nil, err
+		}
 
-		return matchHostByA(_domain, prefix, clientIP)
+		networks = append(networks, _networks...)
 	case mech == "mx", strings.HasPrefix(mech, "mx:"):
 		_domain, prefix := parseSPFDomainAndPrefix(mech, "mx", domain)
 		mxs, err := net.LookupMX(_domain)
+		if err != nil {
+			return nil, err
+		}
+
 		for _, mx := range mxs {
 			host := strings.TrimSuffix(mx.Host, ".")
 			if host == "" {
 				continue
 			}
 
-			matched, err := matchHostByA(host, prefix, clientIP)
-			if err != nil || matched {
-				return matched, err
+			_networks, err := getHostNetworks(host, prefix)
+			if err != nil {
+				return nil, err
 			}
-		}
 
-		return false, err
+			networks = append(networks, _networks...)
+		}
 	case strings.HasPrefix(mech, "include:"):
 		includeDomain := strings.TrimSpace(strings.TrimPrefix(mech, "include:"))
 
-		return IsAllowedIPInSPF(includeDomain, clientIP, depth+1)
+		return GetDomainSPFNetworks(includeDomain, depth+1)
 	case strings.HasPrefix(mech, "redirect="):
 		redirectDomain := strings.TrimSpace(strings.TrimPrefix(mech, "redirect="))
 
-		return IsAllowedIPInSPF(redirectDomain, clientIP, depth+1)
+		return GetDomainSPFNetworks(redirectDomain, depth+1)
 	}
 
-	return false, nil
+	return
 }
 
 func parseSPFDomainAndPrefix(mech, tag, fallbackDomain string) (domain, prefix string) {
@@ -97,20 +157,17 @@ func parseSPFDomainAndPrefix(mech, tag, fallbackDomain string) (domain, prefix s
 	return
 }
 
-func matchHostByA(domain, prefix string, clientIP net.IP) (bool, error) {
+func getHostNetworks(domain, prefix string) (networks []string, err error) {
 	ips, err := net.LookupIP(domain)
 	for _, ip := range ips {
-		_ip := ip.String()
 		if prefix != "" {
-			_ip += "/" + prefix
-		}
-
-		if ipInCIDROrSingle(ip.String(), clientIP) {
-			return true, nil
+			networks = append(networks, ip.String()+"/"+prefix)
+		} else {
+			networks = append(networks, ip.String())
 		}
 	}
 
-	return false, err
+	return
 }
 
 func ipInCIDROrSingle(value string, clientIP net.IP) bool {
