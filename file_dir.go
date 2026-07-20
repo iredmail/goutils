@@ -12,6 +12,7 @@ import (
 )
 
 type FileStat struct {
+	Name      string
 	Exists    bool
 	IsLink    bool // symbol link
 	IsRegular bool // regular file
@@ -47,6 +48,7 @@ func GetFileStat(pth string) (FileStat, error) {
 	}
 
 	fs.Exists = true
+	fs.Name = stat.Name()
 	fs.Mode = stat.Mode()
 
 	// Get uid / gid and owner / group names
