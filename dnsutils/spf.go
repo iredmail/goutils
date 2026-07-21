@@ -8,7 +8,7 @@ import (
 const maxDomainSPFDepth = 10
 
 func GetDomainSPFNetworks(domain string, depth ...int) (networks []string, err error) {
-	if domain == "" || (len(depth) > 0 && depth[0] > maxDomainSPFDepth) {
+	if domain == "" || (len(depth) > 0 && depth[0] > 0 && depth[0] > maxDomainSPFDepth) {
 		return
 	}
 
@@ -49,7 +49,7 @@ func GetDomainSPFNetworks(domain string, depth ...int) (networks []string, err e
 }
 
 func IsAllowedIPInSPF(domain string, ip net.IP, depth ...int) (matched bool, err error) {
-	if domain == "" || ip == nil || (len(depth) > 0 && depth[0] > maxDomainSPFDepth) {
+	if domain == "" || ip == nil || (len(depth) > 0 && depth[0] > 0 && depth[0] > maxDomainSPFDepth) {
 		return
 	}
 
@@ -143,15 +143,21 @@ func getSPFMechanismNetworks(mech, domain string, depth int) (networks []string,
 func parseSPFDomainAndPrefix(mech, tag, fallbackDomain string) (domain, prefix string) {
 	mech = strings.TrimPrefix(mech, tag)
 	mech = strings.TrimPrefix(mech, ":")
+	mech = strings.TrimSpace(mech)
 	if mech == "" {
 		return fallbackDomain, ""
 	}
 
-	domain = mech
-	var found bool
-	domain, prefix, found = strings.Cut(mech, "/")
-	if found {
-		domain = strings.TrimSpace(domain)
+	// Handle "a/24" / "mx/24" (no explicit domain, only CIDR prefix).
+	if strings.HasPrefix(mech, "/") {
+		return fallbackDomain, strings.TrimLeft(mech, "/")
+	}
+
+	domain, prefix, _ = strings.Cut(mech, "/")
+	domain = strings.TrimSpace(domain)
+	prefix = strings.TrimLeft(strings.TrimSpace(prefix), "/")
+	if domain == "" {
+		domain = fallbackDomain
 	}
 
 	return
