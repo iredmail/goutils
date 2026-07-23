@@ -8,12 +8,12 @@ import (
 )
 
 func TestParseSPFDomainAndPrefix(t *testing.T) {
-	domain, prefix := parseSPFDomainAndPrefix("a:a.io/24", "a", "a.io")
-	assert.Equal(t, "a.io", domain)
+	domain, prefix := parseSPFDomainAndPrefix("a:aa.io/24", "a", "a.io")
+	assert.Equal(t, "aa.io", domain)
 	assert.Equal(t, "24", prefix)
 
-	domain, prefix = parseSPFDomainAndPrefix("a:a.io", "a", "a.io")
-	assert.Equal(t, "a.io", domain)
+	domain, prefix = parseSPFDomainAndPrefix("a:aa.io", "a", "a.io")
+	assert.Equal(t, "aa.io", domain)
 	assert.Equal(t, "", prefix)
 
 	domain, prefix = parseSPFDomainAndPrefix("a/24", "a", "a.io")
