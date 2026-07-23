@@ -34,11 +34,17 @@ func recursiveGetDomainSPFNetworks(domain string, maxDepth, curDepth int) (netwo
 		}
 
 		// Strip SPF qualifier.
-		if strings.HasPrefix(mech, "+") ||
-			strings.HasPrefix(mech, "-") ||
+		if strings.HasPrefix(mech, "-") ||
 			strings.HasPrefix(mech, "~") ||
 			strings.HasPrefix(mech, "?") {
+			continue
+		}
+
+		if strings.HasPrefix(mech, "+") {
 			mech = mech[1:]
+			if mech == "all" {
+				continue
+			}
 		}
 
 		_networks, err := getSPFMechanismNetworks(mech, domain, maxDepth, curDepth)
@@ -79,11 +85,17 @@ func recursiveIsAllowedInSPF(domain string, ip net.IP, maxDepth, curDepth int) (
 		}
 
 		// Strip SPF qualifier.
-		if strings.HasPrefix(mech, "+") ||
-			strings.HasPrefix(mech, "-") ||
+		if strings.HasPrefix(mech, "-") ||
 			strings.HasPrefix(mech, "~") ||
 			strings.HasPrefix(mech, "?") {
+			continue
+		}
+
+		if strings.HasPrefix(mech, "+") {
 			mech = mech[1:]
+			if mech == "all" {
+				return true, nil
+			}
 		}
 
 		_networks, err := getSPFMechanismNetworks(mech, domain, maxDepth, curDepth)
