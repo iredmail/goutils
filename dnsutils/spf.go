@@ -7,6 +7,9 @@ import (
 
 const defaultMaxDomainSPFDepth = 10
 
+// GetDomainSPFNetworks Retrieves the SPF networks for a given domain.
+//
+//	Default maxDepth is 10, but can be overridden by passing a positive integer as the second argument.
 func GetDomainSPFNetworks(domain string, maxDepth ...int) (networks []string, err error) {
 	_maxDepth := defaultMaxDomainSPFDepth
 	if len(maxDepth) > 0 && maxDepth[0] > 0 {
@@ -33,7 +36,7 @@ func recursiveGetDomainSPFNetworks(domain string, maxDepth, curDepth int) (netwo
 			continue
 		}
 
-		// Strip SPF qualifier.
+		// Skip mechanisms with SPF qualifiers that indicate non-allowance.
 		if strings.HasPrefix(mech, "-") ||
 			strings.HasPrefix(mech, "~") {
 			continue
@@ -42,6 +45,7 @@ func recursiveGetDomainSPFNetworks(domain string, maxDepth, curDepth int) (netwo
 		if strings.HasPrefix(mech, "+") ||
 			strings.HasPrefix(mech, "?") {
 			mech = mech[1:]
+			// Ignore the "all" mechanism as it does not provide specific network information.
 			if mech == "all" {
 				continue
 			}
@@ -58,6 +62,9 @@ func recursiveGetDomainSPFNetworks(domain string, maxDepth, curDepth int) (netwo
 	return
 }
 
+// IsAllowedIPInSPF Checks if a given IP address is allowed by the SPF records of a specified domain.
+//
+//	Default maxDepth is 10, but can be overridden by passing a positive integer as the third argument.
 func IsAllowedIPInSPF(domain string, ip net.IP, maxDepth ...int) (matched bool, err error) {
 	_maxDepth := defaultMaxDomainSPFDepth
 	if len(maxDepth) > 0 && maxDepth[0] > 0 {
@@ -93,6 +100,7 @@ func recursiveIsAllowedInSPF(domain string, ip net.IP, maxDepth, curDepth int) (
 		if strings.HasPrefix(mech, "+") ||
 			strings.HasPrefix(mech, "?") {
 			mech = mech[1:]
+			// Allow all mechanism.
 			if mech == "all" {
 				return true, nil
 			}
@@ -113,6 +121,7 @@ func recursiveIsAllowedInSPF(domain string, ip net.IP, maxDepth, curDepth int) (
 	return false, nil
 }
 
+// getSPFMechanismNetworks retrieves the networks associated with a specific SPF mechanism for a given domain.
 func getSPFMechanismNetworks(mech, domain string, maxDepth, curDepth int) (networks []string, err error) {
 	switch {
 	case strings.HasPrefix(mech, "ip4:"):
@@ -160,9 +169,10 @@ func getSPFMechanismNetworks(mech, domain string, maxDepth, curDepth int) (netwo
 	return
 }
 
+// parseSPFDomainAndPrefix extracts the domain and CIDR prefix from an SPF mechanism string.
 func parseSPFDomainAndPrefix(mech, tag, fallbackDomain string) (domain, prefix string) {
-	mech = strings.TrimPrefix(mech, tag)
-	mech = strings.TrimPrefix(mech, ":")
+	mech = strings.TrimPrefix(mech, tag) // mx:example.com -> :example.com
+	mech = strings.TrimPrefix(mech, ":") // :example.com -> example.com
 	mech = strings.TrimSpace(mech)
 	if mech == "" {
 		return fallbackDomain, ""
@@ -183,6 +193,7 @@ func parseSPFDomainAndPrefix(mech, tag, fallbackDomain string) (domain, prefix s
 	return
 }
 
+// getHostNetworks retrieves the IP addresses for a given domain and appends the specified CIDR prefix if provided.
 func getHostNetworks(domain, prefix string) (networks []string, err error) {
 	ips, err := net.LookupIP(domain)
 	for _, ip := range ips {
@@ -196,6 +207,7 @@ func getHostNetworks(domain, prefix string) (networks []string, err error) {
 	return
 }
 
+// ipInCIDROrSingle checks if the given IP address is within the specified CIDR range or matches a single IP address.
 func ipInCIDROrSingle(value string, clientIP net.IP) bool {
 	value = strings.TrimSpace(value)
 	if value == "" {
