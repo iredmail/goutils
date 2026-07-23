@@ -5,16 +5,20 @@ import (
 	"strings"
 )
 
-const maxDomainSPFDepth = 10
+const defaultMaxDomainSPFDepth = 10
 
-func GetDomainSPFNetworks(domain string, depth ...int) (networks []string, err error) {
-	if domain == "" || (len(depth) > 0 && depth[0] > 0 && depth[0] > maxDomainSPFDepth) {
-		return
+func GetDomainSPFNetworks(domain string, maxDepth ...int) (networks []string, err error) {
+	_maxDepth := defaultMaxDomainSPFDepth
+	if len(maxDepth) > 0 && maxDepth[0] > 0 {
+		_maxDepth = maxDepth[0]
 	}
 
-	_depth := 0
-	if len(depth) > 0 {
-		_depth = depth[0]
+	return recursiveGetDomainSPFNetworks(domain, _maxDepth, 0)
+}
+
+func recursiveGetDomainSPFNetworks(domain string, maxDepth, curDepth int) (networks []string, err error) {
+	if curDepth > maxDepth {
+		return
 	}
 
 	records, err := LookupSPF(domain)
@@ -37,7 +41,7 @@ func GetDomainSPFNetworks(domain string, depth ...int) (networks []string, err e
 			mech = mech[1:]
 		}
 
-		_networks, err := getSPFMechanismNetworks(mech, domain, _depth)
+		_networks, err := getSPFMechanismNetworks(mech, domain, maxDepth, curDepth)
 		if err != nil {
 			return nil, err
 		}
@@ -48,14 +52,18 @@ func GetDomainSPFNetworks(domain string, depth ...int) (networks []string, err e
 	return
 }
 
-func IsAllowedIPInSPF(domain string, ip net.IP, depth ...int) (matched bool, err error) {
-	if domain == "" || ip == nil || (len(depth) > 0 && depth[0] > 0 && depth[0] > maxDomainSPFDepth) {
-		return
+func IsAllowedIPInSPF(domain string, ip net.IP, maxDepth ...int) (matched bool, err error) {
+	_maxDepth := defaultMaxDomainSPFDepth
+	if len(maxDepth) > 0 && maxDepth[0] > 0 {
+		_maxDepth = maxDepth[0]
 	}
 
-	_depth := 0
-	if len(depth) > 0 {
-		_depth = depth[0]
+	return recursiveIsAllowedInSPF(domain, ip, _maxDepth, 0)
+}
+
+func recursiveIsAllowedInSPF(domain string, ip net.IP, maxDepth, curDepth int) (matched bool, err error) {
+	if curDepth > maxDepth {
+		return
 	}
 
 	records, err := LookupSPF(domain)
@@ -66,7 +74,7 @@ func IsAllowedIPInSPF(domain string, ip net.IP, depth ...int) (matched bool, err
 	fields := strings.Fields(records[0])
 	for _, mech := range fields {
 		mech = strings.TrimSpace(mech)
-		if mech == "" || mech == "all" || strings.EqualFold(mech, "v=spf1") {
+		if mech == "" || strings.EqualFold(mech, "v=spf1") {
 			continue
 		}
 
@@ -78,7 +86,7 @@ func IsAllowedIPInSPF(domain string, ip net.IP, depth ...int) (matched bool, err
 			mech = mech[1:]
 		}
 
-		_networks, err := getSPFMechanismNetworks(mech, domain, _depth)
+		_networks, err := getSPFMechanismNetworks(mech, domain, maxDepth, curDepth)
 		if err != nil {
 			return false, err
 		}
@@ -90,10 +98,10 @@ func IsAllowedIPInSPF(domain string, ip net.IP, depth ...int) (matched bool, err
 		}
 	}
 
-	return
+	return false, nil
 }
 
-func getSPFMechanismNetworks(mech, domain string, depth int) (networks []string, err error) {
+func getSPFMechanismNetworks(mech, domain string, maxDepth, curDepth int) (networks []string, err error) {
 	switch {
 	case strings.HasPrefix(mech, "ip4:"):
 		networks = append(networks, strings.TrimPrefix(mech, "ip4:"))
@@ -130,11 +138,11 @@ func getSPFMechanismNetworks(mech, domain string, depth int) (networks []string,
 	case strings.HasPrefix(mech, "include:"):
 		includeDomain := strings.TrimSpace(strings.TrimPrefix(mech, "include:"))
 
-		return GetDomainSPFNetworks(includeDomain, depth+1)
+		return recursiveGetDomainSPFNetworks(includeDomain, maxDepth, curDepth+1)
 	case strings.HasPrefix(mech, "redirect="):
 		redirectDomain := strings.TrimSpace(strings.TrimPrefix(mech, "redirect="))
 
-		return GetDomainSPFNetworks(redirectDomain, depth+1)
+		return recursiveGetDomainSPFNetworks(redirectDomain, maxDepth, curDepth+1)
 	}
 
 	return
