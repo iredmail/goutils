@@ -128,7 +128,7 @@ func getSPFMechanismNetworks(mech, domain string, maxDepth, curDepth int) (netwo
 		networks = append(networks, strings.TrimPrefix(mech, "ip4:"))
 	case strings.HasPrefix(mech, "ip6:"):
 		networks = append(networks, strings.TrimPrefix(mech, "ip6:"))
-	case mech == "a", strings.HasPrefix(mech, "a:"):
+	case mech == "a", strings.HasPrefix(mech, "a/"), strings.HasPrefix(mech, "a:"):
 		_domain, prefix := parseSPFDomainAndPrefix(mech, "a", domain)
 		_networks, err := getHostNetworks(_domain, prefix)
 		if err != nil {
@@ -136,7 +136,7 @@ func getSPFMechanismNetworks(mech, domain string, maxDepth, curDepth int) (netwo
 		}
 
 		networks = append(networks, _networks...)
-	case mech == "mx", strings.HasPrefix(mech, "mx:"):
+	case mech == "mx", strings.HasPrefix(mech, "mx/"), strings.HasPrefix(mech, "mx:"):
 		_domain, prefix := parseSPFDomainAndPrefix(mech, "mx", domain)
 		mxs, err := net.LookupMX(_domain)
 		if err != nil {
