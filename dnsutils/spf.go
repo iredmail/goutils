@@ -87,10 +87,8 @@ func recursiveIsAllowedInSPF(domain string, ip net.IP, maxDepth, curDepth int) (
 		return
 	}
 
-	fields := strings.Fields(records[0])
-	for _, mech := range fields {
-		mech = strings.TrimSpace(mech)
-		if mech == "" || strings.EqualFold(mech, "v=spf1") {
+	for mech := range strings.FieldsSeq(records[0]) {
+		if strings.EqualFold(mech, "v=spf1") {
 			continue
 		}
 
