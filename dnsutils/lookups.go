@@ -289,8 +289,9 @@ func LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (sp
 		return
 	}
 
-	mechs := strings.Fields(_spf[0])
-	for _, mech := range mechs {
+	var after string
+	var ok bool
+	for mech := range strings.FieldsSeq(_spf[0]) {
 		if strings.HasPrefix(mech, "+") || strings.HasPrefix(mech, "-") ||
 			strings.HasPrefix(mech, "~") || strings.HasPrefix(mech, "?") {
 			mech = mech[1:]
@@ -302,10 +303,10 @@ func LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (sp
 			_, totalQueries, _ = LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypeMX)
 		} else if mech == "ptr" {
 			_, totalQueries, _ = LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypePTR)
-		} else if strings.HasPrefix(mech, "a:") {
+		} else if after, ok = strings.CutPrefix(mech, "a:"); ok {
 			// a:<domain>
 			// a:<domain>/<prefix-length>
-			a := strings.TrimPrefix(mech, "a:")
+			a := after
 			split := strings.Split(a, "/")
 			if len(split) > 1 {
 				a = split[0]
@@ -316,10 +317,10 @@ func LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (sp
 			}
 
 			_, totalQueries, _ = LookupRecursiveSPF(a, totalQueries, spfDNSQueryTypeA)
-		} else if strings.HasPrefix(mech, "mx:") {
+		} else if after, ok = strings.CutPrefix(mech, "mx:"); ok {
 			// mx:<domain>
 			// mx:<domain>/<prefix-length>
-			mx := strings.TrimPrefix(mech, "mx:")
+			mx := after
 			split := strings.Split(mx, "/")
 			if len(split) > 1 {
 				mx = split[0]
@@ -330,12 +331,12 @@ func LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (sp
 			}
 
 			_, totalQueries, _ = LookupRecursiveSPF(mx, totalQueries, spfDNSQueryTypeMX)
-		} else if strings.HasPrefix(mech, "ptr:") {
-			_, totalQueries, _ = LookupRecursiveSPF(strings.TrimPrefix(mech, "ptr:"), totalQueries, spfDNSQueryTypePTR)
-		} else if strings.HasPrefix(mech, "include:") {
-			_, totalQueries, _ = LookupRecursiveSPF(strings.TrimPrefix(mech, "include:"), totalQueries)
-		} else if strings.HasPrefix(mech, "redirect=") {
-			_, totalQueries, _ = LookupRecursiveSPF(strings.TrimPrefix(mech, "redirect="), totalQueries)
+		} else if after, ok = strings.CutPrefix(mech, "ptr:"); ok {
+			_, totalQueries, _ = LookupRecursiveSPF(after, totalQueries, spfDNSQueryTypePTR)
+		} else if after, ok = strings.CutPrefix(mech, "include:"); ok {
+			_, totalQueries, _ = LookupRecursiveSPF(after, totalQueries)
+		} else if after, ok = strings.CutPrefix(mech, "redirect="); ok {
+			_, totalQueries, _ = LookupRecursiveSPF(after, totalQueries)
 		}
 	}
 
