@@ -2,10 +2,13 @@ package goutils
 
 import (
 	"net"
+	"net/netip"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"go4.org/netipx"
 )
 
 var (
@@ -137,4 +140,32 @@ func IsHttpEndpoint(endpoint string) bool {
 	}
 
 	return u.Scheme == "http" || u.Scheme == "https"
+}
+
+func IPToBytes(ip string) (addrBytes []byte, err error) {
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
+		return nil, err
+	}
+
+	addr16 := addr.As16()
+	addrBytes = addr16[:]
+
+	return
+}
+
+func CIDRToBytes(cidr string) (startIP, endIP []byte, err error) {
+	prefix, err := netip.ParsePrefix(cidr)
+	if err != nil {
+		return
+	}
+
+	ipRange := netipx.RangeOfPrefix(prefix)
+	startIPAddr := ipRange.From().As16()
+	startIP = startIPAddr[:]
+
+	endIPAddr := ipRange.To().As16()
+	endIP = endIPAddr[:]
+
+	return
 }
