@@ -19,6 +19,7 @@ require (
 	github.com/shirou/gopsutil/v4 v4.26.6
 	github.com/stretchr/testify v1.11.1
 	github.com/vorlif/spreak v1.0.0
+	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/crypto v0.54.0
 	golang.org/x/text v0.40.0
 	modernc.org/sqlite v1.54.0
