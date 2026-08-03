@@ -229,6 +229,25 @@ func StripExtension(email string) string {
 	return username + "@" + domain
 }
 
+// ExtractExtension 提取邮件地址里的 `+extension` 扩展。如果 s 不是邮件地址，返回空字符串。
+// 注意：extension 保留大小写。
+func ExtractExtension(s string) (ext string) {
+	s = strings.ToLower(s)
+
+	if !IsEmail(s) {
+		return
+	}
+
+	username, _, found := strings.Cut(s, "@")
+	if !found {
+		return
+	}
+
+	_, ext, _ = strings.Cut(username, "+")
+
+	return
+}
+
 // ParseNameAndAddress 是 `enmime.ParseAddressList()` 的简单封装：
 //   - 去除换行
 //   - 去除邮件地址首尾的引号
@@ -332,9 +351,9 @@ func ToLowerWithExt(s string) string {
 	username, ext, found := strings.Cut(userExt, "+")
 	if found {
 		return fmt.Sprintf("%s+%s@%s", strings.ToLower(username), ext, strings.ToLower(domain))
-	} else {
-		return strings.ToLower(s)
 	}
+
+	return strings.ToLower(s)
 }
 
 // ToLowerWithoutExt 将邮件地址转换为小写，并且移除地址扩展（+extension）。
