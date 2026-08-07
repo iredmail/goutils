@@ -284,7 +284,7 @@ func ParseNameAndAddress(s string) (addr *mail.Address, err error) {
 
 func ParseAddressList(s string) (addrs []*mail.Address, err error) {
 	// 移除 Name 和 Address 之间的换行。
-	// Microsoft 发出的邮件常有这样的格式。
+	// Microsoft Outlook 发出的邮件常有这样的格式。
 	s = strings.ReplaceAll(s, "\n", " ")
 
 	addrs, err = enmime.ParseAddressList(s)
