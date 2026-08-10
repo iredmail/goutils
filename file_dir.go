@@ -36,15 +36,11 @@ func GetFileStat(pth string) (FileStat, error) {
 
 	stat, err := os.Lstat(pth)
 	if err != nil {
-		// 不能用 os.IsNotExist(err) 来判断文件是否存在
-		if e, ok := errors.AsType[*os.PathError](err); ok {
-			// no such file or directory
-			if errors.Is(e.Err, syscall.ENOENT) {
-				return fs, nil
-			}
+		if os.IsNotExist(err) {
+			return fs, nil
 		}
 
-		return fs, fmt.Errorf("failed in checking stat of %s: %v", pth, err)
+		return fs, fmt.Errorf("failed in checking stat of %s: %w", pth, err)
 	}
 
 	fs.Exists = true
@@ -86,11 +82,8 @@ func GetFileStat(pth string) (FileStat, error) {
 // DestExists 检查目标对象（文件、目录、符号链接，等）是否存在。
 func DestExists(pth string) bool {
 	_, err := os.Stat(pth)
-	if err != nil {
-		return os.IsExist(err)
-	}
 
-	return true
+	return err == nil
 }
 
 // CreateDirIfNotExist creates target directory with mode `0700` if it
