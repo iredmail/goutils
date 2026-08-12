@@ -1,6 +1,7 @@
 package ctxutils
 
 import (
+	"errors"
 	"net/url"
 	"strconv"
 	"strings"
@@ -62,11 +63,11 @@ func ParamEmailWithoutExt(ctx *fiber.Ctx, name ...string) (addr string, err erro
 	addr = ctx.Params(param)
 	addr, err = url.QueryUnescape(addr)
 	if err != nil {
-		return "", respcode.ErrInvalidEmailAddress
+		return "", errors.New("INVALID_EMAIL")
 	}
 
 	if !emailutils.IsEmail(addr) {
-		return "", respcode.ErrInvalidEmailAddress
+		return "", errors.New("INVALID_EMAIL")
 	}
 
 	return emailutils.ToLowerWithoutExt(addr), nil
