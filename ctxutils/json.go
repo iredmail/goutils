@@ -16,7 +16,7 @@ func JSONError(ctx *fiber.Ctx, err error) error {
 func JSONErrorMap(ctx *fiber.Ctx, m fiber.Map, msg ...string) error {
 	m["_success"] = false
 	if len(msg) > 0 {
-		m["_msg"] = msg
+		m["_msg"] = msg[0]
 	}
 
 	return ctx.JSON(m)
