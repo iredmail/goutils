@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"net/url"
+	"strings"
 )
 
 type Pagination struct {
@@ -21,6 +22,10 @@ type Pagination struct {
 
 // GenPagination 根据当前页 `page`，总条目数 `total`，每页条目数 `limit` 生成分页链接。
 func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQueries map[string]string) (p Pagination) {
+	if limit <= 0 || page < 1 {
+		return
+	}
+
 	p = Pagination{
 		TotalItems:   total,
 		TotalPages:   int(math.Ceil(float64(total) / float64(limit))),
@@ -53,7 +58,11 @@ func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQuerie
 		uv.Add("limit", fmt.Sprintf("%d", limit))
 	}
 
-	p.URIPrefix += "?" + uv.Encode()
+	sep := "?"
+	if strings.Contains(p.URIPrefix, sep) {
+		sep = "&"
+	}
+	p.URIPrefix += sep + uv.Encode()
 
 	if total == 0 {
 		p.PageBeginNum = 0

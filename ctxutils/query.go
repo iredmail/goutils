@@ -3,7 +3,6 @@ package ctxutils
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"strconv"
 	"strings"
 
@@ -30,7 +29,6 @@ func QueryString(ctx *fiber.Ctx, name string, defaultValue ...string) (isEmpty b
 	}
 
 	value = ctx.Query(name, value)
-	value, _ = url.QueryUnescape(value)
 	value = strings.TrimSpace(value)
 
 	isEmpty = len(value) == 0
@@ -58,7 +56,7 @@ func QueryInt64(ctx *fiber.Ctx, key string, defaultValue ...int64) (num int64) {
 	i := ctx.Query(key, fmt.Sprintf("%d", dv))
 	v, err := strconv.ParseInt(i, 10, 64)
 	if err != nil {
-		return 0
+		return dv
 	}
 
 	return v
@@ -74,10 +72,7 @@ func QueryBool(ctx *fiber.Ctx, key string) bool {
 // QueryPage 用于查询 URL query parameters（`/?page=x`）里 `page` 参数的值。
 // 如果没有指定或小于 1 则设置为 1。
 func QueryPage(ctx *fiber.Ctx) (page int) {
-	page = QueryInt(ctx, "page", 1)
-	if page < 1 {
-		page = 1
-	}
+	page = max(QueryInt(ctx, "page", 1), 1)
 
 	return
 }
@@ -92,6 +87,8 @@ func QueryLimit(ctx *fiber.Ctx, defaultValue ...int) (limit int) {
 		} else {
 			limit = defaultPageSizeLimit
 		}
+	} else if limit > 500 {
+		limit = defaultPageSizeLimit
 	}
 
 	return
@@ -124,5 +121,5 @@ func QueryParticipant(ctx *fiber.Ctx) (addr string, err error) {
 		return "", errors.New("INVALID_EMAIL")
 	}
 
-	return addr, nil
+	return strings.TrimSpace(addr), nil
 }

@@ -1,17 +1,23 @@
 package ctxutils
 
 import (
+	"net/url"
+	"strings"
+
 	"github.com/gofiber/fiber/v2"
 )
 
 func SSRError(ctx *fiber.Ctx, err error) error {
-	m := fiber.Map{"err": err.Error()}
-
-	return ctx.Render("ssr_error", m)
+	return ctx.Render("ssr_error", fiber.Map{"err": err.Error()})
 }
 
 func SSRHXRedirect(ctx *fiber.Ctx, location, msg string) error {
-	ctx.Set("HX-Redirect", location+"?msg="+msg)
+	sep := "?"
+	if strings.Contains(location, sep) {
+		sep = "&"
+	}
+
+	ctx.Set("HX-Redirect", location+sep+"msg="+url.QueryEscape(msg))
 
 	return ctx.SendString(msg)
 }
