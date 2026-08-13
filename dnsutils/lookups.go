@@ -65,7 +65,7 @@ func NewResolver(opts ...Option) (*Resolver, error) {
 	}
 
 	if r.dnsServer != "" {
-		r.Resolver = &net.Resolver{
+		r.resolver = &net.Resolver{
 			Dial: func(ctx context.Context, network, address string) (net.Conn, error) {
 				fmt.Println(network, address)
 				d := net.Dialer{
@@ -76,14 +76,14 @@ func NewResolver(opts ...Option) (*Resolver, error) {
 			},
 		}
 	} else {
-		r.Resolver = net.DefaultResolver
+		r.resolver = net.DefaultResolver
 	}
 
 	return r, nil
 }
 
 type Resolver struct {
-	*net.Resolver
+	resolver *net.Resolver
 
 	dnsServer string
 }
@@ -93,7 +93,7 @@ func (r *Resolver) LookupHost(domain string) (ip4s, ip6s []string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	ips, err := r.Resolver.LookupNetIP(ctx, "ip", domain)
+	ips, err := r.resolver.LookupNetIP(ctx, "ip", domain)
 	if err != nil {
 		return
 	}
@@ -114,7 +114,7 @@ func (r *Resolver) LookupA(domain string) (ip4s []string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	ips, err := r.Resolver.LookupNetIP(ctx, "ip4", domain)
+	ips, err := r.resolver.LookupNetIP(ctx, "ip4", domain)
 	if err != nil {
 		return
 	}
@@ -131,7 +131,7 @@ func (r *Resolver) LookupAAAA(domain string) (ip6s []string, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	ips, err := r.Resolver.LookupNetIP(ctx, "ip6", domain)
+	ips, err := r.resolver.LookupNetIP(ctx, "ip6", domain)
 	if err != nil {
 		return
 	}
@@ -148,7 +148,7 @@ func (r *Resolver) LookupMX(domain string) (notfound bool, records []MXRecord, e
 	defer cancel()
 
 	var mxs []*net.MX
-	mxs, err := r.Resolver.LookupMX(ctx, domain)
+	mxs, err := r.resolver.LookupMX(ctx, domain)
 	notfound, errStr = r.IsDNSErrorNoSuchHost(err)
 	if notfound || err != nil {
 		return
@@ -173,7 +173,7 @@ func (r *Resolver) LookupDKIM(domain, selector string) (notfound bool, records [
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	txts, err := r.Resolver.LookupTXT(ctx, fmt.Sprintf("%s._domainkey.%s", selector, domain))
+	txts, err := r.resolver.LookupTXT(ctx, fmt.Sprintf("%s._domainkey.%s", selector, domain))
 	notfound, errStr = r.IsDNSErrorNoSuchHost(err)
 	if notfound || err != nil {
 		return
@@ -194,7 +194,7 @@ func (r *Resolver) LookupPtr(ip string) (notfound bool, records []string, errStr
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	hosts, err := r.Resolver.LookupAddr(ctx, ip)
+	hosts, err := r.resolver.LookupAddr(ctx, ip)
 	notfound, errStr = r.IsDNSErrorNoSuchHost(err)
 	if err != nil {
 		return
@@ -213,7 +213,7 @@ func (r *Resolver) LookupDMARC(domain string) (notfound bool, records []string, 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	txts, err := r.Resolver.LookupTXT(ctx, fmt.Sprintf("_dmarc.%s", domain))
+	txts, err := r.resolver.LookupTXT(ctx, fmt.Sprintf("_dmarc.%s", domain))
 	notfound, errStr = r.IsDNSErrorNoSuchHost(err)
 	if notfound || err != nil {
 		return
@@ -234,7 +234,7 @@ func (r *Resolver) LookupSRV(domain, dnsTypeStr string) (notfound bool, records 
 	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
 	defer cancel()
 
-	_, srvs, err := r.Resolver.LookupSRV(ctx, dnsTypeStr, "tcp", domain)
+	_, srvs, err := r.resolver.LookupSRV(ctx, dnsTypeStr, "tcp", domain)
 	notfound, errStr = r.IsDNSErrorNoSuchHost(err)
 	if notfound || err != nil {
 		return
@@ -257,7 +257,7 @@ func (r *Resolver) LookupSPF(domain string) (records []string, err error) {
 	defer cancel()
 
 	var txts []string
-	txts, err = r.Resolver.LookupTXT(ctx, domain)
+	txts, err = r.resolver.LookupTXT(ctx, domain)
 	for _, txt := range txts {
 		if regxSPF.MatchString(txt) {
 			records = append(records, txt)
