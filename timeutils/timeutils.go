@@ -62,6 +62,19 @@ func EpochToDatetime(epoch int64) string {
 	return t.Format(time.DateTime)
 }
 
+func EpochToYMDHMS(epoch int64) string {
+	if epoch <= 0 {
+		return ""
+	}
+
+	t := time.Unix(epoch, 0).UTC()
+	if t.IsZero() {
+		return ""
+	}
+
+	return t.Format("2006-01-02-15_04_05")
+}
+
 func TimeToDay(t time.Time) string {
 	return EpochToDay(t.UTC().Unix())
 }
