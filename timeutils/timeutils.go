@@ -30,7 +30,7 @@ func EpochToYMD(epoch int64) (ymd int64) {
 		return
 	}
 
-	ymd, _ = strconv.ParseInt(t.Format("20260102"), 10, 64)
+	ymd, _ = strconv.ParseInt(t.Format("20060102"), 10, 64)
 
 	return
 }
