@@ -2,6 +2,7 @@ package sqlutils
 
 import (
 	"modernc.org/sqlite"
+	sqlitelib "modernc.org/sqlite/lib"
 )
 
 // ErrIsDuplicate 检测 err 是否为插入数据重复
@@ -14,5 +15,5 @@ func ErrIsDuplicate(err error) bool {
 
 	// (2067) SQLITE_CONSTRAINT_UNIQUE
 	// (1555) SQLITE_CONSTRAINT_PRIMARYKEY
-	return e.Code() == 2067 || e.Code() == 1555
+	return e.Code() == sqlitelib.SQLITE_CONSTRAINT_UNIQUE || e.Code() == sqlitelib.SQLITE_CONSTRAINT_PRIMARYKEY
 }

@@ -45,8 +45,12 @@ func VerifySSHAPassword(challengePassword, plainPassword string) bool {
 		return false
 	}
 
-	digest := challengeBytes[:20]
-	salt := challengeBytes[20:]
+	if len(challengeBytes) < sha1.Size {
+		return false
+	}
+
+	digest := challengeBytes[:sha1.Size]
+	salt := challengeBytes[sha1.Size:]
 	hash := sha1.New()
 	hash.Write([]byte(plainPassword))
 	hash.Write(salt)

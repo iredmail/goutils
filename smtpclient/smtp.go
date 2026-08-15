@@ -78,7 +78,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 			ServerName:         c.Host,
 		}
 
-		conn = tls.Server(conn, tlsConfig)
+		conn = tls.Client(conn, tlsConfig)
 	}
 
 	client, err := smtp.NewClient(conn, c.Host)
