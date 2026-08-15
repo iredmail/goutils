@@ -11,7 +11,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/go-ldap/ldap/v3 v3.4.14
 	github.com/go-sql-driver/mysql v1.10.0
-	github.com/gofiber/fiber/v2 v2.52.14
+	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/google/uuid v1.6.0
 	github.com/iredmail/ldappool v0.0.0-20260812091950-67387072b52a
 	github.com/jhillyerd/enmime/v2 v2.4.1
@@ -63,7 +63,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.73.0 // indirect
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
-	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
