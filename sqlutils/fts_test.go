@@ -229,6 +229,64 @@ func TestFTSSearch_NoMatch(t *testing.T) {
 	assert.Len(t, results, 0)
 }
 
+func TestFTSSearch_KeywordAsTerm(t *testing.T) {
+	gdb, cleanup := setupFTSDB(t)
+	defer cleanup()
+
+	_, e := gdb.
+		Insert("docs").
+		Cols("title", "content").
+		Vals(goqu.Vals{"AND and OR Search", "This document uses AND and OR as normal words inside content."}).
+		Executor().Exec()
+	assert.Nil(t, e)
+
+	var results []testDoc
+	err := FTSSearch(gdb, "AND and OR", "fts_docs", "docs", &results)
+	assert.Nil(t, err)
+	assert.NotEmpty(t, results, "expected at least 1 result when searching 'AND and OR' as regular terms")
+	found := false
+	for _, r := range results {
+		if r.Title == "AND and OR Search" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "should match newly inserted doc with AND/OR words")
+}
+
+func TestFTSSearch_BooleanKeywordNotOperator(t *testing.T) {
+	gdb, cleanup := setupFTSDB(t)
+	defer cleanup()
+
+	_, e := gdb.
+		Insert("docs").
+		Cols("title", "content").
+		Vals(goqu.Vals{"GoodDoc", "ok and good with normal words"}).
+		Executor().Exec()
+	assert.Nil(t, e)
+	_, e = gdb.
+		Insert("docs").
+		Cols("title", "content").
+		Vals(goqu.Vals{"BadDoc", "nothing matches here completely different"}).
+		Executor().Exec()
+	assert.Nil(t, e)
+
+	var results []testDoc
+	err := FTSSearch(gdb, "ok and good", "fts_docs", "docs", &results)
+	assert.Nil(t, err)
+	found := false
+	for _, r := range results {
+		if r.Title == "GoodDoc" {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "'ok and good' should match doc containing 'ok and good'")
+	for _, r := range results {
+		assert.NotEqual(t, "BadDoc", r.Title, "should not match unrelated doc")
+	}
+}
+
 func TestEscapeFTSKeyword(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -236,16 +294,34 @@ func TestEscapeFTSKeyword(t *testing.T) {
 	}{
 		{`simple`, `simple`},
 		{`a*b`, `a"*"b`},
-		{`with "double" quotes`, `with" """""double""""" "quotes`},
-		{`'single quotes'`, `"'"single" "quotes"'"`},
+		{`foo_bar`, `foo_bar`},
+		{`中文测试`, `中文测试`},
+		{`with spaces`, `with spaces`},
+		{`with "double" quotes`, `with """"double"""" quotes`},
+		{`'single quotes'`, `"'"single quotes"'"`},
 		{`semi;colon`, `semi";"colon`},
 		{`email@test.com`, `email"@"test"."com`},
-		{`hello AND world`, `hello" "world`},
-		{`hello OR world`, `hello" "world`},
-		{`hello NEAR world`, `hello" "world`},
-		{`NOT hello`, `hello`},
+		{`hello AND world`, `hello "AND" world`},
+		{`hello OR world`, `hello "OR" world`},
+		{`hello NOT world`, `hello "NOT" world`},
+		{`hello NEAR world`, `hello NEAR world`},
+		{`hello and world`, `hello and world`},
+		{`hello or world`, `hello or world`},
+		{`hello not world`, `hello not world`},
+		{`hello near world`, `hello near world`},
+		{`NOT hello`, `"NOT" hello`},
+		{`AND`, `"AND"`},
+		{`OR`, `"OR"`},
+		{`NOT`, `"NOT"`},
+		{`NEAR`, `NEAR`},
+		{`and`, `and`},
+		{`or`, `or`},
+		{`not`, `not`},
+		{`nearby`, `nearby`},
 		{`andrew`, `andrew`},
 		{`notion`, `notion`},
+		{`andrew or notion nearby`, `andrew or notion nearby`},
+		{`AND AND AND`, `"AND" "AND" "AND"`},
 		{``, ``},
 	}
 
