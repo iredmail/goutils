@@ -7,7 +7,7 @@ import (
 )
 
 func TestLookupSPF(t *testing.T) {
-	r := NewResolver()
+	r := NewResolver(10)
 	domain := "gmail.com"
 	notfound, records, err := r.LookupSPF(domain)
 	assert.True(t, err == "")
@@ -16,7 +16,7 @@ func TestLookupSPF(t *testing.T) {
 }
 
 func TestLookupRecursiveSPF(t *testing.T) {
-	r := NewResolver("8.8.8.8:53")
+	r := NewResolver(10, "8.8.8.8:53")
 
 	domain := "gmail.com"
 	notfound, records, totalQueries, err := r.LookupRecursiveSPF(domain, 0)
