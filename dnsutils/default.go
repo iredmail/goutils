@@ -22,14 +22,21 @@ type defaultResolver struct {
 
 // LookupHost 查询域名的 A 和 AAAA 记录，并分别返回 IPv4 和 IPv6 地址列表。
 func (dr *defaultResolver) LookupHost(domain string) (notfound bool, ip4s, ip6s []string, errText string) {
-	notfound, ip4s, errText = dr.LookupA(domain)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
+	defer cancel()
 
-	var _notfound bool
-	var _errText string
-	_notfound, ip6s, _errText = dr.LookupAAAA(domain)
+	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", domain)
+	if err != nil {
+		return
+	}
 
-	notfound = notfound && _notfound
-	errText = strings.Join([]string{errText, _errText}, "; ")
+	for _, ip := range ips {
+		if ip.Is4() {
+			ip4s = append(ip4s, ip.String())
+		} else if ip.Is6() {
+			ip6s = append(ip6s, ip.String())
+		}
+	}
 
 	return
 }

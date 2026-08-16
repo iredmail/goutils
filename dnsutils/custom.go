@@ -20,14 +20,25 @@ type customResolver struct {
 
 // LookupHost 查询域名的 A 和 AAAA 记录，并分别返回 IPv4 和 IPv6 地址列表。
 func (cr *customResolver) LookupHost(domain string) (notfound bool, ip4s, ip6s []string, errText string) {
-	notfound, ip4s, errText = cr.LookupA(domain)
+	var errTextIP4, errTextIP46 string
+
+	notfound, ip4s, errTextIP4 = cr.LookupA(domain)
 
 	var _notfound bool
-	var _errText string
-	_notfound, ip6s, _errText = cr.LookupAAAA(domain)
+	_notfound, ip6s, errTextIP46 = cr.LookupAAAA(domain)
 
 	notfound = notfound && _notfound
-	errText = strings.Join([]string{errText, _errText}, "; ")
+
+	var errs []string
+	if errTextIP4 != "" {
+		errs = append(errs, errTextIP4)
+	}
+
+	if errTextIP46 != "" {
+		errs = append(errs, errTextIP46)
+	}
+
+	errText = strings.Join(errs, "; ")
 
 	return
 }
