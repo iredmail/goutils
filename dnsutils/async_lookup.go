@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-func (r *Resolver) AsyncDNSLookupMX(domains []string) []ResponseDNSRecords[MXRecord] {
+func AsyncDNSLookupMX(r Resolver, domains []string) []ResponseDNSRecords[MXRecord] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -21,7 +21,7 @@ func (r *Resolver) AsyncDNSLookupMX(domains []string) []ResponseDNSRecords[MXRec
 			notfound, _records, err := r.LookupMX(d)
 			chanRecords <- ResponseDNSRecords[MXRecord]{
 				Domain:   d,
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -39,7 +39,7 @@ func (r *Resolver) AsyncDNSLookupMX(domains []string) []ResponseDNSRecords[MXRec
 	return records
 }
 
-func (r *Resolver) AsyncDNSLookupDKIM(selector string, domains []string) []ResponseDNSRecords[string] {
+func AsyncDNSLookupDKIM(r Resolver, selector string, domains []string) []ResponseDNSRecords[string] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -55,7 +55,7 @@ func (r *Resolver) AsyncDNSLookupDKIM(selector string, domains []string) []Respo
 			notfound, _records, err := r.LookupDKIM(d, selector)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:   fmt.Sprintf("%s._domainkey.%s", selector, d),
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -73,7 +73,7 @@ func (r *Resolver) AsyncDNSLookupDKIM(selector string, domains []string) []Respo
 	return records
 }
 
-func (r *Resolver) AsyncDNSLookupDMARC(domains []string) []ResponseDNSRecords[string] {
+func AsyncDNSLookupDMARC(r Resolver, domains []string) []ResponseDNSRecords[string] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -89,7 +89,7 @@ func (r *Resolver) AsyncDNSLookupDMARC(domains []string) []ResponseDNSRecords[st
 			notfound, _records, err := r.LookupDMARC(d)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:   fmt.Sprintf("_dmarc.%s", d),
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -107,7 +107,7 @@ func (r *Resolver) AsyncDNSLookupDMARC(domains []string) []ResponseDNSRecords[st
 	return records
 }
 
-func (r *Resolver) AsyncDNSLookupSRV(domains []string, dnsType string) []ResponseDNSRecords[SRVRecord] {
+func AsyncDNSLookupSRV(r Resolver, domains []string, dnsType string) []ResponseDNSRecords[SRVRecord] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -123,7 +123,7 @@ func (r *Resolver) AsyncDNSLookupSRV(domains []string, dnsType string) []Respons
 			notfound, _records, err := r.LookupSRV(d, dnsType)
 			chanRecords <- ResponseDNSRecords[SRVRecord]{
 				Domain:   fmt.Sprintf("_%s._tcp.%s", dnsType, d),
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -141,7 +141,7 @@ func (r *Resolver) AsyncDNSLookupSRV(domains []string, dnsType string) []Respons
 	return records
 }
 
-func (r *Resolver) AsyncDNSLookupRecursiveSPF(domains []string) (records []ResponseDNSRecords[string]) {
+func AsyncDNSLookupRecursiveSPF(r Resolver, domains []string) (records []ResponseDNSRecords[string]) {
 	if len(domains) == 0 {
 		return
 	}
@@ -154,18 +154,13 @@ func (r *Resolver) AsyncDNSLookupRecursiveSPF(domains []string) (records []Respo
 		go func(d string) {
 			defer wg.Done()
 
-			spf, totalQueries, err := r.LookupRecursiveSPF(d, 0)
-			notfound, e := r.IsDNSErrorNoSuchHost(err)
-			if err == nil && len(spf) == 0 {
-				notfound = true
-			}
-
+			notfound, spf, totalQueries, err := r.LookupRecursiveSPF(d, 0)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:       d,
 				Records:      spf,
-				Notfound:     notfound,
+				Notfound:     notfound || len(spf) == 0,
 				TotalQueries: totalQueries,
-				Error:        e,
+				Error:        err,
 			}
 		}(domain)
 	}

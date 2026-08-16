@@ -7,19 +7,21 @@ import (
 )
 
 func TestLookupSPF(t *testing.T) {
-	r, _ := NewResolver()
+	r := NewResolver()
 	domain := "gmail.com"
-	records, err := r.LookupSPF(domain)
-	assert.Nil(t, err)
+	notfound, records, err := r.LookupSPF(domain)
+	assert.True(t, err == "")
+	assert.False(t, notfound)
 	assert.Equal(t, records, []string{"v=spf1 redirect=_spf.google.com"})
 }
 
 func TestLookupRecursiveSPF(t *testing.T) {
-	r, _ := NewResolver(WithDNSServer("8.8.8.8:53"))
+	r := NewResolver("8.8.8.8:53")
 
 	domain := "gmail.com"
-	records, totalQueries, err := r.LookupRecursiveSPF(domain, 0)
-	assert.Nil(t, err)
+	notfound, records, totalQueries, err := r.LookupRecursiveSPF(domain, 0)
+	assert.True(t, err == "")
+	assert.False(t, notfound)
 	assert.Equal(t, totalQueries, 2)
 	assert.Equal(t, records, []string{"v=spf1 redirect=_spf.google.com"})
 }
