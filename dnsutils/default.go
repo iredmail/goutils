@@ -8,6 +8,7 @@ import (
 	"net"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/iredmail/goutils/emailutils"
 )
@@ -16,6 +17,7 @@ var _ Resolver = (*defaultResolver)(nil)
 
 type defaultResolver struct {
 	resolver *net.Resolver
+	timeout  time.Duration
 }
 
 // LookupHost 查询域名的 A 和 AAAA 记录，并分别返回 IPv4 和 IPv6 地址列表。
@@ -34,7 +36,7 @@ func (dr *defaultResolver) LookupHost(domain string) (notfound bool, ip4s, ip6s 
 
 // LookupA 查询域名的 A 记录，并返回 IPv4 地址列表。
 func (dr *defaultResolver) LookupA(domain string) (notfound bool, ip4s []string, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	ips, err := dr.resolver.LookupNetIP(ctx, "ip4", domain)
@@ -52,7 +54,7 @@ func (dr *defaultResolver) LookupA(domain string) (notfound bool, ip4s []string,
 
 // LookupAAAA 查询域名的 AAAA 记录，并返回 IPv6 地址列表。
 func (dr *defaultResolver) LookupAAAA(domain string) (notfound bool, ip6s []string, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	ips, err := dr.resolver.LookupNetIP(ctx, "ip6", domain)
@@ -69,7 +71,7 @@ func (dr *defaultResolver) LookupAAAA(domain string) (notfound bool, ip6s []stri
 }
 
 func (dr *defaultResolver) LookupMX(domain string) (notfound bool, records []MXRecord, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	var mxs []*net.MX
@@ -95,7 +97,7 @@ func (dr *defaultResolver) LookupMX(domain string) (notfound bool, records []MXR
 }
 
 func (dr *defaultResolver) LookupDKIM(domain, selector string) (notfound bool, records []string, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	txts, err := dr.resolver.LookupTXT(ctx, fmt.Sprintf("%s._domainkey.%s", selector, domain))
@@ -116,7 +118,7 @@ func (dr *defaultResolver) LookupDKIM(domain, selector string) (notfound bool, r
 }
 
 func (dr *defaultResolver) LookupPtr(ip string) (notfound bool, records []string, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	hosts, err := dr.resolver.LookupAddr(ctx, ip)
@@ -135,7 +137,7 @@ func (dr *defaultResolver) LookupPtr(ip string) (notfound bool, records []string
 }
 
 func (dr *defaultResolver) LookupDMARC(domain string) (notfound bool, records []string, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	txts, err := dr.resolver.LookupTXT(ctx, fmt.Sprintf("_dmarc.%s", domain))
@@ -156,7 +158,7 @@ func (dr *defaultResolver) LookupDMARC(domain string) (notfound bool, records []
 }
 
 func (dr *defaultResolver) LookupSRV(domain, dnsTypeStr string) (notfound bool, records []SRVRecord, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	_, srvs, err := dr.resolver.LookupSRV(ctx, dnsTypeStr, "tcp", domain)
@@ -178,7 +180,7 @@ func (dr *defaultResolver) LookupSRV(domain, dnsTypeStr string) (notfound bool, 
 }
 
 func (dr *defaultResolver) LookupSPF(domain string) (notfound bool, records []string, errText string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
 	var txts []string

@@ -23,15 +23,20 @@ const (
 	spfDNSQueryTypePTR uint16 = 12 // RFC 1035: PTR
 )
 
-func NewResolver(dnsAddr ...string) Resolver {
+func NewResolver(queryTimeoutSeconds int, dnsAddr ...string) Resolver {
+	timeout := defaultDNSQueryTimeout
+	if queryTimeoutSeconds > 0 {
+		timeout = time.Duration(queryTimeoutSeconds) * time.Second
+	}
+
 	if len(dnsAddr) > 0 && dnsAddr[0] != "" {
 		return &customResolver{
-			client:  &dns.Client{Timeout: defaultDNSQueryTimeout},
+			client:  &dns.Client{Timeout: timeout},
 			dnsAddr: dnsAddr[0],
 		}
 	}
 
-	return &defaultResolver{resolver: net.DefaultResolver}
+	return &defaultResolver{resolver: net.DefaultResolver, timeout: timeout}
 }
 
 type Resolver interface {
