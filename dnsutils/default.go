@@ -115,11 +115,14 @@ func (dr *defaultResolver) LookupDKIM(domain, selector string) (notfound bool, r
 
 	for _, txt := range txts {
 		if regxDKIM.MatchString(txt) {
+			// net.Resolver 已经返回了拼接后的完整 TXT 字符串，
+			// 这里保留完整命中的 DKIM 记录，供调用方直接展示或诊断。
 			records = append(records, txt)
-
-			break
 		}
 	}
+
+	// 域名存在但没有匹配到 DKIM 记录时，也应该视为“未找到目标记录”。
+	notfound = len(records) == 0
 
 	return
 }
@@ -155,11 +158,14 @@ func (dr *defaultResolver) LookupDMARC(domain string) (notfound bool, records []
 
 	for _, txt := range txts {
 		if regxDMARC.MatchString(txt) {
+			// LookupTXT 返回的是完整 TXT 记录；这里直接保存完整命中值，
+			// 避免调用方只能看到被截断的 DMARC 内容。
 			records = append(records, txt)
-
-			break
 		}
 	}
+
+	// 查询成功但没有匹配到 DMARC 记录时，应明确返回 notfound=true。
+	notfound = len(records) == 0
 
 	return
 }
@@ -199,18 +205,22 @@ func (dr *defaultResolver) LookupSPF(domain string) (notfound bool, records []st
 
 	for _, txt := range txts {
 		if regxSPF.MatchString(txt) {
+			// SPF 的后续递归解析依赖完整原文，因此这里保留完整命中的记录，
+			// 而不是在首条命中后提前退出。
 			records = append(records, txt)
-
-			break
 		}
 	}
+
+	// 域名存在但未发布 SPF 记录时，返回 notfound=true 更符合语义。
+	notfound = len(records) == 0
 
 	return
 }
 
 func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (notfound bool, spf []string, totalQueries int, errText string) {
 	// FYI http://www.open-spf.org/SPF_Record_Syntax/
-	if _totalQueries > 10 {
+	// RFC 7208 要求会触发 DNS 查询的 SPF 机制/修饰符总数最多为 10。
+	if _totalQueries >= 10 {
 		totalQueries = _totalQueries
 
 		return
@@ -223,17 +233,31 @@ func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, 
 
 			return
 		case spfDNSQueryTypeMX:
+			// mx 机制本身就会触发一次 MX 查询，这一步即使拿不到任何 MX 主机，
+			// 也应该计入 SPF 的总查询次数。
+			totalQueries = _totalQueries + 1
+
 			_, mx, _ := dr.LookupMX(domain)
 			for _, _r := range mx {
-				totalQueries = _totalQueries + 1
+				if totalQueries >= 10 {
+					return
+				}
+
 				_, _, totalQueries, _ = dr.LookupRecursiveSPF(_r.MX, totalQueries, spfDNSQueryTypeA)
 			}
 
 			return
 		case spfDNSQueryTypePTR:
+			// ptr 机制至少会进行一次 PTR 查询；先把这一步计入总数。
+			// 完整 PTR 语义仍依赖连接 IP，当前 API 只能做近似统计。
+			totalQueries = _totalQueries + 1
+
 			_, ptr, _ := dr.LookupPtr(domain)
 			for _, p := range ptr {
-				totalQueries = _totalQueries + 1
+				if totalQueries >= 10 {
+					return
+				}
+
 				_, _, totalQueries, _ = dr.LookupRecursiveSPF(p, totalQueries, spfDNSQueryTypeA)
 			}
 

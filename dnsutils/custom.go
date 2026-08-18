@@ -117,14 +117,17 @@ func (cr *customResolver) LookupDKIM(domain, selector string) (notfound bool, re
 			continue
 		}
 
-		for _, txt := range txts.Txt {
-			if regxDKIM.MatchString(txt) {
-				records = append(records, txt)
-
-				break
-			}
+		// 一条 TXT RR 在 DNS 报文里可能被拆成多个字符串片段，
+		// 必须先拼回完整内容再匹配并返回，否则长 DKIM 记录会被截断。
+		txt := strings.Join(txts.Txt, "")
+		if regxDKIM.MatchString(txt) {
+			// 返回完整命中的记录，供调用方做后续展示或诊断。
+			records = append(records, txt)
 		}
 	}
+
+	// 域名存在但没有匹配到 DKIM 记录时，也应该视为“未找到目标记录”。
+	notfound = len(records) == 0
 
 	return
 }
@@ -166,14 +169,17 @@ func (cr *customResolver) LookupDMARC(domain string) (notfound bool, records []s
 			continue
 		}
 
-		for _, txt := range txts.Txt {
-			if regxDMARC.MatchString(txt) {
-				records = append(records, txt)
-
-				break
-			}
+		// DMARC TXT 也可能被拆分成多个片段，先拼接后再做正则匹配，
+		// 并把完整记录返回给调用方，避免只拿到前半段内容。
+		txt := strings.Join(txts.Txt, "")
+		if regxDMARC.MatchString(txt) {
+			// 保留完整命中的 DMARC 记录，便于上层直接展示和排障。
+			records = append(records, txt)
 		}
 	}
+
+	// 查询成功但没有匹配到 DMARC 记录时，应明确返回 notfound=true。
+	notfound = len(records) == 0
 
 	return
 }
@@ -218,21 +224,25 @@ func (cr *customResolver) LookupSPF(domain string) (notfound bool, records []str
 			continue
 		}
 
-		for _, txt := range txts.Txt {
-			if regxSPF.MatchString(txt) {
-				records = append(records, txt)
-
-				break
-			}
+		// SPF 记录经常因为过长被拆成多个 TXT 片段，必须先拼接成完整字符串，
+		// 否则只 append 某一个片段会导致 include/redirect 等机制被截断。
+		txt := strings.Join(txts.Txt, "")
+		if regxSPF.MatchString(txt) {
+			// 保留完整命中的 SPF 记录，后续递归解析依赖完整原文。
+			records = append(records, txt)
 		}
 	}
+
+	// 域名存在但未发布 SPF 记录时，返回 notfound=true 更符合调用方预期。
+	notfound = len(records) == 0
 
 	return
 }
 
 func (cr *customResolver) LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (notfound bool, spf []string, totalQueries int, errText string) {
 	// FYI http://www.open-spf.org/SPF_Record_Syntax/
-	if _totalQueries > 10 {
+	// RFC 7208 要求会触发 DNS 查询的 SPF 机制/修饰符总数最多为 10。
+	if _totalQueries >= 10 {
 		totalQueries = _totalQueries
 
 		return
@@ -245,17 +255,31 @@ func (cr *customResolver) LookupRecursiveSPF(domain string, _totalQueries int, d
 
 			return
 		case spfDNSQueryTypeMX:
+			// mx 机制本身会产生一次 MX 查询；即使后面没有任何 MX 主机，
+			// 这次查询也应该计入总次数。
+			totalQueries = _totalQueries + 1
+
 			_, mx, _ := cr.LookupMX(domain)
 			for _, _r := range mx {
-				totalQueries = _totalQueries + 1
+				if totalQueries >= 10 {
+					return
+				}
+
 				_, _, totalQueries, _ = cr.LookupRecursiveSPF(_r.MX, totalQueries, spfDNSQueryTypeA)
 			}
 
 			return
 		case spfDNSQueryTypePTR:
+			// ptr 机制至少会触发一次 PTR 查询；这里先把这一步记入计数。
+			// 注意：完整的 PTR SPF 语义仍然依赖连接 IP，当前 API 只能做近似统计。
+			totalQueries = _totalQueries + 1
+
 			_, ptr, _ := cr.LookupPtr(domain)
 			for _, p := range ptr {
-				totalQueries = _totalQueries + 1
+				if totalQueries >= 10 {
+					return
+				}
+
 				_, _, totalQueries, _ = cr.LookupRecursiveSPF(p, totalQueries, spfDNSQueryTypeA)
 			}
 
@@ -337,20 +361,65 @@ func (cr *customResolver) LookupRecursiveSPF(domain string, _totalQueries int, d
 func (cr *customResolver) exchange(domain string, dnsType uint16) (notfound bool, answers []dns.RR, errText string) {
 	msg := new(dns.Msg)
 	msg.SetQuestion(dns.Fqdn(domain), dnsType)
+	// 显式带上 EDNS0，尽量减少长 TXT 记录因 UDP 报文过小而被截断的概率。
+	msg.SetEdns0(1232, false)
 
-	r, _, err := cr.client.Exchange(msg, cr.dnsAddr)
+	// 复制一份 client，避免在 TCP 回退时直接修改共享的 resolver 配置。
+	client := *cr.client
+
+	r, _, err := client.Exchange(msg, cr.dnsAddr)
 	if err != nil {
 		errText = err.Error()
 
 		return
 	}
 
-	notfound = r.Rcode == dns.RcodeNameError
-	if notfound {
+	if r == nil {
+		errText = "empty dns response"
+
 		return
 	}
 
-	answers = r.Answer
+	if r.Truncated && client.Net != "tcp" {
+		// UDP 响应被截断时，按 DNS 常见处理方式回退到 TCP 重试，
+		// 这样可以拿到完整的 TXT/SPF/DMARC/DKIM 记录。
+		tcpClient := client
+		tcpClient.Net = "tcp"
+
+		r, _, err = tcpClient.Exchange(msg, cr.dnsAddr)
+		if err != nil {
+			errText = err.Error()
+
+			return
+		}
+
+		if r == nil {
+			errText = "empty dns response"
+
+			return
+		}
+	}
+
+	switch r.Rcode {
+	case dns.RcodeSuccess:
+		answers = r.Answer
+	case dns.RcodeNameError:
+		// 只有 NXDOMAIN 才表示名字不存在，统一映射为 notfound。
+		notfound = true
+	default:
+		// 其他 RCODE（如 SERVFAIL/REFUSED）不能静默吞掉，
+		// 否则上层会误以为“查询成功但没有记录”。
+		rcode := dns.RcodeToString[r.Rcode]
+		if rcode == "" {
+			rcode = fmt.Sprintf("RCODE(%d)", r.Rcode)
+		}
+
+		errText = fmt.Sprintf("dns query failed with rcode %s", rcode)
+	}
+
+	if notfound || errText != "" {
+		return
+	}
 
 	return
 }
