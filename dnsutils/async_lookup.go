@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-func AsyncDNSLookupMX(domains []string) []ResponseDNSRecords[MXRecord] {
+func AsyncDNSLookupMX(r Resolver, domains []string) []ResponseDNSRecords[MXRecord] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -18,10 +18,10 @@ func AsyncDNSLookupMX(domains []string) []ResponseDNSRecords[MXRecord] {
 		go func(d string) {
 			defer wg.Done()
 
-			notfound, _records, err := LookupMX(d)
+			notfound, _records, err := r.LookupMX(d)
 			chanRecords <- ResponseDNSRecords[MXRecord]{
 				Domain:   d,
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -39,7 +39,7 @@ func AsyncDNSLookupMX(domains []string) []ResponseDNSRecords[MXRecord] {
 	return records
 }
 
-func AsyncDNSLookupDKIM(selector string, domains []string) []ResponseDNSRecords[string] {
+func AsyncDNSLookupDKIM(r Resolver, selector string, domains []string) []ResponseDNSRecords[string] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -52,10 +52,10 @@ func AsyncDNSLookupDKIM(selector string, domains []string) []ResponseDNSRecords[
 		go func(d string) {
 			defer wg.Done()
 
-			notfound, _records, err := LookupDKIM(d, selector)
+			notfound, _records, err := r.LookupDKIM(d, selector)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:   fmt.Sprintf("%s._domainkey.%s", selector, d),
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -73,7 +73,7 @@ func AsyncDNSLookupDKIM(selector string, domains []string) []ResponseDNSRecords[
 	return records
 }
 
-func AsyncDNSLookupDMARC(domains []string) []ResponseDNSRecords[string] {
+func AsyncDNSLookupDMARC(r Resolver, domains []string) []ResponseDNSRecords[string] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -86,10 +86,10 @@ func AsyncDNSLookupDMARC(domains []string) []ResponseDNSRecords[string] {
 		go func(d string) {
 			defer wg.Done()
 
-			notfound, _records, err := LookupDMARC(d)
+			notfound, _records, err := r.LookupDMARC(d)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:   fmt.Sprintf("_dmarc.%s", d),
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -107,7 +107,7 @@ func AsyncDNSLookupDMARC(domains []string) []ResponseDNSRecords[string] {
 	return records
 }
 
-func AsyncDNSLookupSRV(domains []string, dnsType string) []ResponseDNSRecords[SRVRecord] {
+func AsyncDNSLookupSRV(r Resolver, domains []string, dnsType string) []ResponseDNSRecords[SRVRecord] {
 	if len(domains) == 0 {
 		return nil
 	}
@@ -120,10 +120,10 @@ func AsyncDNSLookupSRV(domains []string, dnsType string) []ResponseDNSRecords[SR
 		go func(d string) {
 			defer wg.Done()
 
-			notfound, _records, err := LookupSRV(d, dnsType)
+			notfound, _records, err := r.LookupSRV(d, dnsType)
 			chanRecords <- ResponseDNSRecords[SRVRecord]{
 				Domain:   fmt.Sprintf("_%s._tcp.%s", dnsType, d),
-				Notfound: notfound,
+				Notfound: notfound || len(_records) == 0,
 				Records:  _records,
 				Error:    err,
 			}
@@ -141,7 +141,7 @@ func AsyncDNSLookupSRV(domains []string, dnsType string) []ResponseDNSRecords[SR
 	return records
 }
 
-func AsyncDNSLookupRecursiveSPF(domains []string) (records []ResponseDNSRecords[string]) {
+func AsyncDNSLookupRecursiveSPF(r Resolver, domains []string) (records []ResponseDNSRecords[string]) {
 	if len(domains) == 0 {
 		return
 	}
@@ -154,18 +154,13 @@ func AsyncDNSLookupRecursiveSPF(domains []string) (records []ResponseDNSRecords[
 		go func(d string) {
 			defer wg.Done()
 
-			spf, totalQueries, err := LookupRecursiveSPF(d, 0)
-			notfound, e := IsDNSErrorNoSuchHost(err)
-			if err == nil && len(spf) == 0 {
-				notfound = true
-			}
-
+			notfound, spf, totalQueries, err := r.LookupRecursiveSPF(d, 0)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:       d,
 				Records:      spf,
-				Notfound:     notfound,
+				Notfound:     notfound || len(spf) == 0,
 				TotalQueries: totalQueries,
-				Error:        e,
+				Error:        err,
 			}
 		}(domain)
 	}
