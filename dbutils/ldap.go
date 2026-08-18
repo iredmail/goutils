@@ -7,7 +7,7 @@ type LDAPConnConfig struct {
 	BindDN             string
 	BindPassword       string
 	StartTLS           bool
-	ConnTimeout        int // connection timeout in seconds
+	ConnTimeout        int // 连接超时时长。默认为 20（秒）。
 
 	// MaxConnections 定义 ldap 连接池维持的最大连接数。默认为 10。
 	MaxConnections int

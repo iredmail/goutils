@@ -27,6 +27,8 @@ func (t DBType) Dialect() (dialect string) {
 	case DBTypePGSQL:
 		dialect = DialectPg
 	default:
+		// 默认使用 MySQL。
+		// iRedMail 服务器在使用 OpenLDAP 作为 backend 的同时也安装了 MySQL/MariaDB。
 		dialect = DialectMySQL
 	}
 

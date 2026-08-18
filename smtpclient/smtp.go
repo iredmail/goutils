@@ -3,7 +3,6 @@ package smtpclient
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net"
 	"net/mail"
 	"net/smtp"
@@ -78,7 +77,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 			ServerName:         c.Host,
 		}
 
-		conn = tls.Server(conn, tlsConfig)
+		conn = tls.Client(conn, tlsConfig)
 	}
 
 	client, err := smtp.NewClient(conn, c.Host)
@@ -133,7 +132,7 @@ func SendmailWithComposer(c Config, composer *Composer) (err error) {
 	}
 
 	if _, err = w.Write(msg); err != nil {
-		log.Fatalln(err)
+		return fmt.Errorf("failed in writing mail body: %w", err)
 	}
 
 	err = w.Close()

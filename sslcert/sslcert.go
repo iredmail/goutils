@@ -61,7 +61,7 @@ func New(options ...Option) (*Manager, error) {
 		}
 
 		m.FixedCert.Leaf = certificate
-		m.certDomains = cert.Leaf.DNSNames
+		m.certDomains = certificate.DNSNames
 
 		return m, err
 	}

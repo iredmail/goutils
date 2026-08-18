@@ -121,11 +121,6 @@ func VerifyPassword(hashedPassword, plainPassword string) (matched bool, err err
 		return
 	}
 
-	// 明文密码不带 scheme。
-	if hashedPassword == plainPassword {
-		return true, nil
-	}
-
 	scheme, _ := extractSchemeAndHash(hashedPassword)
 
 	if !slices.Contains(SupportedPasswordSchemes, scheme) {

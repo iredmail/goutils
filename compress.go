@@ -5,17 +5,25 @@ import (
 	"compress/gzip"
 )
 
-func CompressWithGzip(data []byte) ([]byte, error) {
+func CompressWithGzip(data []byte) (compressedData []byte, err error) {
 	var b bytes.Buffer
 	gz := gzip.NewWriter(&b)
 
-	if _, err := gz.Write(data); err != nil {
-		return nil, err
+	_, err = gz.Write(data)
+	if err != nil {
+		_ = gz.Close()
+
+		return
 	}
 
-	if err := gz.Close(); err != nil {
-		return nil, err
+	// 显式 Close，确保 gzip footer 和所有缓冲数据都写入 bytes.Buffer
+	err = gz.Close()
+	if err != nil {
+		return
 	}
 
-	return b.Bytes(), nil
+	// Close 之后再读取，才是完整的压缩数据
+	compressedData = b.Bytes()
+
+	return
 }
