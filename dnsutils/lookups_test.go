@@ -117,6 +117,26 @@ func TestLookupRecursiveSPFCountsMXQueriesAndLimit(t *testing.T) {
 	}
 }
 
+func TestLookupRecursiveSPFCountsExistsQueriesAndLimit(t *testing.T) {
+	addr := startTestDNSServer(t, dnsTestResponder)
+
+	for _, factory := range testResolverFactories(t) {
+		t.Run(factory.name, func(t *testing.T) {
+			notfound, records, totalQueries, errText := factory.new(addr).LookupRecursiveSPF("exists2.test", 0)
+			assert.Empty(t, errText)
+			assert.False(t, notfound)
+			assert.Equal(t, []string{"v=spf1 exists:one.exists.test exists:two.exists.test -all"}, records)
+			assert.Equal(t, 3, totalQueries)
+
+			notfound, records, totalQueries, errText = factory.new(addr).LookupRecursiveSPF("exists10.test", 0)
+			assert.Empty(t, errText)
+			assert.False(t, notfound)
+			assert.Equal(t, []string{"v=spf1 exists:e01.exists.test exists:e02.exists.test exists:e03.exists.test exists:e04.exists.test exists:e05.exists.test exists:e06.exists.test exists:e07.exists.test exists:e08.exists.test exists:e09.exists.test exists:e10.exists.test -all"}, records)
+			assert.Equal(t, 10, totalQueries)
+		})
+	}
+}
+
 func testResolverFactories(t *testing.T) []testResolverFactory {
 	t.Helper()
 	t.Setenv("GODEBUG", "netdns=go")
@@ -201,6 +221,16 @@ func dnsTestResponder(m *dns.Msg, q dns.Question, network string) {
 		m.Answer = []dns.RR{&dns.TXT{
 			Hdr: dns.RR_Header{Name: q.Name, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 60},
 			Txt: []string{"v=spf1 mx -all"},
+		}}
+	case q.Name == "exists2.test." && q.Qtype == dns.TypeTXT:
+		m.Answer = []dns.RR{&dns.TXT{
+			Hdr: dns.RR_Header{Name: q.Name, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 60},
+			Txt: []string{"v=spf1 exists:one.exists.test exists:two.exists.test -all"},
+		}}
+	case q.Name == "exists10.test." && q.Qtype == dns.TypeTXT:
+		m.Answer = []dns.RR{&dns.TXT{
+			Hdr: dns.RR_Header{Name: q.Name, Rrtype: dns.TypeTXT, Class: dns.ClassINET, Ttl: 60},
+			Txt: []string{"v=spf1 exists:e01.exists.test exists:e02.exists.test exists:e03.exists.test exists:e04.exists.test exists:e05.exists.test exists:e06.exists.test exists:e07.exists.test exists:e08.exists.test exists:e09.exists.test exists:e10.exists.test -all"},
 		}}
 	case q.Name == "_spf.google.test." && q.Qtype == dns.TypeTXT:
 		m.Answer = []dns.RR{&dns.TXT{

@@ -232,6 +232,11 @@ func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, 
 			totalQueries = _totalQueries + 1
 
 			return
+		case spfDNSQueryTypeExists:
+			// exists 机制会额外触发一次 DNS 查询；这里只做计数，不继续做完整 SPF 求值。
+			totalQueries = _totalQueries + 1
+
+			return
 		case spfDNSQueryTypeMX:
 			// mx 机制本身就会触发一次 MX 查询，这一步即使拿不到任何 MX 主机，
 			// 也应该计入 SPF 的总查询次数。
@@ -326,6 +331,15 @@ func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, 
 			_, _, totalQueries, _ = dr.LookupRecursiveSPF(mx, totalQueries, spfDNSQueryTypeMX)
 		} else if after, ok = strings.CutPrefix(mech, "ptr:"); ok {
 			_, _, totalQueries, _ = dr.LookupRecursiveSPF(after, totalQueries, spfDNSQueryTypePTR)
+		} else if after, ok = strings.CutPrefix(mech, "exists:"); ok {
+			// exists:<domain-spec> 是 RFC 7208 里的 SPF 机制之一：
+			// 1) 先对 domain-spec 做 macro 展开；
+			// 2) 再查询展开后的域名是否“存在”可解析的 A 记录；
+			// 3) 这个动作本身会消耗一次 DNS 查询配额，必须计入 10 次上限。
+			//
+			// 但当前函数只是“递归查询次数估算器”，没有 client IP / macro 上下文，
+			// 因此这里只做计数，不尝试做完整的 exists 匹配求值。
+			_, _, totalQueries, _ = dr.LookupRecursiveSPF(after, totalQueries, spfDNSQueryTypeExists)
 		} else if after, ok = strings.CutPrefix(mech, "include:"); ok {
 			_, _, totalQueries, _ = dr.LookupRecursiveSPF(after, totalQueries)
 		} else if after, ok = strings.CutPrefix(mech, "redirect="); ok {

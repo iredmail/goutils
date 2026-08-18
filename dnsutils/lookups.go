@@ -21,6 +21,8 @@ const (
 	spfDNSQueryTypeA   uint16 = 1  // RFC 1035: A
 	spfDNSQueryTypeMX  uint16 = 15 // RFC 1035: MX
 	spfDNSQueryTypePTR uint16 = 12 // RFC 1035: PTR
+	// exists 不是实际 RR type，只用于 LookupRecursiveSPF 内部标记“会触发一次 DNS 查询”。
+	spfDNSQueryTypeExists uint16 = 0
 )
 
 func NewResolver(queryTimeoutSeconds int, dnsAddr ...string) Resolver {
