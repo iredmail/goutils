@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.27rc2
+go 1.27.0
 
 require (
 	github.com/DeRuina/timberjack v1.3.9
@@ -13,7 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/google/uuid v1.6.0
-	github.com/iredmail/ldappool v0.0.0-20260812091950-67387072b52a
+	github.com/iredmail/ldappool v0.0.0-20260820090442-dd50d860dec6
 	github.com/jhillyerd/enmime/v2 v2.4.1
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.26.7
@@ -46,7 +46,7 @@ require (
 	github.com/lufia/plan9stats v0.0.0-20251013123823-9fd1530e3ec3 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/mattn/go-runewidth v0.0.27 // indirect
+	github.com/mattn/go-runewidth v0.0.28 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/olekukonko/cat v0.0.0-20250911104152-50322a0618f6 // indirect
 	github.com/olekukonko/errors v1.3.0 // indirect
@@ -69,5 +69,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.74.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.12.0 // indirect
+	modernc.org/memory v1.12.1 // indirect
 )
