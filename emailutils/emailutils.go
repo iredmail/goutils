@@ -180,6 +180,21 @@ func ExtractUsernameAndDomain(s string) (username, domain string, isValidEmail b
 	return
 }
 
+func ExtractUsernameExtDomain(s string) (username, extension, domain string, isValidEmail bool) {
+	if !IsEmail(s) {
+		return
+	}
+
+	isValidEmail = true
+
+	// Keep extension case, but normalize username/domain case.
+	s = ToLowerWithExt(s)
+	userExt, domain, _ := strings.Cut(s, "@")
+	username, extension, _ = strings.Cut(userExt, "+")
+
+	return
+}
+
 // ExtractEmailLocalPart 返回邮件地址里的 local part 部分。
 func ExtractEmailLocalPart(e string) (string, error) {
 	parts := strings.Split(e, "@")
@@ -196,9 +211,9 @@ func ExtractDomainFromEmail(e string) string {
 	parts := strings.Split(e, "@")
 	domain := parts[len(parts)-1]
 
-	if strings.HasPrefix(domain, "[") {
+	if after, ok := strings.CutPrefix(domain, "["); ok {
 		// IP address.
-		d1 := strings.TrimPrefix(domain, "[")
+		d1 := after
 		d2 := strings.TrimSuffix(d1, "]")
 
 		return d2
