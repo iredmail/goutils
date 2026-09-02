@@ -225,12 +225,11 @@ func ExtractDomainFromEmail(e string) string {
 // StripExtension 移除邮件地址里的 `+extension` 扩展。
 // 注意：始终将 `email` 转换为小写再返回。
 func StripExtension(email string) string {
-	email = strings.ToLower(email)
-
 	if !IsEmail(email) {
 		return email
 	}
 
+	email = strings.ToLower(email)
 	username, domain, found := strings.Cut(email, "@")
 	if !found {
 		return email
