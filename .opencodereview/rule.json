@@ -1,0 +1,6 @@
+{
+    "exclude": [
+        "pwhash/*md5*",
+        "pwhash/sha512*"
+    ]
+}

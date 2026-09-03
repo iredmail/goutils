@@ -25,12 +25,14 @@ func (ns NullString) String() string {
 	return ns.value
 }
 
-func (ns *NullString) Scan(value interface{}) error {
+func (ns *NullString) Scan(value any) error {
 	if value == nil {
 		ns.emptyToNull = true
 
 		return nil
 	}
+
+	ns.emptyToNull = false
 
 	v, err := driver.String.ConvertValue(value)
 	if err != nil {
@@ -100,12 +102,12 @@ func (nf NullFloat64) Float64() float64 {
 func (nf NullFloat64) Float64Round2Decimals() float64 {
 	if nf.value == 0 {
 		return nf.value
-	} else {
-		return math.Round(nf.value * 100)
 	}
+
+	return math.Round(nf.value*100) / 100
 }
 
-func (nf *NullFloat64) Scan(value interface{}) error {
+func (nf *NullFloat64) Scan(value any) error {
 	if value == nil {
 		nf.isNull = true
 
@@ -159,7 +161,7 @@ func (ib IntBool) Bool() bool {
 	return bool(ib)
 }
 
-func (ib *IntBool) Scan(value interface{}) error {
+func (ib *IntBool) Scan(value any) error {
 	v, err := driver.Bool.ConvertValue(value)
 	if err != nil {
 		return err

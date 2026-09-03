@@ -2,7 +2,8 @@ package dbutils
 
 import (
 	"database/sql"
-	"fmt"
+	"net"
+	"net/url"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -11,13 +12,22 @@ import (
 func NewPgSQL(c SQLConnConfig) (db *sql.DB, err error) {
 	// supported params：
 	// https://pkg.go.dev/github.com/lib/pq#hdr-Connection_String_Parameters
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-		c.DBUser,
-		c.DBPassword,
-		c.DBHost,
-		c.DBPort,
-		c.DBName,
-	)
+	u := url.URL{
+		Scheme: "postgres",
+		User:   url.UserPassword(c.DBUser, c.DBPassword),
+		Host:   net.JoinHostPort(c.DBHost, c.DBPort),
+		Path:   c.DBName,
+	}
+
+	sslmode := "disable"
+	if c.UseSSL && c.VerifyCert {
+		sslmode = "require"
+	}
+
+	q := u.Query()
+	q.Set("sslmode", sslmode)
+	u.RawQuery = q.Encode()
+	dsn := u.String()
 
 	db, err = sql.Open("postgres", dsn)
 	if err != nil {

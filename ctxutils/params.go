@@ -21,7 +21,7 @@ func ParamDomain(ctx *fiber.Ctx, key ...string) (domain string, err error) {
 	}
 
 	domain = ctx.Params(_key)
-	domain, err = url.QueryUnescape(domain)
+	domain, err = url.PathUnescape(domain)
 	if err != nil {
 		return "", respcode.ErrInvalidDomain
 	}
@@ -61,7 +61,7 @@ func ParamEmailWithoutExt(ctx *fiber.Ctx, name ...string) (addr string, err erro
 	}
 
 	addr = ctx.Params(param)
-	addr, err = url.QueryUnescape(addr)
+	addr, err = url.PathUnescape(addr)
 	if err != nil {
 		return "", errors.New("INVALID_EMAIL")
 	}
@@ -140,7 +140,7 @@ func ParamString(ctx *fiber.Ctx, name string, defaultValue ...string) (isEmpty b
 	}
 
 	value = ctx.Params(name)
-	decoded, err := url.QueryUnescape(value)
+	decoded, err := url.PathUnescape(value)
 	if err != nil {
 		isEmpty = true
 

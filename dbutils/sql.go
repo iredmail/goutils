@@ -5,11 +5,10 @@ import (
 )
 
 type SQLConnConfig struct {
-	DBHost string
-	DBPort string
-	UseSSL bool
-	// TODO Add new field `VerifyCert bool` to force or skip ssl cert verification.
-	// VerifyCert bool
+	DBHost     string
+	DBPort     string
+	UseSSL     bool
+	VerifyCert bool // force or skip ssl cert verification
 	DBUser     string
 	DBPassword string
 	DBName     string
