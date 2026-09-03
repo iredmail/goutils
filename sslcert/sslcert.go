@@ -135,6 +135,9 @@ func (m *Manager) Certificate(key string) (*x509.Certificate, error) {
 
 	_, pub := pem.Decode(certRaw)
 	pubBlock, _ := pem.Decode(pub)
+	if pubBlock == nil {
+		return nil, errors.New("invalid PEM certificate data")
+	}
 
 	return x509.ParseCertificate(pubBlock.Bytes)
 }

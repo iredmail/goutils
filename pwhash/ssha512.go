@@ -36,8 +36,11 @@ func VerifySSHA512Password(challengePassword, plainPassword string) bool {
 		return false
 	}
 
-	hash := hashWithSalt[:64]
-	salt := hashWithSalt[64:]
+	if len(hashWithSalt) < sha512.Size {
+		return false
+	}
+	hash := hashWithSalt[:sha512.Size]
+	salt := hashWithSalt[sha512.Size:]
 
 	sha := sha512.New()
 	sha.Write([]byte(plainPassword))
