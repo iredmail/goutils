@@ -81,6 +81,7 @@ func getSQLSchemaVersion(gdb *goqu.Database) (found bool, version int, err error
 	var value string
 
 	found, err = gdb.From(tableSystem).
+		Select("v").
 		Where(goqu.Ex{"k": keySQLSchemaVersion}).
 		Limit(1).
 		ScanVal(&value)
