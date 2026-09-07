@@ -1,6 +1,6 @@
 module github.com/iredmail/goutils
 
-go 1.27.0
+go 1.27.1
 
 require (
 	github.com/DeRuina/timberjack v1.3.9
@@ -13,7 +13,7 @@ require (
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/gofiber/fiber/v2 v2.52.15
 	github.com/google/uuid v1.6.0
-	github.com/iredmail/ldappool v0.0.0-20260906140028-9b244e621c3d
+	github.com/iredmail/ldappool v0.0.0-20260907030438-ec89c46bd648
 	github.com/jhillyerd/enmime/v2 v2.5.0
 	github.com/lib/pq v1.10.9
 	github.com/shirou/gopsutil/v4 v4.26.8
