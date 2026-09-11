@@ -187,7 +187,7 @@ func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath s
 
 	client, err := smtp.Dial(smtpServer)
 	if err != nil {
-		return err
+		return
 	}
 
 	defer func() {
@@ -202,7 +202,7 @@ func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath s
 
 	err = client.Hello(domain)
 	if err != nil {
-		return err
+		return
 	}
 
 	// TLS
@@ -214,8 +214,7 @@ func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath s
 
 		err = client.StartTLS(tlsConfig)
 		if err != nil {
-			fmt.Printf("failed in STARTTLS directive: %v\n", err)
-			os.Exit(255)
+			return fmt.Errorf("failed in STARTTLS directive: %w", err)
 		}
 	}
 
@@ -223,13 +222,13 @@ func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath s
 	auth := smtp.PlainAuth("", c.SMTPUser, c.SMTPPassword, c.Host)
 	err = client.Auth(auth)
 	if err != nil {
-		return err
+		return
 	}
 
 	// MAIL
 	err = client.Mail(from.Address)
 	if err != nil {
-		return err
+		return
 	}
 
 	// `RCPT TO:`
@@ -240,29 +239,30 @@ func SendmailWithEml(c Config, from mail.Address, recipients []string, emlPath s
 
 	to := strings.Join(toAddrs, ",")
 	if err = client.Rcpt(to); err != nil {
-		return err
+		return
 	}
 
 	// `DATA`
 	w, err := client.Data()
 	if err != nil {
-		return err
+		return
 	}
 
 	// 读取邮件源码文件
-	rawEmail, err := os.ReadFile(emlPath)
+	var rawEmail []byte
+	rawEmail, err = os.ReadFile(emlPath)
 	if err != nil {
-		return err
+		return
 	}
 
 	_, err = w.Write(rawEmail)
 	if err != nil {
-		return err
+		return
 	}
 
 	err = w.Close()
 	if err != nil {
-		return err
+		return
 	}
 
 	return client.Quit()

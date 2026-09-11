@@ -46,9 +46,7 @@ func InitSQLiteDB(pth string, pragmas map[string]string, maxIdleConns int, connM
 	if pragmas == nil {
 		pragmas = _pragmas
 	} else {
-		for k, v := range pragmas {
-			_pragmas[k] = v
-		}
+		maps.Copy(_pragmas, pragmas)
 	}
 
 	pth = pth + "?" + GenSQLiteURIPragmas(_pragmas)

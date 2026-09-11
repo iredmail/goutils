@@ -18,7 +18,7 @@ type testDoc struct {
 func setupFTSDB(t *testing.T) (*goqu.Database, func()) {
 	dbFile, err := os.CreateTemp("", "goutils_fts_test_*.db")
 	assert.Nil(t, err)
-	dbFile.Close()
+	_ = dbFile.Close()
 
 	sqliteDB, err := InitSQLiteDB(dbFile.Name(), nil, 0, 0)
 	assert.Nil(t, err)
@@ -70,7 +70,7 @@ func setupFTSDB(t *testing.T) (*goqu.Database, func()) {
 
 	testData := []testDoc{
 		{ID: 1, Title: "Hello World", Content: "This is a test document with normal content about programming."},
-		{ID: 2, Title: "Special Characters", Content: `Document content has 'single' and "double" quotes; plus semicolons in text.`},
+		{ID: 2, Title: "Special Characters", Content: `Document content has 'single' and "double" quotes; plus semicolons; in text.`},
 		{ID: 3, Title: "Email Address", Content: "Reach us via email at test@example.com for further information details."},
 		{ID: 4, Title: "Fourth Topic", Content: "Discussion about database queries and search performance optimization methods."},
 	}
@@ -86,8 +86,8 @@ func setupFTSDB(t *testing.T) (*goqu.Database, func()) {
 	}
 
 	cleanup := func() {
-		sqliteDB.Close()
-		os.Remove(dbFile.Name())
+		_ = sqliteDB.Close()
+		_ = os.Remove(dbFile.Name())
 	}
 
 	return gdb, cleanup
@@ -147,6 +147,24 @@ func TestFTSSearch_EmailWithAtSign(t *testing.T) {
 
 	assert.Len(t, results, 1)
 	assert.Equal(t, "Email Address", results[0].Title)
+}
+
+func TestFTSSearch_ShortEmailAddress(t *testing.T) {
+	gdb, cleanup := setupFTSDB(t)
+	defer cleanup()
+
+	_, err := gdb.
+		Insert("docs").
+		Cols("title", "content").
+		Vals(goqu.Vals{"Short Email", "Please reach us at u@x.io for support."}).
+		Executor().Exec()
+	assert.Nil(t, err)
+
+	var results []testDoc
+	err = FTSSearch(gdb, `u@x.io`, "fts_docs", "docs", &results)
+	assert.Nil(t, err)
+	assert.Len(t, results, 1)
+	assert.Equal(t, "Short Email", results[0].Title)
 }
 
 func TestFTSSearch_SQLInjectionAttempt_OrClause(t *testing.T) {
@@ -293,14 +311,15 @@ func TestEscapeFTSKeyword(t *testing.T) {
 		expected string
 	}{
 		{`simple`, `simple`},
-		{`a*b`, `a"*"b`},
+		{`a*b`, `"a*b"`},
 		{`foo_bar`, `foo_bar`},
 		{`中文测试`, `中文测试`},
 		{`with spaces`, `with spaces`},
-		{`with "double" quotes`, `with """"double"""" quotes`},
-		{`'single quotes'`, `"'"single quotes"'"`},
-		{`semi;colon`, `semi";"colon`},
-		{`email@test.com`, `email"@"test"."com`},
+		{`with "double" quotes`, `with """double""" quotes`},
+		{`'single quotes'`, `"'single" "quotes'"`},
+		{`semi;colon`, `"semi;colon"`},
+		{`email@test.com`, `"email@test.com"`},
+		{`u@x.io`, `"u@x.io"`},
 		{`hello AND world`, `hello "AND" world`},
 		{`hello OR world`, `hello "OR" world`},
 		{`hello NOT world`, `hello "NOT" world`},

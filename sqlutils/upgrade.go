@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"io/fs"
+	"strconv"
 
 	"github.com/doug-martin/goqu/v9"
 )
@@ -47,12 +48,14 @@ func createSystemTable(gdb *goqu.Database) error {
 	dialect := gdb.Dialect()
 	var exec string
 	switch dialect {
-	case dialectSQLite:
+	case dialectSQLite, dialectSQLite3:
 		exec = schemaSystemSqlite
 	case dialectMysql:
 		exec = schemaSystemMysql
 	case dialectPostgres:
 		exec = schemaSystemPostgres
+	default:
+		return fmt.Errorf("unsupported dialect type: %s", dialect)
 	}
 
 	_, err := gdb.Exec(exec)
@@ -75,14 +78,21 @@ func insertSQLSchemaVersion(gdb *goqu.Database, version int) error {
 
 // getSQLSchemaVersion 获取当前数据库结构版本
 func getSQLSchemaVersion(gdb *goqu.Database) (found bool, version int, err error) {
-	var kv KVInt
+	var value string
 
 	found, err = gdb.From(tableSystem).
+		Select("v").
 		Where(goqu.Ex{"k": keySQLSchemaVersion}).
 		Limit(1).
-		ScanStruct(&kv)
+		ScanVal(&value)
 
-	return found, kv.V, err
+	if err != nil || !found {
+		return
+	}
+
+	version, err = strconv.Atoi(value)
+
+	return
 }
 
 // updateSQLSchemaVersion 更新本地版本
@@ -90,7 +100,7 @@ func updateSQLSchemaVersion(gdb *goqu.Database, version int) error {
 	_, err := gdb.
 		Update(tableSystem).
 		Where(goqu.Ex{"k": keySQLSchemaVersion}).
-		Set(goqu.Record{"v": version}).
+		Set(goqu.Record{"v": fmt.Sprintf("%d", version)}).
 		Executor().Exec()
 
 	return err
@@ -103,7 +113,7 @@ func InsertSQLSchemaVersion(gdb *goqu.Database, version int) (err error) {
 		Prepared(true).
 		Rows(goqu.Record{
 			"k": keySQLSchemaVersion,
-			"v": version,
+			"v": fmt.Sprintf("%d", version),
 		}).
 		OnConflict(goqu.DoNothing()).
 		Executor().Exec()

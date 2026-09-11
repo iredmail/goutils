@@ -312,3 +312,29 @@ func TestGenDotPrefixedAllSubDomains(t *testing.T) {
 	assert.Equal(t, []string(nil), GenDotPrefixedAllSubDomains("com"))
 	assert.Equal(t, []string(nil), GenDotPrefixedAllSubDomains(""))
 }
+
+func TestExtractUsernameExtDomain(t *testing.T) {
+	username, ext, domain, ok := ExtractUsernameExtDomain("not-an-email")
+	assert.False(t, ok)
+	assert.Equal(t, "", username)
+	assert.Equal(t, "", ext)
+	assert.Equal(t, "", domain)
+
+	username, ext, domain, ok = ExtractUsernameExtDomain("UsEr+LoG@ExAmPlE.CoM")
+	assert.True(t, ok)
+	assert.Equal(t, "user", username)
+	assert.Equal(t, "LoG", ext)
+	assert.Equal(t, "example.com", domain)
+
+	username, ext, domain, ok = ExtractUsernameExtDomain("UsEr@ExAmPlE.CoM")
+	assert.True(t, ok)
+	assert.Equal(t, "user", username)
+	assert.Equal(t, "", ext)
+	assert.Equal(t, "example.com", domain)
+
+	username, ext, domain, ok = ExtractUsernameExtDomain("user+TAG@[192.168.1.1]")
+	assert.True(t, ok)
+	assert.Equal(t, "user", username)
+	assert.Equal(t, "TAG", ext)
+	assert.Equal(t, "[192.168.1.1]", domain)
+}
