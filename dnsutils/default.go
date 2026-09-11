@@ -26,7 +26,8 @@ func (dr *defaultResolver) LookupHost(domain string) (notfound bool, ip4s, ip6s 
 	defer cancel()
 
 	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", domain)
-	if err != nil {
+	notfound, errText = dr.isDNSErrorNoSuchHost(err)
+	if notfound || err != nil {
 		return
 	}
 
