@@ -1,17 +1,11 @@
 package dnsutils
 
 import (
-	"cmp"
-	"context"
-	"errors"
-	"fmt"
 	"net"
 	"regexp"
-	"slices"
-	"strings"
 	"time"
 
-	"github.com/iredmail/goutils/emailutils"
+	"github.com/miekg/dns"
 )
 
 var (
@@ -27,7 +21,38 @@ const (
 	spfDNSQueryTypeA   uint16 = 1  // RFC 1035: A
 	spfDNSQueryTypeMX  uint16 = 15 // RFC 1035: MX
 	spfDNSQueryTypePTR uint16 = 12 // RFC 1035: PTR
+	// exists 不是实际 RR type，只用于 LookupRecursiveSPF 内部标记“会触发一次 DNS 查询”。
+	spfDNSQueryTypeExists uint16 = 0
 )
+
+func NewResolver(queryTimeoutSeconds int, dnsAddr ...string) Resolver {
+	timeout := defaultDNSQueryTimeout
+	if queryTimeoutSeconds > 0 {
+		timeout = time.Duration(queryTimeoutSeconds) * time.Second
+	}
+
+	if len(dnsAddr) > 0 && dnsAddr[0] != "" {
+		return &customResolver{
+			client:  &dns.Client{Timeout: timeout},
+			dnsAddr: dnsAddr[0],
+		}
+	}
+
+	return &defaultResolver{resolver: net.DefaultResolver, timeout: timeout}
+}
+
+type Resolver interface {
+	LookupHost(domain string) (notfound bool, ip4s, ip6s []string, errText string)
+	LookupA(domain string) (notfound bool, ip4s []string, errText string)
+	LookupAAAA(domain string) (notfound bool, ip6s []string, errText string)
+	LookupMX(domain string) (notfound bool, records []MXRecord, errText string)
+	LookupDKIM(domain, selector string) (notfound bool, records []string, errText string)
+	LookupDMARC(domain string) (notfound bool, records []string, errText string)
+	LookupSPF(domain string) (notfound bool, records []string, errText string)
+	LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (notfound bool, spf []string, totalQueries int, errText string)
+	LookupSRV(domain, dnsTypeStr string) (notfound bool, records []SRVRecord, errText string)
+	LookupPtr(ip string) (notfound bool, records []string, errText string)
+}
 
 type MXRecord struct {
 	MX       string `json:"mx"`
@@ -47,298 +72,4 @@ type ResponseDNSRecords[T any] struct {
 	TotalQueries int    `json:"total_queries,omitempty"`
 	Records      []T    `json:"records"`
 	Error        string `json:"error"`
-}
-
-func IsDNSErrorNoSuchHost(err error) (v bool, e string) {
-	if err == nil {
-		return false, ""
-	}
-
-	if _err, ok := errors.AsType[*net.DNSError](err); ok {
-		v = _err.Err == "no such host"
-		if !v {
-			e = err.Error()
-		}
-	}
-
-	return
-}
-
-// LookupHost 查询域名的 A 和 AAAA 记录，并分别返回 IPv4 和 IPv6 地址列表。
-func LookupHost(domain string) (ip4s, ip6s []string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", domain)
-	if err != nil {
-		return
-	}
-
-	for _, ip := range ips {
-		if ip.Is4() {
-			ip4s = append(ip4s, ip.String())
-		} else if ip.Is6() {
-			ip6s = append(ip6s, ip.String())
-		}
-	}
-
-	return
-}
-
-// LookupA 查询域名的 A 记录，并返回 IPv4 地址列表。
-func LookupA(domain string) (ip4s []string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip4", domain)
-	if err != nil {
-		return
-	}
-
-	for _, ip := range ips {
-		ip4s = append(ip4s, ip.String())
-	}
-
-	return
-}
-
-// LookupAAAA 查询域名的 AAAA 记录，并返回 IPv6 地址列表。
-func LookupAAAA(domain string) (ip6s []string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip6", domain)
-	if err != nil {
-		return
-	}
-
-	for _, ip := range ips {
-		ip6s = append(ip6s, ip.String())
-	}
-
-	return
-}
-
-func LookupMX(domain string) (notfound bool, records []MXRecord, errStr string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	var mxs []*net.MX
-	mxs, err := net.DefaultResolver.LookupMX(ctx, domain)
-	notfound, errStr = IsDNSErrorNoSuchHost(err)
-	if notfound || err != nil {
-		return
-	}
-
-	for _, mx := range mxs {
-		records = append(records, MXRecord{
-			MX:       strings.TrimSuffix(mx.Host, "."),
-			Priority: mx.Pref,
-		})
-	}
-
-	// Sort by mx priority
-	slices.SortFunc(records, func(a, b MXRecord) int {
-		return cmp.Compare(a.Priority, b.Priority)
-	})
-
-	return
-}
-
-func LookupDKIM(domain, selector string) (notfound bool, records []string, errStr string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	txts, err := net.DefaultResolver.LookupTXT(ctx, fmt.Sprintf("%s._domainkey.%s", selector, domain))
-	notfound, errStr = IsDNSErrorNoSuchHost(err)
-	if notfound || err != nil {
-		return
-	}
-
-	for _, txt := range txts {
-		if regxDKIM.MatchString(txt) {
-			records = append(records, txt)
-
-			break
-		}
-	}
-
-	return
-}
-
-func LookupPtr(ip string) (notfound bool, records []string, errStr string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	hosts, err := net.DefaultResolver.LookupAddr(ctx, ip)
-	notfound, errStr = IsDNSErrorNoSuchHost(err)
-	if err != nil {
-		return
-	}
-
-	for _, host := range hosts {
-		records = append(records, strings.TrimSuffix(host, "."))
-	}
-
-	notfound = len(records) == 0
-
-	return
-}
-
-func LookupDMARC(domain string) (notfound bool, records []string, errStr string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	txts, err := net.DefaultResolver.LookupTXT(ctx, fmt.Sprintf("_dmarc.%s", domain))
-	notfound, errStr = IsDNSErrorNoSuchHost(err)
-	if notfound || err != nil {
-		return
-	}
-
-	for _, txt := range txts {
-		if regxDMARC.MatchString(txt) {
-			records = append(records, txt)
-
-			break
-		}
-	}
-
-	return
-}
-
-func LookupSRV(domain, dnsTypeStr string) (notfound bool, records []SRVRecord, errStr string) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	_, srvs, err := net.DefaultResolver.LookupSRV(ctx, dnsTypeStr, "tcp", domain)
-	notfound, errStr = IsDNSErrorNoSuchHost(err)
-	if notfound || err != nil {
-		return
-	}
-
-	for _, srv := range srvs {
-		records = append(records, SRVRecord{
-			Priority: srv.Priority,
-			Port:     srv.Port,
-			Weight:   srv.Weight,
-			Target:   strings.TrimSuffix(srv.Target, "."),
-		})
-	}
-
-	return
-}
-
-func LookupSPF(domain string) (records []string, err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), defaultDNSQueryTimeout)
-	defer cancel()
-
-	var txts []string
-	txts, err = net.DefaultResolver.LookupTXT(ctx, domain)
-	for _, txt := range txts {
-		if regxSPF.MatchString(txt) {
-			records = append(records, txt)
-
-			break
-		}
-	}
-
-	return
-}
-
-func LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (spf []string, totalQueries int, err error) {
-	// FYI http://www.open-spf.org/SPF_Record_Syntax/
-	if _totalQueries > 10 {
-		return
-	}
-
-	if len(dnsType) > 0 {
-		switch dnsType[0] {
-		case spfDNSQueryTypeA:
-			totalQueries = _totalQueries + 1
-
-			return
-		case spfDNSQueryTypeMX:
-			_, mx, _ := LookupMX(domain)
-			for _, r := range mx {
-				totalQueries = _totalQueries + 1
-				_, totalQueries, _ = LookupRecursiveSPF(r.MX, totalQueries, spfDNSQueryTypeA)
-			}
-
-			return
-		case spfDNSQueryTypePTR:
-			_, ptr, _ := LookupPtr(domain)
-			for _, p := range ptr {
-				totalQueries = _totalQueries + 1
-				_, totalQueries, _ = LookupRecursiveSPF(p, totalQueries, spfDNSQueryTypeA)
-			}
-
-			return
-		}
-	}
-
-	_spf, _err := LookupSPF(domain)
-	if _totalQueries == 0 {
-		spf = _spf
-		totalQueries = 1
-		err = _err
-	} else {
-		totalQueries = _totalQueries + 1
-	}
-
-	if len(_spf) == 0 {
-		return
-	}
-
-	var after string
-	var ok bool
-	for mech := range strings.FieldsSeq(_spf[0]) {
-		if strings.HasPrefix(mech, "+") || strings.HasPrefix(mech, "-") ||
-			strings.HasPrefix(mech, "~") || strings.HasPrefix(mech, "?") {
-			mech = mech[1:]
-		}
-
-		if mech == "a" {
-			_, totalQueries, _ = LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypeA)
-		} else if mech == "mx" {
-			_, totalQueries, _ = LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypeMX)
-		} else if mech == "ptr" {
-			_, totalQueries, _ = LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypePTR)
-		} else if after, ok = strings.CutPrefix(mech, "a:"); ok {
-			// a:<domain>
-			// a:<domain>/<prefix-length>
-			a := after
-			split := strings.Split(a, "/")
-			if len(split) > 1 {
-				a = split[0]
-			}
-
-			if !emailutils.IsDomain(a) {
-				return
-			}
-
-			_, totalQueries, _ = LookupRecursiveSPF(a, totalQueries, spfDNSQueryTypeA)
-		} else if after, ok = strings.CutPrefix(mech, "mx:"); ok {
-			// mx:<domain>
-			// mx:<domain>/<prefix-length>
-			mx := after
-			split := strings.Split(mx, "/")
-			if len(split) > 1 {
-				mx = split[0]
-			}
-
-			if !emailutils.IsDomain(mx) {
-				return
-			}
-
-			_, totalQueries, _ = LookupRecursiveSPF(mx, totalQueries, spfDNSQueryTypeMX)
-		} else if after, ok = strings.CutPrefix(mech, "ptr:"); ok {
-			_, totalQueries, _ = LookupRecursiveSPF(after, totalQueries, spfDNSQueryTypePTR)
-		} else if after, ok = strings.CutPrefix(mech, "include:"); ok {
-			_, totalQueries, _ = LookupRecursiveSPF(after, totalQueries)
-		} else if after, ok = strings.CutPrefix(mech, "redirect="); ok {
-			_, totalQueries, _ = LookupRecursiveSPF(after, totalQueries)
-		}
-	}
-
-	return
 }
