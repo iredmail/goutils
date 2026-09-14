@@ -58,6 +58,10 @@ func (cr *customResolver) LookupA(domain string) (notfound bool, ip4s []string, 
 		}
 	}
 
+	// 域名存在但没有任何 A 记录（NODATA）时同样应视为“未找到”，
+	// 与 defaultResolver 及同文件其它 Lookup* 方法保持一致。
+	notfound = len(ip4s) == 0
+
 	return
 }
 
@@ -300,21 +304,10 @@ func (cr *customResolver) LookupRecursiveSPF(domain string, _totalQueries int, d
 		spf = _spf
 		totalQueries = 1
 	} else {
-		totalQueries++
+		totalQueries = _totalQueries + 1
 	}
 
 	if notfound || len(_spf) == 0 {
-		return
-	}
-
-	if _totalQueries == 0 {
-		spf = _spf
-		totalQueries = 1
-	} else {
-		totalQueries++
-	}
-
-	if len(_spf) == 0 {
 		return
 	}
 

@@ -25,7 +25,7 @@ func (dr *defaultResolver) LookupHost(domain string) (notfound bool, ip4s, ip6s 
 	ctx, cancel := context.WithTimeout(context.Background(), dr.timeout)
 	defer cancel()
 
-	ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip", domain)
+	ips, err := dr.resolver.LookupNetIP(ctx, "ip", domain)
 	notfound, errText = dr.isDNSErrorNoSuchHost(err)
 	if notfound || err != nil {
 		return
@@ -100,6 +100,8 @@ func (dr *defaultResolver) LookupMX(domain string) (notfound bool, records []MXR
 	slices.SortFunc(records, func(a, b MXRecord) int {
 		return cmp.Compare(a.Priority, b.Priority)
 	})
+
+	notfound = len(records) == 0
 
 	return
 }
@@ -277,7 +279,7 @@ func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, 
 		spf = _spf
 		totalQueries = 1
 	} else {
-		totalQueries++
+		totalQueries = _totalQueries + 1
 	}
 
 	if notfound || len(_spf) == 0 {

@@ -55,7 +55,7 @@ func AsyncDNSLookupDKIM(r Resolver, selector string, domains []string) []Respons
 			notfound, _records, err := r.LookupDKIM(d, selector)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:   fmt.Sprintf("%s._domainkey.%s", selector, d),
-				Notfound: notfound || len(_records) == 0,
+				Notfound: notfound || (err == "" && len(_records) == 0),
 				Records:  _records,
 				Error:    err,
 			}
@@ -158,7 +158,7 @@ func AsyncDNSLookupRecursiveSPF(r Resolver, domains []string) (records []Respons
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:       d,
 				Records:      spf,
-				Notfound:     notfound || len(spf) == 0,
+				Notfound:     notfound || (err == "" && len(spf) == 0),
 				TotalQueries: totalQueries,
 				Error:        err,
 			}
