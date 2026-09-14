@@ -216,6 +216,10 @@ func (cr *customResolver) LookupSRV(domain, dnsTypeStr string) (notfound bool, r
 		})
 	}
 
+	// 查询成功但没有 SRV 记录（NODATA）时同样视为“未找到”，
+	// 与同文件其它 Lookup* 方法保持一致。
+	notfound = len(records) == 0
+
 	return
 }
 

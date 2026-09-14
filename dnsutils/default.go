@@ -190,6 +190,8 @@ func (dr *defaultResolver) LookupSRV(domain, dnsTypeStr string) (notfound bool, 
 		})
 	}
 
+	notfound = len(records) == 0
+
 	return
 }
 
