@@ -273,18 +273,14 @@ func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, 
 
 	var _spf []string
 	notfound, _spf, errText = dr.LookupSPF(domain)
-	if notfound {
-		return
-	}
-
 	if _totalQueries == 0 {
 		spf = _spf
 		totalQueries = 1
 	} else {
-		totalQueries = _totalQueries + 1
+		totalQueries++
 	}
 
-	if len(_spf) == 0 {
+	if notfound || len(_spf) == 0 {
 		return
 	}
 
@@ -360,6 +356,9 @@ func (dr *defaultResolver) isDNSErrorNoSuchHost(err error) (v bool, e string) {
 
 	if _err, ok := errors.AsType[*net.DNSError](err); ok {
 		v = _err.Err == "no such host"
+		if v {
+			e = ""
+		}
 	}
 
 	return

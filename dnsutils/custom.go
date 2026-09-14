@@ -153,6 +153,8 @@ func (cr *customResolver) LookupPtr(ip string) (notfound bool, records []string,
 		}
 	}
 
+	notfound = len(records) == 0
+
 	return
 }
 
@@ -294,7 +296,14 @@ func (cr *customResolver) LookupRecursiveSPF(domain string, _totalQueries int, d
 
 	var _spf []string
 	notfound, _spf, errText = cr.LookupSPF(domain)
-	if notfound {
+	if _totalQueries == 0 {
+		spf = _spf
+		totalQueries = 1
+	} else {
+		totalQueries++
+	}
+
+	if notfound || len(_spf) == 0 {
 		return
 	}
 
@@ -302,7 +311,7 @@ func (cr *customResolver) LookupRecursiveSPF(domain string, _totalQueries int, d
 		spf = _spf
 		totalQueries = 1
 	} else {
-		totalQueries = _totalQueries + 1
+		totalQueries++
 	}
 
 	if len(_spf) == 0 {

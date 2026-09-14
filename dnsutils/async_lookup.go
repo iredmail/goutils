@@ -21,7 +21,7 @@ func AsyncDNSLookupMX(r Resolver, domains []string) []ResponseDNSRecords[MXRecor
 			notfound, _records, err := r.LookupMX(d)
 			chanRecords <- ResponseDNSRecords[MXRecord]{
 				Domain:   d,
-				Notfound: notfound || len(_records) == 0,
+				Notfound: notfound || (err == "" && len(_records) == 0),
 				Records:  _records,
 				Error:    err,
 			}
