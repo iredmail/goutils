@@ -29,6 +29,9 @@ func (dr *defaultResolver) LookupHost(domain string) (notfound bool, ip4s, ip6s 
 		return
 	}
 
+	// 与 customResolver 保持一致：查询成功但无任何地址时同样视为 notfound。
+	notfound = len(ips) == 0
+
 	for _, ip := range ips {
 		if ip.Is4() {
 			ip4s = append(ip4s, ip.String())
@@ -232,7 +235,7 @@ func (dr *defaultResolver) isDNSErrorNoSuchHost(err error) (v bool, e string) {
 	e = err.Error()
 
 	if _err, ok := errors.AsType[*net.DNSError](err); ok {
-		v = _err.Err == "no such host"
+		v = _err.IsNotFound
 		if v {
 			e = ""
 		}

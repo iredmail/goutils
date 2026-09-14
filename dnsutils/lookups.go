@@ -146,6 +146,8 @@ func lookupRecursiveSPF(r Resolver, domain string, _totalQueries int, dnsType ..
 	var after string
 	var ok bool
 	for mech := range strings.FieldsSeq(_spf[0]) {
+		mech = strings.ToLower(mech)
+
 		if strings.HasPrefix(mech, "+") || strings.HasPrefix(mech, "-") ||
 			strings.HasPrefix(mech, "~") || strings.HasPrefix(mech, "?") {
 			mech = mech[1:]
