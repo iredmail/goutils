@@ -79,7 +79,7 @@ func TestLookupTXTRecordFilteringAndNotfound(t *testing.T) {
 
 func TestCustomResolverExchangeHandlesRcodeAndTruncation(t *testing.T) {
 	addr := startTestDNSServer(t, dnsTestResponder)
-	r := NewResolver(2, addr)
+	r := NewResolver(addr, 2)
 
 	notfound, records, errText := r.LookupSPF("servfail.test")
 	assert.False(t, notfound)
@@ -161,7 +161,7 @@ func testResolverFactories(t *testing.T) []testResolverFactory {
 		{
 			name: "customResolver",
 			new: func(addr string) Resolver {
-				return NewResolver(2, addr)
+				return NewResolver(addr, 2)
 			},
 		},
 	}

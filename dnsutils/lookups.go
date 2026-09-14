@@ -28,20 +28,24 @@ const (
 	spfDNSQueryTypeExists uint16 = 0
 )
 
-func NewResolver(queryTimeoutSeconds int, dnsAddr string) Resolver {
-	timeout := defaultDNSQueryTimeout
-	if queryTimeoutSeconds > 0 {
-		timeout = time.Duration(queryTimeoutSeconds) * time.Second
+func NewResolver(server string, timeout int) Resolver {
+	timeoutDuration := defaultDNSQueryTimeout
+
+	if timeout > 0 {
+		timeoutDuration = time.Duration(timeout) * time.Second
 	}
 
-	if dnsAddr != "" {
+	if server != "" {
 		return &customResolver{
-			client:  &dns.Client{Timeout: timeout},
-			dnsAddr: dnsAddr,
+			client:  &dns.Client{Timeout: timeoutDuration},
+			dnsAddr: server,
 		}
 	}
 
-	return &defaultResolver{resolver: net.DefaultResolver, timeout: timeout}
+	return &defaultResolver{
+		resolver: net.DefaultResolver,
+		timeout:  timeoutDuration,
+	}
 }
 
 type Resolver interface {
