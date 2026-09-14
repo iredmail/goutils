@@ -58,6 +58,8 @@ func (dr *defaultResolver) LookupA(domain string) (notfound bool, ip4s []string,
 		ip4s = append(ip4s, ip.String())
 	}
 
+	notfound = len(ip4s) == 0
+
 	return
 }
 
