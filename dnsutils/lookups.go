@@ -117,14 +117,16 @@ func lookupRecursiveSPF(r Resolver, domain string, _totalQueries int, dnsType ..
 			// 注意：完整的 PTR SPF 语义仍然依赖连接 IP，当前 API 只能做近似统计。
 			totalQueries = _totalQueries + 1
 
-			_, ptr, _ := r.LookupPtr(domain)
-			for _, p := range ptr {
-				if totalQueries >= 10 {
-					return
-				}
+			/*
+				_, ptr, _ := r.LookupPtr(domain)
+				for _, p := range ptr {
+					if totalQueries >= 10 {
+						return
+					}
 
-				_, _, totalQueries, _ = lookupRecursiveSPF(r, p, totalQueries, spfDNSQueryTypeA)
-			}
+					_, _, totalQueries, _ = lookupRecursiveSPF(r, p, totalQueries, spfDNSQueryTypeA)
+				}
+			*/
 
 			return
 		}
