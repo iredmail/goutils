@@ -89,7 +89,7 @@ func AsyncDNSLookupDMARC(r Resolver, domains []string) []ResponseDNSRecords[stri
 			notfound, _records, err := r.LookupDMARC(d)
 			chanRecords <- ResponseDNSRecords[string]{
 				Domain:   fmt.Sprintf("_dmarc.%s", d),
-				Notfound: notfound || len(_records) == 0,
+				Notfound: notfound || (err == "" && len(_records) == 0),
 				Records:  _records,
 				Error:    err,
 			}
@@ -123,7 +123,7 @@ func AsyncDNSLookupSRV(r Resolver, domains []string, dnsType string) []ResponseD
 			notfound, _records, err := r.LookupSRV(d, dnsType)
 			chanRecords <- ResponseDNSRecords[SRVRecord]{
 				Domain:   fmt.Sprintf("_%s._tcp.%s", dnsType, d),
-				Notfound: notfound || len(_records) == 0,
+				Notfound: notfound || (err == "" && len(_records) == 0),
 				Records:  _records,
 				Error:    err,
 			}

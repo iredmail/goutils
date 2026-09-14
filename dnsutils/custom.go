@@ -80,6 +80,8 @@ func (cr *customResolver) LookupAAAA(domain string) (notfound bool, ip6s []strin
 		}
 	}
 
+	notfound = len(ip6s) == 0
+
 	return
 }
 
@@ -99,6 +101,8 @@ func (cr *customResolver) LookupMX(domain string) (notfound bool, records []MXRe
 			})
 		}
 	}
+
+	notfound = len(records) == 0
 
 	// Sort by mx priority
 	slices.SortFunc(records, func(a, b MXRecord) int {
