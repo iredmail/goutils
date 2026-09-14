@@ -9,8 +9,6 @@ import (
 	"slices"
 	"strings"
 	"time"
-
-	"github.com/iredmail/goutils/emailutils"
 )
 
 var _ Resolver = (*defaultResolver)(nil)
@@ -221,132 +219,7 @@ func (dr *defaultResolver) LookupSPF(domain string) (notfound bool, records []st
 }
 
 func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (notfound bool, spf []string, totalQueries int, errText string) {
-	// FYI http://www.open-spf.org/SPF_Record_Syntax/
-	// RFC 7208 要求会触发 DNS 查询的 SPF 机制/修饰符总数最多为 10。
-	if _totalQueries >= 10 {
-		totalQueries = _totalQueries
-
-		return
-	}
-
-	if len(dnsType) > 0 {
-		switch dnsType[0] {
-		case spfDNSQueryTypeA:
-			totalQueries = _totalQueries + 1
-
-			return
-		case spfDNSQueryTypeExists:
-			// exists 机制会额外触发一次 DNS 查询；这里只做计数，不继续做完整 SPF 求值。
-			totalQueries = _totalQueries + 1
-
-			return
-		case spfDNSQueryTypeMX:
-			// mx 机制本身就会触发一次 MX 查询，这一步即使拿不到任何 MX 主机，
-			// 也应该计入 SPF 的总查询次数。
-			totalQueries = _totalQueries + 1
-
-			_, mx, _ := dr.LookupMX(domain)
-			for _, _r := range mx {
-				if totalQueries >= 10 {
-					return
-				}
-
-				_, _, totalQueries, _ = dr.LookupRecursiveSPF(_r.MX, totalQueries, spfDNSQueryTypeA)
-			}
-
-			return
-		case spfDNSQueryTypePTR:
-			// ptr 机制至少会进行一次 PTR 查询；先把这一步计入总数。
-			// 完整 PTR 语义仍依赖连接 IP，当前 API 只能做近似统计。
-			totalQueries = _totalQueries + 1
-
-			_, ptr, _ := dr.LookupPtr(domain)
-			for _, p := range ptr {
-				if totalQueries >= 10 {
-					return
-				}
-
-				_, _, totalQueries, _ = dr.LookupRecursiveSPF(p, totalQueries, spfDNSQueryTypeA)
-			}
-
-			return
-		}
-	}
-
-	var _spf []string
-	notfound, _spf, errText = dr.LookupSPF(domain)
-	if _totalQueries == 0 {
-		spf = _spf
-		totalQueries = 1
-	} else {
-		totalQueries = _totalQueries + 1
-	}
-
-	if notfound || len(_spf) == 0 {
-		return
-	}
-
-	var after string
-	var ok bool
-	for mech := range strings.FieldsSeq(_spf[0]) {
-		if strings.HasPrefix(mech, "+") || strings.HasPrefix(mech, "-") ||
-			strings.HasPrefix(mech, "~") || strings.HasPrefix(mech, "?") {
-			mech = mech[1:]
-		}
-
-		if mech == "a" {
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypeA)
-		} else if mech == "mx" {
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypeMX)
-		} else if mech == "ptr" {
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(domain, totalQueries, spfDNSQueryTypePTR)
-		} else if after, ok = strings.CutPrefix(mech, "a:"); ok {
-			// a:<domain>
-			// a:<domain>/<prefix-length>
-			a := after
-			split := strings.Split(a, "/")
-			if len(split) > 1 {
-				a = split[0]
-			}
-
-			if !emailutils.IsDomain(a) {
-				return
-			}
-
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(a, totalQueries, spfDNSQueryTypeA)
-		} else if after, ok = strings.CutPrefix(mech, "mx:"); ok {
-			// mx:<domain>
-			// mx:<domain>/<prefix-length>
-			mx := after
-			split := strings.Split(mx, "/")
-			if len(split) > 1 {
-				mx = split[0]
-			}
-
-			if !emailutils.IsDomain(mx) {
-				return
-			}
-
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(mx, totalQueries, spfDNSQueryTypeMX)
-		} else if after, ok = strings.CutPrefix(mech, "ptr:"); ok {
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(after, totalQueries, spfDNSQueryTypePTR)
-		} else if after, ok = strings.CutPrefix(mech, "exists:"); ok {
-			// exists:<domain-spec> 是 RFC 7208 里的 SPF 机制之一：
-			// 1) 先对 domain-spec 做 macro 展开；
-			// 2) 再查询展开后的域名是否“存在”可解析的 A 记录；
-			// 3) 这个动作本身会消耗一次 DNS 查询配额，必须计入 10 次上限。
-			//
-			// 但当前函数只是“递归查询次数估算器”，没有 client IP / macro 上下文，
-			// 因此这里只做计数，不尝试做完整的 exists 匹配求值。
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(after, totalQueries, spfDNSQueryTypeExists)
-		} else if after, ok = strings.CutPrefix(mech, "include:"); ok {
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(after, totalQueries)
-		} else if after, ok = strings.CutPrefix(mech, "redirect="); ok {
-			_, _, totalQueries, _ = dr.LookupRecursiveSPF(after, totalQueries)
-		}
-	}
-
-	return
+	return lookupRecursiveSPF(dr, domain, _totalQueries, dnsType...)
 }
 
 func (dr *defaultResolver) isDNSErrorNoSuchHost(err error) (v bool, e string) {
