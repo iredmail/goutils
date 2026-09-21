@@ -68,14 +68,6 @@ func RemoveSpacesAndNewLines(s string, sep ...string) string {
 	}
 }
 
-// StringSliceToLower 将 slice 里的元素都转换为小写。
-// DEPRECATED: 使用 `slice.ToLower()` 代替。
-func StringSliceToLower(ss []string) {
-	for i := range len(ss) {
-		ss[i] = strings.ToLower(ss[i])
-	}
-}
-
 // FlattenStrings 函数将输入的任意类型 v 展平为一个字符串切片，空字符串和重复的字符串会被移除。
 // 对于嵌套的切片，函数会递归地展平所有层级。
 func FlattenStrings(v any) (flattened []string) {
