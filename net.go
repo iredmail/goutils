@@ -22,20 +22,7 @@ var (
 )
 
 func IsIP(s string) bool {
-	ip := net.ParseIP(s)
-	if ip == nil {
-		return false
-	}
-
-	// IPv4 最后一个数字必须是 1-255。
-	if ip.To4() != nil {
-		lastOctet := ip.To4()[3]
-		if lastOctet <= 0 || lastOctet > 255 {
-			return false
-		}
-	}
-
-	return true
+	return net.ParseIP(s) != nil
 }
 
 func IsCIDR(s string) bool {
@@ -125,7 +112,7 @@ func IsIPv4(address string) bool {
 func IsIPv6(address string) bool {
 	ip := net.ParseIP(address)
 
-	return ip.To16() != nil
+	return ip != nil && ip.To4() == nil
 }
 
 func IsHttpEndpoint(endpoint string) bool {

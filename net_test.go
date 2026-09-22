@@ -8,20 +8,32 @@ import (
 
 func TestIsIP(t *testing.T) {
 	assert.True(t, IsIP("192.168.0.1"))
+	assert.True(t, IsIP("192.168.1.0")) // 实际遇到 Roundcube 请求来自 IP x.x.x.0
+	assert.True(t, IsIP("192.168.1.255"))
+	assert.True(t, IsIP("2001:db8::1"))
+	assert.True(t, IsIP("::1"))
 	assert.False(t, IsIP("192.168.0.0/24"))
-	assert.False(t, IsIP("192.168.1.0"))
 	assert.False(t, IsIP("192.168.1."))
 	assert.False(t, IsIP("192.168.1"))
 	assert.False(t, IsIP("192.168."))
 	assert.False(t, IsIP("192.168"))
 	assert.False(t, IsIP("192."))
 	assert.False(t, IsIP("192"))
+	assert.False(t, IsIP("[2001:db8::1]"))
+	assert.False(t, IsIP("192.168.0.1:25"))
 }
 
-func TestIsIPv46(t *testing.T) {
+func TestIsIPv4(t *testing.T) {
 	assert.True(t, IsIPv4("192.168.2.4"))
+	assert.False(t, IsIPv4("2001:db8::1"))
 	assert.False(t, IsIPv4("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
+}
+
+func TestIsIPv6(t *testing.T) {
+	assert.False(t, IsIPv6("192.168.2.4"))
+	assert.True(t, IsIPv6("2001:db8::1"))
 	assert.True(t, IsIPv6("2001:0db8:85a3:0000:0000:8a2e:0370:7334"))
+	assert.True(t, IsIPv6("::1"))
 }
 
 func TestIsCIDR(t *testing.T) {
