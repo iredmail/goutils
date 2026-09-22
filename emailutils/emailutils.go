@@ -17,7 +17,7 @@ import (
 
 var (
 	// Email with traditional domain format, supports local part with letters, digits, and special characters.
-	regexEmail = regexp.MustCompile(`[\w\-#][\w\-.+=/&#]*@[\w\-][\w\-.]*\.[a-zA-Z0-9\-]{2,25}$`)
+	regexEmail = regexp.MustCompile(`^[\w\-#'~][\w\-.+=/&#'~]*@[\w\-][\w\-.]*\.[a-zA-Z0-9\-]{2,25}$`)
 
 	// Email with IP address literal in domain part, supports both IPv4 and IPv6.
 	// Format: `user@[IP]` where IP can be IPv4 (1.2.3.4) or IPv6 (2001:db8::1)

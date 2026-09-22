@@ -13,14 +13,16 @@ func TestIsEmail(t *testing.T) {
 	assert.False(t, IsEmail("user.123@abc@abc.com"))
 	assert.False(t, IsEmail("user@domain"))
 	assert.False(t, IsEmail("win-q1hgaa9hc1g$@b.io")) // $
+	assert.False(t, IsEmail("lcastaã±eda@ruska.com.pe"))
 
 	// Valid
 	assert.True(t, IsEmail("user@abc.com"))
 	assert.True(t, IsEmail("user+abc@abc.com"))
 	assert.True(t, IsEmail("user.abc@abc.com"))
 	assert.True(t, IsEmail("user.123@abc.com"))
+	assert.True(t, IsEmail("o'hara@abc.com"))    // '
+	assert.True(t, IsEmail("user~name@abc.com")) // ~
 	assert.True(t, IsEmail("user@sub3.sub2.sub1.com"))
-	assert.True(t, IsEmail("lcastaã±eda@ruska.com.pe"))
 	assert.True(t, IsEmail("lcastaeda@ruska.com.pe"))
 	assert.True(t, IsEmail("bounces+32777391-f0d7-user=iii.com@em6987.great.com"))
 
