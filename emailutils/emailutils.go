@@ -17,11 +17,11 @@ import (
 
 var (
 	// Email with traditional domain format, supports local part with letters, digits, and special characters.
-	regexEmail = regexp.MustCompile(`^[\w\-#'~][\w\-.+=/&#'~]*@[\w\-][\w\-.]*\.[a-zA-Z0-9\-]{2,25}$`)
+	regexEmail = regexp.MustCompile(`^[\w\-#'~][\w\-.+=/&#'~*]*@[\w\-][\w\-.]*\.[a-zA-Z0-9\-]{2,25}$`)
 
 	// Email with IP address literal in domain part, supports both IPv4 and IPv6.
 	// Format: `user@[IP]` where IP can be IPv4 (1.2.3.4) or IPv6 (2001:db8::1)
-	regexEmailWithIPDomain = regexp.MustCompile(`^[\w\-#][\w\-.+=/&#]*@\[[\da-fA-F:.]+\]$`)
+	regexEmailWithIPDomain = regexp.MustCompile(`^[\w\-#][\w\-.+=/&#]*@\[[\da-fA-F:.]+]$`)
 
 	// Domain must start with an alphanumeric character, then may contain alnum, dot or hyphen,
 	// and must end with a dot + 2-25 alphanumeric TLD. This forbids leading dot or hyphen.
@@ -35,10 +35,10 @@ var (
 	regexAllDigits = regexp.MustCompile(`^\d+$`)
 
 	// FQDN 域名的首字母
-	regexValidDomainFirstChar = regexp.MustCompile(`^[0-9a-zA-Z]{1,1}$`)
+	// regexValidDomainFirstChar = regexp.MustCompile(`^[0-9a-zA-Z]$`)
 
 	// FQDN 域名
-	regexFQDN = regexp.MustCompile(`^([a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9]{1}[a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z]{1}[a-zA-Z0-9]{0,62})\.?$`)
+	regexFQDN = regexp.MustCompile(`^([a-zA-Z0-9][a-zA-Z0-9-]{0,62})(\.[a-zA-Z0-9][a-zA-Z0-9-]{0,62})*?(\.[a-zA-Z][a-zA-Z0-9]{0,62})\.?$`)
 )
 
 func allAreDigits(s string) bool {
@@ -443,7 +443,7 @@ func ReverseDomainsByDot(domains []string) []string {
 //   - Username and domain parts will be converted to lower cases.
 //   - Address extension will be kept (with same upper/lower cases).
 func ExtractEmailsInCommaString(s string) (mails []string) {
-	for _, addr := range strings.Split(s, ",") {
+	for addr := range strings.SplitSeq(s, ",") {
 		addr = strings.TrimSpace(addr)
 
 		if IsEmail(addr) {
