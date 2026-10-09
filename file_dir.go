@@ -153,6 +153,78 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 	return fmt.Errorf("failed in checking stat of file %s: %v", pth, err)
 }
 
+// WriteFileAtomic 以「先写临时文件、再原子替换」的方式写入文件。
+//
+// 为什么不直接用 os.WriteFile / O_TRUNC 原地覆盖：
+// 这类写法会先把目标文件截断为 0 字节，再写入新内容。
+// 若在两步之间进程被中断（断电、OOM、被 kill、容器被驱逐），
+// 目标文件就会停留在**空**或**半截**状态，造成不可逆的数据丢失。
+// 而被写入的往往是关键配置或状态文件（/etc/fstab、/etc/hosts、
+// /etc/sysctl.conf、crontab 等），一旦丢失会直接影响系统启动或服务可用性。
+//
+// 本函数改为：
+//  1. 在目标文件所在目录创建临时文件（同目录，保证可原子 rename）；
+//  2. 写入内容并 fsync，确保数据真正落盘；
+//  3. 用 os.Rename 原子替换目标文件。
+//
+// rename 在同一文件系统内是原子操作，因此观察者要么看到旧内容、
+// 要么看到新内容，不会看到中间状态；失败时原文件保持不变。
+//
+// perm 用于新建文件时的权限。注意：若目标文件已存在，
+// 其原有权限会被保留（通过先把权限复制到临时文件实现），
+// 因此显式传入的 perm 只对「文件原本不存在」的情况生效。
+func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
+	dir := filepath.Dir(pth)
+
+	// 若目标文件已存在，沿用它的权限，避免一次改写意外改变文件权限。
+	if info, err := os.Stat(pth); err == nil {
+		perm = info.Mode().Perm()
+	}
+
+	tmp, err := os.CreateTemp(dir, "."+filepath.Base(pth)+".tmp-*")
+	if err != nil {
+		return fmt.Errorf("failed in creating temporary file in %s: %w", dir, err)
+	}
+
+	tmpPath := tmp.Name()
+
+	// 清理函数：任何提前返回都要移除临时文件，避免残留。
+	// 成功 rename 之后该路径已不存在，重复删除是无害的。
+	defer func() {
+		_ = os.Remove(tmpPath)
+	}()
+
+	if err = tmp.Chmod(perm); err != nil {
+		_ = tmp.Close()
+
+		return fmt.Errorf("failed in setting permission of %s: %w", tmpPath, err)
+	}
+
+	if _, err = tmp.Write(data); err != nil {
+		_ = tmp.Close()
+
+		return fmt.Errorf("failed in writing to %s: %w", tmpPath, err)
+	}
+
+	// fsync：确保内容在 rename 之前已真正写入磁盘。
+	// 否则断电时可能出现「rename 已生效但数据未落盘」的空文件。
+	if err = tmp.Sync(); err != nil {
+		_ = tmp.Close()
+
+		return fmt.Errorf("failed in syncing %s: %w", tmpPath, err)
+	}
+
+	if err = tmp.Close(); err != nil {
+		return fmt.Errorf("failed in closing %s: %w", tmpPath, err)
+	}
+
+	if err = os.Rename(tmpPath, pth); err != nil {
+		return fmt.Errorf("failed in replacing %s: %w", pth, err)
+	}
+
+	return nil
+}
+
 // ReadFullFileContent 读取指定文件的所有内容，并去除首尾的空白字符。
 func ReadFullFileContent(pth string) (content []byte, err error) {
 	content, err = os.ReadFile(pth)
