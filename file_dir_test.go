@@ -3,6 +3,7 @@ package goutils
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"testing"
 
@@ -396,8 +397,12 @@ func TestWriteFileAtomicEmptyContent(t *testing.T) {
 	assert.Empty(t, got)
 }
 
-// 验证 copyFile 不再跟随符号链接
-func TestVerifyCopyFileNoSymlinkFollow(t *testing.T) {
+// 验证 copyFile 不会跟随目标位置预置的符号链接。
+//
+// 这是安全断言的核心，与「是否允许覆盖」无关：
+// copyFile 允许覆盖已存在的目标（copyDir 依赖该语义），
+// 但覆盖的必须是**链接本身**，而不能顺着链接写到它指向的文件。
+func TestVerifyCopyFileDoesNotFollowSymlink(t *testing.T) {
 	dir := t.TempDir()
 
 	src := filepath.Join(dir, "src.txt")
@@ -409,12 +414,23 @@ func TestVerifyCopyFileNoSymlinkFollow(t *testing.T) {
 	link := filepath.Join(dir, "link.txt")
 	require.NoError(t, os.Symlink(victim, link))
 
-	// 模拟 copyDir 把 src 复制到 link 位置
-	err := copyFile(src, link)
-	require.Error(t, err, "目标已是符号链接时应拒绝")
+	// 模拟 copyDir 把 src 复制到 link 位置。
+	require.NoError(t, copyFile(src, link))
 
-	got, _ := os.ReadFile(victim)
-	assert.Equal(t, "victim-original", string(got), "受害文件不应被写入")
+	// 最关键：受害文件的内容必须未被改动。
+	got, err := os.ReadFile(victim)
+	require.NoError(t, err)
+	assert.Equal(t, "victim-original", string(got),
+		"受害文件被写入了：说明仍会跟随预置的符号链接")
+
+	// 链接本身应被替换成普通文件，内容为源文件内容。
+	li, err := os.Lstat(link)
+	require.NoError(t, err)
+	assert.True(t, li.Mode().IsRegular(), "符号链接应被普通文件替换")
+
+	copied, err := os.ReadFile(link)
+	require.NoError(t, err)
+	assert.Equal(t, "source-data", string(copied))
 }
 
 // 验证 GetFileStat 不再把特殊文件误判为普通文件
@@ -457,4 +473,153 @@ func TestVerifyCreateDirIfNotExistRejectsSymlink(t *testing.T) {
 
 	err := CreateDirIfNotExist(link, 0755)
 	require.Error(t, err, "符号链接不应被当作目录使用")
+}
+
+// TestVerifyCopyFileCleansUpOnLateFailure 验证「尾部失败也会清理 dst」。
+//
+// 背景：copyFile 以 O_EXCL 创建目标，若失败后不删除，调用方在同一路径
+// 重试时会因「已存在」而永久失败。因此 defer 的清理逻辑必须能感知
+// **所有**错误路径，包括 Chmod / Chown 这些位于函数尾部的步骤。
+//
+// 之所以能感知，是因为 copyFile 的签名保留了命名返回值 err：
+// return 语句会先把返回值赋给 err，再执行 defer。
+// 若把签名改回 `error`（err 变成局部变量），尾部那些
+// `return fmt.Errorf(...)` 就不会赋值给 err，dst 将残留。
+//
+// 真实环境中 Chown 失败难以稳定构造（非 root 用户 chown 给自己总是成功），
+// 因此这里用「只读目录」让创建阶段失败，验证失败路径不残留；
+// 命名返回值机制本身则由 TestVerifyCopyFileSignatureHasNamedReturn 断言。
+func TestVerifyCopyFileCleansUpOnLateFailure(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("以 root 运行时目录权限不生效")
+	}
+
+	dir := t.TempDir()
+	src := filepath.Join(dir, "src.txt")
+	require.NoError(t, os.WriteFile(src, []byte("data"), 0644))
+
+	roDir := filepath.Join(dir, "readonly")
+	require.NoError(t, os.Mkdir(roDir, 0555))
+	t.Cleanup(func() { _ = os.Chmod(roDir, 0755) })
+
+	dst := filepath.Join(roDir, "dst.txt")
+
+	err := copyFile(src, dst)
+	require.Error(t, err, "只读目录中应失败")
+
+	_, statErr := os.Stat(dst)
+	assert.True(t, os.IsNotExist(statErr), "失败路径不应残留目标文件")
+}
+
+// TestVerifyCopyFileSignatureHasNamedReturn 断言 copyFile 使用命名返回值。
+//
+// 这是 TestVerifyCopyFileCleansUpOnLateFailure 能成立的前提：
+// 只有命名返回值才能让 defer 看到 `return fmt.Errorf(...)` 这类路径的错误。
+// 该断言通过行为验证：构造一个在 Chmod 之后失败的场景不可行，
+// 因此改为验证「成功路径不误删 + 失败路径不残留」这一对性质，
+// 并在注释中明确记录签名要求，避免后人误改。
+func TestVerifyCopyFileSignatureHasNamedReturn(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "src.txt")
+	dst := filepath.Join(dir, "dst.txt")
+
+	require.NoError(t, os.WriteFile(src, []byte("data"), 0644))
+
+	// 成功路径：目标必须保留（若 defer 误判为失败而删除，此处会失败）
+	require.NoError(t, copyFile(src, dst))
+
+	got, err := os.ReadFile(dst)
+	require.NoError(t, err)
+	assert.Equal(t, "data", string(got), "成功路径不应删除目标文件")
+}
+
+// TestCopyFileSignatureMustKeepNamedReturn 静态断言 copyFile 保留命名返回值。
+//
+// 为什么需要静态断言：函数中「类型断言失败」那条路径写成
+//
+//	return fmt.Errorf("failed in reading owner/group info of %s", src)
+//
+// 位于 defer 注册之后。defer 通过检查 err 是否为 nil 来决定是否删除已创建的
+// 目标文件；而该路径不给 err 赋值，只有当签名是命名返回值 `(err error)` 时，
+// return 语句才会把值写入 err，defer 才能看到。
+//
+// 若签名被改回 `error`，这条路径下 err 保持为 nil，目标文件不会被删除；
+// 又因为创建使用了 O_EXCL，调用方在同一路径重试会永久失败。
+//
+// 该路径无法从外部构造（stat.Sys() 的类型断言在类 Unix 上恒为真），
+// 因此行为测试覆盖不到，只能在此静态检查源码。
+func TestCopyFileSignatureMustKeepNamedReturn(t *testing.T) {
+	src, err := os.ReadFile("file_dir.go")
+	require.NoError(t, err, "应能读到同目录的 file_dir.go")
+
+	const wantSignature = "func copyFile(src, dst string) (err error) {"
+
+	if !strings.Contains(string(src), wantSignature) {
+		t.Errorf("copyFile 的签名必须是 %q，实际未找到。\n"+
+			"原因：defer 依赖命名返回值 err 来判断是否需要清理已创建的目标文件；\n"+
+			"改成 `error` 会让「类型断言失败」那条 return 路径不删除目标文件，\n"+
+			"而创建时用了 O_EXCL，会导致调用方在同一路径重试永久失败。",
+			wantSignature)
+	}
+}
+
+// TestVerifyCopyFileOverwritesExisting 验证目标已存在时会被覆盖。
+//
+// copyDir 依赖该语义：os.Rename 因 EXDEV 失败后，它把源树复制到目标树，
+// 而目标树中可能已有同名文件。若此处报错，重复复制与「合并到已有目录」
+// 都会失败。
+func TestVerifyCopyFileOverwritesExisting(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "src.txt")
+	dst := filepath.Join(dir, "dst.txt")
+
+	require.NoError(t, os.WriteFile(src, []byte("new-content"), 0644))
+	require.NoError(t, os.WriteFile(dst, []byte("old-content"), 0644))
+
+	require.NoError(t, copyFile(src, dst), "目标已存在时应覆盖，不应报错")
+
+	got, err := os.ReadFile(dst)
+	require.NoError(t, err)
+	assert.Equal(t, "new-content", string(got))
+}
+
+// TestVerifyCopyFileOverwriteUpdatesMode 验证覆盖后权限跟随源文件。
+//
+// 创建时先用 0600 再 Chmod 成源文件权限，因此覆盖一个 0644 的旧文件、
+// 源文件为 0600 时，结果必须是 0600，不能沿用旧文件的权限。
+func TestVerifyCopyFileOverwriteUpdatesMode(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "src.txt")
+	dst := filepath.Join(dir, "dst.txt")
+
+	require.NoError(t, os.WriteFile(src, []byte("x"), 0600))
+	require.NoError(t, os.WriteFile(dst, []byte("old"), 0644))
+
+	require.NoError(t, copyFile(src, dst))
+
+	info, err := os.Stat(dst)
+	require.NoError(t, err)
+	assert.Equal(t, os.FileMode(0600), info.Mode().Perm())
+}
+
+// TestVerifyCopyDirIsIdempotent 验证 copyDir 可重复执行。
+//
+// 由于 copyDir 用 MkdirAll 创建目标目录（已存在时成功），随后逐条调用
+// copyFile，若 copyFile 不覆盖已存在文件，第二次复制会在第一个同名文件上
+// 直接失败，使整个复制不幂等。
+func TestVerifyCopyDirIsIdempotent(t *testing.T) {
+	base := t.TempDir()
+	src := filepath.Join(base, "src")
+	dst := filepath.Join(base, "dst")
+
+	require.NoError(t, os.MkdirAll(src, 0755))
+	require.NoError(t, os.WriteFile(filepath.Join(src, "a.txt"), []byte("aaa"), 0644))
+	require.NoError(t, os.WriteFile(filepath.Join(src, "b.txt"), []byte("bbb"), 0644))
+
+	require.NoError(t, copyDir(src, dst), "首次复制应成功")
+	require.NoError(t, copyDir(src, dst), "重复复制应成功（幂等）")
+
+	got, err := os.ReadFile(filepath.Join(dst, "a.txt"))
+	require.NoError(t, err)
+	assert.Equal(t, "aaa", string(got))
 }

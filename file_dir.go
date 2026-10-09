@@ -423,11 +423,22 @@ func copyDir(src, dst string) error {
 
 // copyFile copies a single file from src to dst.
 //
-// 安全要点：目标文件以 O_EXCL|O_NOFOLLOW 创建（见下方说明），
-// 不使用 os.Create —— 后者会**跟随符号链接**：
+// 安全要点：不使用 os.Create —— 后者会**跟随符号链接**：
 // 若攻击者预先在 dst 处放置一个指向 /etc/sudoers 之类的符号链接，
 // 复制操作就会把内容写进该目标文件，形成任意文件写。
-func copyFile(src, dst string) error {
+//
+// 因此不采用「打开已有路径再写入」的方式，而是：
+//  1. 若 dst 已存在则先 os.Remove（作用于链接自身，不跟随）；
+//  2. 再以 O_CREATE|O_EXCL|O_NOFOLLOW 新建。
+//
+// 这样既保持了「目标已存在时覆盖」的语义（os.Rename 因 EXDEV 失败后，
+// copyDir 依赖它把源树复制到目标树；目标树中可能已有同名文件），
+// 又不会顺着预置的符号链接写入。
+//
+// 写入过程中若发生错误，会删除已创建的 dst，避免留下半截文件；
+// 因为创建使用了 O_EXCL，残留文件会让调用方在同一路径重试时永久失败，
+// 所以函数签名保留了命名返回值 err（详见 defer 处的说明）。
+func copyFile(src, dst string) (err error) {
 	in, err := os.Open(src)
 	if err != nil {
 		return err
@@ -439,23 +450,38 @@ func copyFile(src, dst string) error {
 		return err
 	}
 
-	// 以独占方式创建目标文件，拒绝跟随已存在的符号链接：
-	//   - O_CREATE|O_EXCL：目标已存在（含符号链接）时直接报错，
-	//     而不是像 os.Create 那样截断并跟随链接写入；
-	//   - O_NOFOLLOW：即使目标本身就是符号链接也拒绝打开。
+	// 目标已存在时先移除：os.Remove 作用于路径本身（不跟随符号链接），
+	// 因此删除的是预置的链接而不是它指向的文件。
 	//
+	// 必须先删除再创建，而不能直接打开已有路径写入（os.Create 就是这样），
+	// 因为那样会跟随符号链接。同时这一步也保证了「目标已存在时覆盖」的语义：
+	// copyDir 在 os.Rename 因 EXDEV 失败后被调用，目标树中可能已有同名文件，
+	// 此时应覆盖而不是报错，否则重复复制会失败。
+	if _, err = os.Lstat(dst); err == nil {
+		if err = os.Remove(dst); err != nil {
+			return fmt.Errorf("failed in removing existing destination %s: %w", dst, err)
+		}
+	}
+
 	// 初建权限先取 0600（最小权限），随后再按源文件权限修正 ——
 	// 避免“创建到 chmod 之间”存在一段权限过宽的窗口。
 	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_EXCL|syscall.O_NOFOLLOW, 0600)
 	if err != nil {
-		if os.IsExist(err) {
-			return fmt.Errorf("destination already exists (refusing to follow a possible symbol link): %s", dst)
-		}
-
-		return err
+		return fmt.Errorf("failed in creating destination %s: %w", dst, err)
 	}
 
-	// 写出错时清理掉半截文件，避免留下不完整的目标。
+	// 任何一步失败都删除已创建的 dst，避免留下半截文件。
+	//
+	// 这里判断的是**命名返回值 err**（函数签名中写的是 `(err error)`）。
+	// return 语句会先把返回值赋给 err，再执行 defer，因此无论写成本函数
+	// 末尾那种 `return fmt.Errorf(...)`（类型断言失败分支），
+	// 还是 `err = ...; return err`，defer 都能看到错误。
+	//
+	// 反过来说，若把签名改回 `error`（err 变成局部变量），
+	// 末尾那条 `return fmt.Errorf(...)` 就不会再赋值给 err，
+	// defer 看到的仍是 nil，dst 便不会被删除；而创建使用了 O_EXCL，
+	// 调用方在同一路径重试会永久失败。因此命名返回值是必要的，不要改掉。
+	// 这一点由 TestCopyFileSignatureMustKeepNamedReturn 静态守护。
 	defer func() {
 		if err != nil {
 			_ = os.Remove(dst)
@@ -489,5 +515,9 @@ func copyFile(src, dst string) error {
 		return fmt.Errorf("failed in reading owner/group info of %s", src)
 	}
 
-	return os.Chown(dst, int(sys.Uid), int(sys.Gid))
+	if err = os.Chown(dst, int(sys.Uid), int(sys.Gid)); err != nil {
+		return err
+	}
+
+	return nil
 }
