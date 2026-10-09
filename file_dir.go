@@ -24,13 +24,31 @@ type FileStat struct {
 	Gid       uint32
 }
 
+// String 返回 FileStat 的可读描述，便于日志与调试。
+//
+// 除类型标记外，这里也带上属主/属组与权限，
+// 因为这些是排查“文件为何未被修改”时最常用的信息。
 func (fs *FileStat) String() string {
 	return fmt.Sprintf(
-		"Exists: %v, IsLink: %v, IsRegular: %v, IsDir: %v",
-		fs.Exists, fs.IsLink, fs.IsRegular, fs.IsDir,
+		"Name: %s, Exists: %v, IsLink: %v, IsRegular: %v, IsDir: %v, Mode: %04o, Owner: %s, Group: %s",
+		fs.Name, fs.Exists, fs.IsLink, fs.IsRegular, fs.IsDir, fs.Mode.Perm(), fs.Owner, fs.Group,
 	)
 }
 
+// GetFileStat 获取目标路径的信息（不跟随符号链接）。
+//
+// 注意：使用 os.Lstat，因此若 pth 本身是符号链接，
+// 返回的是**链接自身**的信息（IsLink = true），而不是它指向的目标。
+//
+// 路径不存在时返回零值 FileStat（Exists = false）且 err 为 nil，
+// 调用方应以 fs.Exists 判断存在性。
+//
+// 类型判定说明（重要）：
+// IsRegular **仅在文件确实是普通文件**时为 true，使用 stat.Mode().IsRegular() 判断。
+// 四个类型标记是互斥的；FIFO、socket、字符/块设备（如 /dev/null）
+// 三者皆为 false。调用方（file / template / copy2 等模块）应先确认
+// IsRegular 为 true，再对文件执行 chmod / chown / 覆盖等操作，
+// 避免把特殊文件当作普通文件处理。
 func GetFileStat(pth string) (FileStat, error) {
 	fs := FileStat{}
 
@@ -47,110 +65,167 @@ func GetFileStat(pth string) (FileStat, error) {
 	fs.Name = stat.Name()
 	fs.Mode = stat.Mode()
 
-	// Get uid / gid and owner / group names
-	ss := stat.Sys().(*syscall.Stat_t)
+	// 取 uid/gid 与属主/属组名。
+	//
+	// 注意：stat.Sys() 在不同操作系统上的具体类型不同，
+	// 这里假定为类 Unix 平台的 *syscall.Stat_t（本仓库仅支持类 Unix）。
+	ss, ok := stat.Sys().(*syscall.Stat_t)
+	if !ok {
+		return fs, fmt.Errorf("unsupported file info type for %s", pth)
+	}
+
 	fs.Uid = ss.Uid
 	fs.Gid = ss.Gid
 
-	usr, err := user.LookupId(fmt.Sprintf("%d", fs.Uid))
-	if err == nil {
+	// 查不到名称时保留空字符串即可（例如 uid 没有对应的 /etc/passwd 条目），
+	// 这不影响 Exists / 类型等关键信息，因此不视为错误。
+	if usr, err := user.LookupId(fmt.Sprintf("%d", fs.Uid)); err == nil {
 		fs.Owner = usr.Username
 	}
 
-	group, err := user.LookupGroupId(fmt.Sprintf("%d", fs.Gid))
-	if err == nil {
+	if group, err := user.LookupGroupId(fmt.Sprintf("%d", fs.Gid)); err == nil {
 		fs.Group = group.Name
 	}
 
-	if stat.IsDir() {
+	// 按真实类型分类，互斥且完整：
+	// 目录 → IsDir；符号链接 → IsLink；普通文件 → IsRegular；其余（FIFO、
+	// socket、设备等）三者皆 false，调用方应据此拒绝操作，而不是当成普通文件。
+	switch {
+	case stat.IsDir():
 		fs.IsDir = true
-
-		return fs, nil
-	}
-
-	if stat.Mode()&os.ModeSymlink == os.ModeSymlink {
+	case stat.Mode()&os.ModeSymlink != 0:
 		fs.IsLink = true
-
-		return fs, nil
+	case stat.Mode().IsRegular():
+		fs.IsRegular = true
 	}
-
-	fs.IsRegular = true
 
 	return fs, nil
 }
 
 // DestExists 检查目标对象（文件、目录、符号链接，等）是否存在。
+//
+// 注意：使用 os.Stat，会**跟随符号链接**，因此：
+//   - 指向有效目标的符号链接 → true；
+//   - **悬空**符号链接（目标不存在）→ false。
+//
+// 若判断的是“链接本身是否存在”，应改用 os.Lstat。
 func DestExists(pth string) bool {
 	_, err := os.Stat(pth)
 
 	return err == nil
 }
 
-// CreateDirIfNotExist creates target directory with mode `0700` if it
-// does not exist.
-func CreateDirIfNotExist(pth string, mode os.FileMode) (err error) {
-	var info os.FileInfo
-
-	info, err = os.Stat(pth)
-
+// CreateDirIfNotExist 创建目标目录（若不存在）。
+//
+// 注意：
+//   - MkdirAll 的 perm 参数会**受 umask 影响**（例如 umask 022 时 0777 实际为 0755）。
+//     若调用方要求精确权限，应在调用后自行 Chmod。
+//   - 使用 os.Lstat 判断存在性，不跟随符号链接：
+//     符号链接即使是悬空的也不会被当成“不存在”，避免顺着链接去创建目录。
+//   - 已存在但不是目录（普通文件、符号链接等）时返回明确错误。
+func CreateDirIfNotExist(pth string, mode os.FileMode) error {
+	info, err := os.Lstat(pth)
 	if err != nil {
-		if os.IsNotExist(err) {
-			// Destination doesn't exist. Create it.
-			err = os.MkdirAll(pth, mode)
+		if !os.IsNotExist(err) {
+			// 除“不存在”外的错误（如权限不足、路径中间层不是目录）原样返回，
+			// 交由调用方判断；此处不吞掉错误。
+			return fmt.Errorf("failed in checking stat of %s: %w", pth, err)
+		}
 
-			if err != nil {
-				return fmt.Errorf("failed in creating directory %s. error=%v", pth, err)
-			}
-		} else {
-			return
+		if err = os.MkdirAll(pth, mode); err != nil {
+			return fmt.Errorf("failed in creating directory %s: %w", pth, err)
 		}
-	} else {
-		// 目标路径存在，但不是目录。
-		if !info.IsDir() {
-			return fmt.Errorf("%s exists, but not a directory", pth)
-		}
+
+		return nil
 	}
 
-	return
-}
-
-func CreateDirWithOGMIfNotExist(pth string, mode os.FileMode, ownerUid, ownerGid int) (err error) {
-	err = CreateDirIfNotExist(pth, mode)
-	if err != nil {
-		return
+	if info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("%s exists and is a symbol link (refusing to use it as a directory)", pth)
 	}
 
-	return os.Chown(pth, ownerUid, ownerGid)
+	if !info.IsDir() {
+		return fmt.Errorf("%s exists, but not a directory", pth)
+	}
+
+	return nil
 }
 
-// CreateFileIfNotExist creates target file with mode `0700` if it doesn't exist.
+// CreateDirWithOGMIfNotExist 创建目录并设置属主/属组（若目录不存在）。
+//
+// 参数 ownerUid / ownerGid 为 -1 时，对应项保持不变
+// （与 os.Chown 的语义一致）；传入其它负值会被 os.Chown 拒绝。
+func CreateDirWithOGMIfNotExist(pth string, mode os.FileMode, ownerUid, ownerGid int) error {
+	if err := CreateDirIfNotExist(pth, mode); err != nil {
+		return err
+	}
+
+	if err := os.Chown(pth, ownerUid, ownerGid); err != nil {
+		return fmt.Errorf("failed in setting owner/group of %s: %w", pth, err)
+	}
+
+	return nil
+}
+
+// CreateFileIfNotExist creates target file with given mode if it doesn't exist.
+//
+// 注意事项：
+//   - 使用 os.Lstat 判断存在性，**不跟随符号链接**。
+//     若用 os.Stat，一个指向不存在目标的「悬空符号链接」会被判为“不存在”，
+//     随后的写入会顺着该链接落到它指向的真实路径上（若父目录存在），
+//     使调用方在不知情的情况下写到别处。
+//   - 若目标已是符号链接（无论是否悬空），直接报错而不是跟随写入。
+//   - 目标已存在且是普通文件时直接返回 nil（不覆盖既有内容）。
 func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
-	info, err := os.Stat(pth)
+	info, err := os.Lstat(pth)
 	if err == nil {
 		if info.IsDir() {
 			return fmt.Errorf("%s is a directory (which should be a regular file)", pth)
 		}
 
+		if info.Mode()&os.ModeSymlink != 0 {
+			return fmt.Errorf("%s is a symbol link (refusing to write through it)", pth)
+		}
+
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("%s is not a regular file (mode=%v)", pth, info.Mode().Type())
+		}
+
+		// 已存在且是普通文件：不覆盖。
 		return nil
 	}
 
-	if os.IsNotExist(err) {
-		// Check and create (if not exist) parent directory with permission 0755.
-		dir := filepath.Dir(pth)
-		if err2 := CreateDirIfNotExist(dir, 0755); err2 != nil {
-			return err2
-		}
-
-		// 创建文件
-		if err2 := os.WriteFile(pth, content, mode); err2 != nil {
-			return fmt.Errorf("failed in creating file %s: %v", pth, err2)
-		}
-
-		return nil
+	if !os.IsNotExist(err) {
+		// 其它错误（如权限不足）不应被当成“文件不存在”。
+		return fmt.Errorf("failed in checking stat of file %s: %w", pth, err)
 	}
 
-	// 其它错误
-	return fmt.Errorf("failed in checking stat of file %s: %v", pth, err)
+	// 文件不存在：确保父目录存在（权限 0755），再创建。
+	dir := filepath.Dir(pth)
+	if err2 := CreateDirIfNotExist(dir, 0755); err2 != nil {
+		return err2
+	}
+
+	// 以 O_EXCL 创建：若在 Lstat 与本次创建之间有人抢先创建了该路径
+	// （可能是符号链接），O_EXCL 会让创建失败，而不是跟随写入。
+	f, err2 := os.OpenFile(pth, os.O_WRONLY|os.O_CREATE|os.O_EXCL, mode)
+	if err2 != nil {
+		return fmt.Errorf("failed in creating file %s: %w", pth, err2)
+	}
+
+	if _, err2 = f.Write(content); err2 != nil {
+		_ = f.Close()
+		_ = os.Remove(pth)
+
+		return fmt.Errorf("failed in writing to file %s: %w", pth, err2)
+	}
+
+	if err2 = f.Close(); err2 != nil {
+		_ = os.Remove(pth)
+
+		return fmt.Errorf("failed in closing file %s: %w", pth, err2)
+	}
+
+	return nil
 }
 
 // WriteFileAtomic 以「先写临时文件、再原子替换」的方式写入文件。
@@ -173,11 +248,19 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 // perm 用于新建文件时的权限。注意：若目标文件已存在，
 // 其原有权限会被保留（通过先把权限复制到临时文件实现），
 // 因此显式传入的 perm 只对「文件原本不存在」的情况生效。
+//
+// 关于符号链接：本函数用 os.Rename 替换目标路径，
+// 因此若 pth 本身是符号链接，**链接会被替换成普通文件**，
+// 而不会沿链接写入它指向的目标。这个行为是刻意的（可避免被预置链接劫持），
+// 但调用方若期望“写入链接指向的真实文件”，需先自行解析链接（filepath.EvalSymlinks）。
 func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
 	dir := filepath.Dir(pth)
 
 	// 若目标文件已存在，沿用它的权限，避免一次改写意外改变文件权限。
-	if info, err := os.Stat(pth); err == nil {
+	//
+	// 用 os.Lstat 而非 os.Stat：目标若是符号链接，则取到的是链接自身的权限
+	// （符号链接权限恒为 0777，无实际意义），此时应保留调用方传入的 perm。
+	if info, err := os.Lstat(pth); err == nil && info.Mode()&os.ModeSymlink == 0 {
 		perm = info.Mode().Perm()
 	}
 
@@ -281,22 +364,34 @@ func MoveDir(src, dst string) error {
 }
 
 // copyDir recursively copies a directory tree.
+//
+// 目录权限的复制方式说明：MkdirAll 的 perm 会受 umask 影响，
+// 直接用源目录权限调用 MkdirAll 得到的权限会被 umask 削减
+// （例如源目录 0777、umask 022 时实际得到 0755），与原目录不一致。
+// 因此这里先用 0700 创建，再用 Chmod 显式设置 —— Chmod 不受 umask 影响。
 func copyDir(src, dst string) error {
 	stat, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
 
-	sys := stat.Sys().(*syscall.Stat_t)
+	sys, ok := stat.Sys().(*syscall.Stat_t)
+	if !ok {
+		return fmt.Errorf("unsupported file info type for %s", src)
+	}
 
-	// Create the destination directory with the same permissions
-	if err = os.MkdirAll(dst, stat.Mode()); err != nil {
-		return err
+	// 先用最小权限创建，随后再 Chmod 成源目录的权限。
+	if err = os.MkdirAll(dst, 0700); err != nil {
+		return fmt.Errorf("failed in creating directory %s: %w", dst, err)
+	}
+
+	if err = os.Chmod(dst, stat.Mode().Perm()); err != nil {
+		return fmt.Errorf("failed in setting permission of %s: %w", dst, err)
 	}
 
 	// Set the owner and group of the destination directory
 	if err = os.Chown(dst, int(sys.Uid), int(sys.Gid)); err != nil {
-		return err
+		return fmt.Errorf("failed in setting owner/group of %s: %w", dst, err)
 	}
 
 	entries, err := os.ReadDir(src)
@@ -308,6 +403,10 @@ func copyDir(src, dst string) error {
 		srcPath := filepath.Join(src, entry.Name())
 		dstPath := filepath.Join(dst, entry.Name())
 
+		// 目录按目录递归；其余（普通文件、符号链接等）按文件复制。
+		//
+		// 注意：这里用 entry.IsDir()，它基于 ReadDir 返回的 DirEntry 类型，
+		// 对符号链接返回 false（不会被误当成目录递归进去）。
 		if entry.IsDir() {
 			if err = copyDir(srcPath, dstPath); err != nil {
 				return err
@@ -323,6 +422,11 @@ func copyDir(src, dst string) error {
 }
 
 // copyFile copies a single file from src to dst.
+//
+// 安全要点：目标文件以 O_EXCL|O_NOFOLLOW 创建（见下方说明），
+// 不使用 os.Create —— 后者会**跟随符号链接**：
+// 若攻击者预先在 dst 处放置一个指向 /etc/sudoers 之类的符号链接，
+// 复制操作就会把内容写进该目标文件，形成任意文件写。
 func copyFile(src, dst string) error {
 	in, err := os.Open(src)
 	if err != nil {
@@ -330,32 +434,60 @@ func copyFile(src, dst string) error {
 	}
 	defer in.Close()
 
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	if _, err = io.Copy(out, in); err != nil {
-		return err
-	}
-
-	// Sync file content to disk
-	if err = out.Sync(); err != nil {
-		return err
-	}
-
-	// Copy file permissions and ownership
 	stat, err := os.Stat(src)
 	if err != nil {
 		return err
 	}
 
-	if err = os.Chmod(dst, stat.Mode()); err != nil {
+	// 以独占方式创建目标文件，拒绝跟随已存在的符号链接：
+	//   - O_CREATE|O_EXCL：目标已存在（含符号链接）时直接报错，
+	//     而不是像 os.Create 那样截断并跟随链接写入；
+	//   - O_NOFOLLOW：即使目标本身就是符号链接也拒绝打开。
+	//
+	// 初建权限先取 0600（最小权限），随后再按源文件权限修正 ——
+	// 避免“创建到 chmod 之间”存在一段权限过宽的窗口。
+	out, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE|os.O_EXCL|syscall.O_NOFOLLOW, 0600)
+	if err != nil {
+		if os.IsExist(err) {
+			return fmt.Errorf("destination already exists (refusing to follow a possible symbol link): %s", dst)
+		}
+
 		return err
 	}
 
-	sys := stat.Sys().(*syscall.Stat_t)
+	// 写出错时清理掉半截文件，避免留下不完整的目标。
+	defer func() {
+		if err != nil {
+			_ = os.Remove(dst)
+		}
+	}()
+
+	if _, err = io.Copy(out, in); err != nil {
+		_ = out.Close()
+
+		return err
+	}
+
+	// Sync file content to disk
+	if err = out.Sync(); err != nil {
+		_ = out.Close()
+
+		return err
+	}
+
+	if err = out.Close(); err != nil {
+		return err
+	}
+
+	// Copy file permissions and ownership
+	if err = os.Chmod(dst, stat.Mode().Perm()); err != nil {
+		return err
+	}
+
+	sys, ok := stat.Sys().(*syscall.Stat_t)
+	if !ok {
+		return fmt.Errorf("failed in reading owner/group info of %s", src)
+	}
 
 	return os.Chown(dst, int(sys.Uid), int(sys.Gid))
 }

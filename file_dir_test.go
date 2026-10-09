@@ -243,8 +243,9 @@ func TestWriteFileAtomicReplacesContent(t *testing.T) {
 
 // TestWriteFileAtomicPreservesExistingPermission 验证改写不会意外改变文件权限。
 //
-// 这一点很重要：若用临时文件的默认权限覆盖，一个原本 0600 的密钥文件
-// 可能在一次改写后变成 0644，从而泄露内容。
+// 为什么需要这条断言：本函数通过「创建临时文件再 rename」实现，
+// 而临时文件的权限若未按目标文件设置，一次改写就可能把 0600 的密钥文件
+// 变成 0644，从而泄露内容。因此要求已存在文件的权限被完整沿用。
 func TestWriteFileAtomicPreservesExistingPermission(t *testing.T) {
 	dir := t.TempDir()
 	pth := filepath.Join(dir, "secret.conf")
@@ -288,16 +289,12 @@ func TestWriteFileAtomicLeavesNoTempFiles(t *testing.T) {
 // TestWriteFileAtomicReplacesViaRenameWithoutTruncatingTarget 验证写入采用
 // 「写临时文件 + 原子 rename」，而不是原地截断。
 //
-// 为什么不能靠「让写入失败」来验证：
-// 实测表明 os.WriteFile 在打开阶段就会失败（目录/文件不可写），
-// 因此它同样不会留下被截断的文件——这类用例无法区分新旧实现。
+// 这里用**结构性质**来断言，而不是「让写入失败再看文件是否受损」：
+// 后者无法体现差异——无论哪种实现，在目录或文件不可写时都会在打开阶段
+// 就失败，因而都不会留下被截断的文件。
 //
-// 这里改用**结构性质**来断言：
-//   - 写入过程中目标文件的 inode 不会原地被改（rename 会换成新 inode）；
-//   - 目录中短暂出现的临时文件与目标文件不同名。
-//
-// inode 变化本身就是「通过 rename 替换」的直接证据，
-// 也意味着任一时刻的观察者要么看到旧内容、要么看到新内容，
+// inode 变化是「通过 rename 替换」的直接证据：它意味着写入换了一个新的
+// 文件实体，因此任一时刻的观察者要么看到完整旧内容、要么看到完整新内容，
 // 不存在「已截断但尚未写入」的中间态。
 func TestWriteFileAtomicReplacesViaRenameWithoutTruncatingTarget(t *testing.T) {
 	dir := t.TempDir()
@@ -397,4 +394,67 @@ func TestWriteFileAtomicEmptyContent(t *testing.T) {
 	got, err := os.ReadFile(pth)
 	require.NoError(t, err)
 	assert.Empty(t, got)
+}
+
+// 验证 copyFile 不再跟随符号链接
+func TestVerifyCopyFileNoSymlinkFollow(t *testing.T) {
+	dir := t.TempDir()
+
+	src := filepath.Join(dir, "src.txt")
+	require.NoError(t, os.WriteFile(src, []byte("source-data"), 0600))
+
+	victim := filepath.Join(dir, "victim.txt")
+	require.NoError(t, os.WriteFile(victim, []byte("victim-original"), 0600))
+
+	link := filepath.Join(dir, "link.txt")
+	require.NoError(t, os.Symlink(victim, link))
+
+	// 模拟 copyDir 把 src 复制到 link 位置
+	err := copyFile(src, link)
+	require.Error(t, err, "目标已是符号链接时应拒绝")
+
+	got, _ := os.ReadFile(victim)
+	assert.Equal(t, "victim-original", string(got), "受害文件不应被写入")
+}
+
+// 验证 GetFileStat 不再把特殊文件误判为普通文件
+func TestVerifyGetFileStatSpecialFiles(t *testing.T) {
+	st, err := GetFileStat("/dev/null")
+	require.NoError(t, err)
+	require.True(t, st.Exists)
+
+	assert.False(t, st.IsRegular, "/dev/null 是字符设备，不应被标记为普通文件")
+	assert.False(t, st.IsDir)
+	assert.False(t, st.IsLink)
+}
+
+// 验证 CreateFileIfNotExist 拒绝符号链接
+func TestVerifyCreateFileIfNotExistRejectsSymlink(t *testing.T) {
+	dir := t.TempDir()
+
+	victim := filepath.Join(dir, "victim.txt")
+	require.NoError(t, os.WriteFile(victim, []byte("original"), 0600))
+
+	link := filepath.Join(dir, "link.txt")
+	require.NoError(t, os.Symlink(victim, link))
+
+	err := CreateFileIfNotExist(link, []byte("new"), 0600)
+	require.Error(t, err, "目标为符号链接时应拒绝写入")
+
+	got, _ := os.ReadFile(victim)
+	assert.Equal(t, "original", string(got), "受害文件不应被写入")
+}
+
+// 验证 CreateDirIfNotExist 拒绝符号链接
+func TestVerifyCreateDirIfNotExistRejectsSymlink(t *testing.T) {
+	dir := t.TempDir()
+
+	real := filepath.Join(dir, "real")
+	require.NoError(t, os.Mkdir(real, 0755))
+
+	link := filepath.Join(dir, "link")
+	require.NoError(t, os.Symlink(real, link))
+
+	err := CreateDirIfNotExist(link, 0755)
+	require.Error(t, err, "符号链接不应被当作目录使用")
 }
