@@ -1256,29 +1256,36 @@ func TestVerifyWriteFileAtomicFiltersChownErrors(t *testing.T) {
 
 // TestVerifyWriteFileAtomicEPERMDegradesGracefully 覆盖 EPERM 降级分支。
 //
-// 为什么需要外部编排：EPERM 只在「非 root 进程改写一个属于**第三方**账号的
-// 文件」时出现，两个条件缺一不可：
+// 该分支的构造条件很苛刻，两个条件缺一不可：
 //
-//   - 必须是非 root：root 有 CAP_CHOWN，任何 chown 都会成功；
-//   - 目标文件的属主必须是**别人**：若文件属于自己，Chown(self) 恒成功，
+//   - 测试进程必须是**非 root**：root 有 CAP_CHOWN，任何 chown 都会成功；
+//   - 目标文件的属主必须是**第三方**：若文件属于自己，Chown(self) 恒成功，
 //     根本走不到 EPERM 分支。
 //
-// 第二个条件无法在单个测试进程内构造：t.TempDir() 造出的文件属主就是当前
-// 用户，而改属他人需要 root。因此本测试改为**读取外部准备好的文件**：
+// 第二个条件无法在测试进程内构造：t.TempDir() 造出的文件属主就是当前用户，
+// 而改属他人需要 chown 能力。
 //
-//	环境变量 GOUTILS_EPERM_TEST_FILE 指向一个由 root 创建、
-//	属主为第三方 uid 且对当前用户可读可写的文件。
+// 本测试原本由 CI 编排覆盖（以 root 准备第三方属主的文件，再以非 root 执行），
+// 但该 CI 步骤已移除：托管 runner 处于受限容器中，CapEff 不含 CAP_CHOWN，
+// 连 root 都无法 chown，准备步骤直接失败：
 //
-// CI 中由 workflow 以 root 准备该文件，再以普通用户运行本测试（见
-// .github/workflows/tests.yml 的 "Test EPERM degradation as unprivileged user"）。
+//	chown: changing ownership of '.../conf': Operation not permitted
 //
-// 未提供该环境变量时跳过 —— 这是刻意的：在本地开发机上不会伪造出一个
-// 「已验证 EPERM」的假象，跳过消息会说明该分支由哪个环境覆盖。
+// 因此改为**可选的外部注入**：若环境变量指向一个已准备好的、属主为第三方的
+// 文件，则真实验证降级行为；否则跳过。
+//
+// 跳过是刻意的：宁可不测，也不要把「无法构造前提」伪装成「已验证」。
+// 该分支的两项保障另有覆盖：
+//   - 静态：TestVerifyWriteFileAtomicFiltersChownErrors 断言只忽略 EPERM；
+//   - 行为：TestVerifyWriteFileAtomicPreservesGroupWhenPermitted 断言 Chown
+//     确实被调用（用「属组应沿用」区分「调用了」与「没调用」）。
 func TestVerifyWriteFileAtomicEPERMDegradesGracefully(t *testing.T) {
 	pth := os.Getenv("GOUTILS_EPERM_TEST_FILE")
 	if pth == "" {
 		t.Skip("未设置 GOUTILS_EPERM_TEST_FILE；" +
-			"该分支需由「root 准备属主为第三方的文件 + 非 root 执行」的外部编排覆盖（见 CI workflow）")
+			"该分支需要「属主为第三方的文件 + 非 root 进程」，" +
+			"而 CI runner 缺少 CAP_CHOWN、无法准备这样的文件。" +
+			"如需覆盖，请手工以 root 创建文件并 chown 给其它 uid 后再设该变量运行")
 	}
 
 	// 前置条件：文件存在、且属主不是当前用户。
