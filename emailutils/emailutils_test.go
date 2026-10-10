@@ -178,6 +178,91 @@ func TestParseNameAndAddress(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestParseAddressList(t *testing.T) {
+	// 单个地址
+	addrs, emails, err := ParseAddressList(`Name <U@D.io>`)
+	assert.Nil(t, err)
+	assert.Len(t, addrs, 1)
+	assert.Equal(t, "Name", addrs[0].Name)
+	assert.Equal(t, "u@d.io", addrs[0].Address)
+	assert.Equal(t, []string{"u@d.io"}, emails)
+
+	// 多个以逗号分隔的地址，用户名和域名转换为小写
+	addrs, emails, err = ParseAddressList(`Alice <Alice@Example.COM>, Bob <BOB@example.com>, charlie@EXAMPLE.com`)
+	assert.Nil(t, err)
+	assert.Len(t, addrs, 3)
+	assert.Equal(t, "Alice", addrs[0].Name)
+	assert.Equal(t, "alice@example.com", addrs[0].Address)
+	assert.Equal(t, "Bob", addrs[1].Name)
+	assert.Equal(t, "bob@example.com", addrs[1].Address)
+	assert.Equal(t, "", addrs[2].Name)
+	assert.Equal(t, "charlie@example.com", addrs[2].Address)
+	assert.Equal(t, []string{"alice@example.com", "bob@example.com", "charlie@example.com"}, emails)
+
+	// 带地址扩展：addrs 里用户名和域名转换为小写，但地址扩展保留大小写；
+	// emails 里不含地址扩展，且已排序。
+	addrs, emails, err = ParseAddressList(`Name <UsEr+LoG@ExAmPlE.CoM>, Other <Admin+AbC-123@Domain.Org>`)
+	assert.Nil(t, err)
+	assert.Len(t, addrs, 2)
+	assert.Equal(t, "user+LoG@example.com", addrs[0].Address)
+	assert.Equal(t, "admin+AbC-123@domain.org", addrs[1].Address)
+	assert.Equal(t, []string{"admin@domain.org", "user@example.com"}, emails)
+
+	// 同一基础地址带不同扩展：emails 里保留重复项（不去重）
+	addrs, emails, err = ParseAddressList(`<user+a@example.com>, <user+B@example.com>`)
+	assert.Nil(t, err)
+	assert.Len(t, addrs, 2)
+	assert.Equal(t, "user+a@example.com", addrs[0].Address)
+	assert.Equal(t, "user+B@example.com", addrs[1].Address)
+	assert.Equal(t, []string{"user@example.com", "user@example.com"}, emails)
+
+	// 名字和 email 带单引号
+	addrs, emails, err = ParseAddressList(`'Name' <'u@d.io'>, 'Name2' <'u2@d.io'>`)
+	assert.Nil(t, err)
+	assert.Len(t, addrs, 2)
+	assert.Equal(t, "Name", addrs[0].Name)
+	assert.Equal(t, "u@d.io", addrs[0].Address)
+	assert.Equal(t, "Name2", addrs[1].Name)
+	assert.Equal(t, "u2@d.io", addrs[1].Address)
+	// 已排序：'2' < '@'
+	assert.Equal(t, []string{"u2@d.io", "u@d.io"}, emails)
+
+	// Name 和 Address 之间有换行
+	s := `Microsoft account team
+	<account-security-noreply@accountprotection.microsoft.com>, Other
+	<other@example.com>`
+	addrs, emails, err = ParseAddressList(s)
+	assert.Nil(t, err)
+	assert.Len(t, addrs, 2)
+	assert.Equal(t, "Microsoft account team", addrs[0].Name)
+	assert.Equal(t, "account-security-noreply@accountprotection.microsoft.com", addrs[0].Address)
+	assert.Equal(t, "Other", addrs[1].Name)
+	assert.Equal(t, "other@example.com", addrs[1].Address)
+	assert.Equal(t, []string{"account-security-noreply@accountprotection.microsoft.com", "other@example.com"}, emails)
+
+	// MIME 编码的 display name
+	addrs, emails, err = ParseAddressList("=?iso-8859-9?Q?Javuz_Ma=FElak?= <user@domain.tr>, =?gb2312?B?1cW7zbHyIFpoYW5nLCBIdWFuZ2Jpbg==?= <user@domain.com>")
+	assert.Nil(t, err)
+	assert.Len(t, addrs, 2)
+	assert.Equal(t, "Javuz Maşlak", addrs[0].Name)
+	assert.Equal(t, "user@domain.tr", addrs[0].Address)
+	assert.Equal(t, "张煌彬 Zhang, Huangbin", addrs[1].Name)
+	assert.Equal(t, "user@domain.com", addrs[1].Address)
+	// 已排序，与 addrs 顺序不同
+	assert.Equal(t, []string{"user@domain.com", "user@domain.tr"}, emails)
+
+	// 空字符串
+	addrs, emails, err = ParseAddressList("")
+	if err == nil {
+		assert.Len(t, addrs, 0)
+		assert.Len(t, emails, 0)
+	}
+
+	// 无效地址
+	_, _, err = ParseAddressList("Name <user>")
+	assert.NotNil(t, err)
+}
+
 func TestFilterValidEmails(t *testing.T) {
 	emails := []string{"a", "b.io", "user@c.io", "d@", "e@f.com", "g+ext@h.com"}
 	valid, invalid := FilterValidEmails(emails)

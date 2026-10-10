@@ -296,7 +296,9 @@ func ParseNameAndAddress(s string) (addr *mail.Address, err error) {
 	return
 }
 
-func ParseAddressList(s string) (addrs []*mail.Address, err error) {
+// ParseAddressList 用于解析多个以逗号分隔的 `Name <Address>` 地址。
+// 是 `enmime.ParseAddressList()` 的简单封装。
+func ParseAddressList(s string) (addrs []*mail.Address, emailsWithoutExt []string, err error) {
 	// 移除 Name 和 Address 之间的换行。
 	// Microsoft Outlook 发出的邮件常有这样的格式。
 	s = strings.ReplaceAll(s, "\n", " ")
@@ -310,26 +312,13 @@ func ParseAddressList(s string) (addrs []*mail.Address, err error) {
 		// 去掉首尾的引号
 		// 部分 Microsoft Outlook 客户端会带上引号。
 		addr.Name = strings.Trim(addr.Name, `'"`)
-		addr.Address = strings.ToLower(strings.Trim(addr.Address, `'"`))
-
+		addr.Address = ToLowerWithExt(strings.Trim(addr.Address, `'"`))
 		addrs[idx] = addr
+
+		emailsWithoutExt = append(emailsWithoutExt, StripExtension(addr.Address))
 	}
 
-	return
-}
-
-// ExtractEmailsFromAddressList 从 `To:`, `Cc:` 等含有多个邮件地址的邮件头的值里提取完整邮件地址。
-// 注意：返回的邮件地址都是小写、不包含地址扩展。
-func ExtractEmailsFromAddressList(s string) (emails []string, err error) {
-	addrs, err := ParseAddressList(s)
-	if err != nil {
-		return
-	}
-
-	for _, addr := range addrs {
-		// 去掉地址扩展（并转换为小写）
-		emails = append(emails, StripExtension(addr.Address))
-	}
+	slices.Sort(emailsWithoutExt)
 
 	return
 }
@@ -364,7 +353,11 @@ func ToLowerWithExt(s string) string {
 	userExt, domain, _ := strings.Cut(s, "@")
 	username, ext, found := strings.Cut(userExt, "+")
 	if found {
-		return fmt.Sprintf("%s+%s@%s", strings.ToLower(username), ext, strings.ToLower(domain))
+		return fmt.Sprintf("%s+%s@%s",
+			strings.ToLower(strings.TrimSpace(username)),
+			ext,
+			strings.ToLower(strings.TrimSpace(domain)),
+		)
 	}
 
 	return strings.ToLower(s)
