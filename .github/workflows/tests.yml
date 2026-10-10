@@ -33,6 +33,67 @@ jobs:
 
       - run: make testv
 
+      # Test the EPERM degradation path of WriteFileAtomic.
+      #
+      # `WriteFileAtomic` preserves the ownership of an existing target file by
+      # chowning the temporary file before renaming it. A non-root process can
+      # not chown a file to another account, so that call fails with EPERM and
+      # the function intentionally continues (ownership degrades to the calling
+      # user). That branch can not be reached from a normal unit test:
+      #
+      #   - the test process must NOT be root (root has CAP_CHOWN and any chown
+      #     succeeds), and
+      #   - the target file must be owned by a THIRD party. A file created by
+      #     t.TempDir() belongs to the current user, and chowning a file to its
+      #     current owner does not fail.
+      #
+      # Hence the target file is prepared as root here, and the test is then run
+      # as an unprivileged user with GOUTILS_EPERM_TEST_FILE pointing at it.
+      # Without this step the EPERM branch is only skipped, never exercised.
+      - name: Prepare file owned by a third party (for EPERM test)
+        run: |
+          set -eux
+          EPERM_DIR=/tmp/goutils-eperm
+          mkdir -p "$EPERM_DIR"
+          # World-writable so the unprivileged user can replace the file
+          # (rename into the directory) while not owning it.
+          chmod 0777 "$EPERM_DIR"
+          # uid/gid 12345 with no matching account: a third-party owner that no
+          # unprivileged user can chown to.
+          echo "original-content" > "$EPERM_DIR/conf"
+          chown 12345:12345 "$EPERM_DIR/conf"
+          chmod 0644 "$EPERM_DIR/conf"
+          stat -c 'prepared: owner=%u:%g mode=%a path=%n' "$EPERM_DIR/conf"
+
+      - name: Test EPERM degradation as unprivileged user
+        run: |
+          set -eux
+          # `nobody` exists on GitHub runners. Run the test from a directory it
+          # can read, with writable GOCACHE / GOMODCACHE.
+          WORKDIR=$(mktemp -d)
+          chmod 0777 "$WORKDIR"
+          cp -a "$GITHUB_WORKSPACE/." "$WORKDIR/"
+          chown -R nobody "$WORKDIR"
+
+          OUT=/tmp/goutils-eperm/output.txt
+          su nobody -s /bin/bash -c "
+            cd '$WORKDIR' &&
+            export GOCACHE='$WORKDIR/.gocache' &&
+            export GOMODCACHE='$WORKDIR/.gomodcache' &&
+            export GOUTILS_EPERM_TEST_FILE=/tmp/goutils-eperm/conf &&
+            go test -count=1 -run TestVerifyWriteFileAtomicEPERMDegradesGracefully -v ./... \
+              | tee '$OUT'
+          "
+
+          # A skip means the branch was NOT covered, which is what this step
+          # exists to prevent (e.g. the prepare step silently did nothing).
+          # `set -e` does not catch a skip, so check it explicitly.
+          if grep -q -- '--- SKIP: TestVerifyWriteFileAtomicEPERMDegradesGracefully' "$OUT"; then
+            echo "::error::EPERM test was skipped; the EPERM branch is not covered."
+            exit 1
+          fi
+          grep -q -- '--- PASS: TestVerifyWriteFileAtomicEPERMDegradesGracefully' "$OUT"
+
       - id: govulncheck
         uses: golang/govulncheck-action@v1
         with:

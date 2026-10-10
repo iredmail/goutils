@@ -220,6 +220,78 @@ func TestMoveDir(t *testing.T) {
 }
 
 // TestWriteFileAtomicCreatesFile 验证文件不存在时能正常创建。
+// TestVerifyWriteFileAtomicPreservesGroupWhenPermitted 覆盖「Chown 成功」路径。
+//
+// 上一个测试覆盖的是 Chown 因 EPERM 失败而降级；本测试覆盖它**成功**时
+// 属组被正确沿用，两者互补。
+//
+// 为什么需要它：非 root 无法改 uid，但**可以**把自己拥有的文件的属组改为
+// 自己所属的另一个组。因此构造「属主是自己、属组是另一个组」的文件后，
+// Chown 会成功，且结果可与「根本没调用 Chown」区分开：
+//
+//   - Chown 被调用且成功 → 新文件属组 = 原文件属组（另一个组）
+//   - Chown 未被调用     → 新文件属组 = 进程默认 gid
+//
+// 两者不同，因此本测试能检出「Chown 调用被删除」这类回归 ——
+// 而这正是仅断言「属主 == 当前 uid」时无法区分的（见上一个测试的说明）。
+func TestVerifyWriteFileAtomicPreservesGroupWhenPermitted(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("以 root 运行时属组处理不具代表性，该分支由非 root 环境覆盖")
+	}
+
+	dir := t.TempDir()
+	pth := filepath.Join(dir, "conf")
+
+	require.NoError(t, os.WriteFile(pth, []byte("old"), 0644))
+
+	// 把属组改为当前用户所属的、且**不同于默认 gid** 的另一个组。
+	// 若当前用户没有其它组可用，则跳过（环境限制，不应误判为失败）。
+	groups, err := os.Getgroups()
+	require.NoError(t, err)
+
+	var altGid int = -1
+
+	for _, g := range groups {
+		if g != os.Getgid() {
+			altGid = g
+
+			break
+		}
+	}
+
+	if altGid < 0 {
+		t.Skip("当前用户只有一个组，无法构造「属组与默认 gid 不同」的场景")
+	}
+
+	require.NoError(t, os.Chown(pth, -1, altGid), "应能把自己文件的属组改为自己所属的组")
+
+	before, err := os.Stat(pth)
+	require.NoError(t, err)
+
+	bs, ok := before.Sys().(*syscall.Stat_t)
+	require.True(t, ok)
+	require.Equal(t, uint32(altGid), bs.Gid, "前置条件：文件属组应为另一个组")
+	require.NotEqual(t, uint32(os.Getgid()), bs.Gid,
+		"前置条件：文件属组必须不同于进程默认 gid，否则无法与「未调用 Chown」区分")
+
+	require.NoError(t, WriteFileAtomic(pth, []byte("new"), 0644))
+
+	after, err := os.Stat(pth)
+	require.NoError(t, err)
+
+	as, ok := after.Sys().(*syscall.Stat_t)
+	require.True(t, ok)
+
+	assert.Equal(t, uint32(altGid), as.Gid,
+		"属组应沿用原文件(%d)；\n"+
+			"若等于进程默认 gid(%d)，说明 Chown 没有被调用或没有生效",
+		altGid, os.Getgid())
+
+	got, err := os.ReadFile(pth)
+	require.NoError(t, err)
+	assert.Equal(t, "new", string(got))
+}
+
 func TestWriteFileAtomicCreatesFile(t *testing.T) {
 	dir := t.TempDir()
 	pth := filepath.Join(dir, "new.conf")
@@ -1182,52 +1254,73 @@ func TestVerifyWriteFileAtomicFiltersChownErrors(t *testing.T) {
 		"非 EPERM 的 Chown 失败应向上返回错误，而不是静默忽略")
 }
 
-// TestVerifyWriteFileAtomicEPERMDegradesGracefully 真正覆盖 EPERM 降级分支。
+// TestVerifyWriteFileAtomicEPERMDegradesGracefully 覆盖 EPERM 降级分支。
 //
-// 为什么需要专门的构造：EPERM 只在「非 root 进程改写一个属于**第三方**账号的
-// 文件」时出现。两个条件缺一不可：
+// 为什么需要外部编排：EPERM 只在「非 root 进程改写一个属于**第三方**账号的
+// 文件」时出现，两个条件缺一不可：
 //
-//   - 必须是非 root（root 有 CAP_CHOWN，任何 chown 都成功）；
-//   - 目标文件的属主必须是**别人**。若文件属于自己，Chown(self) 恒成功，
-//     根本走不到 EPERM 分支 —— 这正是本测试存在的理由：
-//     用 t.TempDir() 造出来的文件属主就是当前用户，
-//     所以在同一进程内**无法**构造出 EPERM 场景。
+//   - 必须是非 root：root 有 CAP_CHOWN，任何 chown 都会成功；
+//   - 目标文件的属主必须是**别人**：若文件属于自己，Chown(self) 恒成功，
+//     根本走不到 EPERM 分支。
 //
-// 因此这里采用「分两步」的方式，避免依赖外部编排：
+// 第二个条件无法在单个测试进程内构造：t.TempDir() 造出的文件属主就是当前
+// 用户，而改属他人需要 root。因此本测试改为**读取外部准备好的文件**：
 //
-//  1. 若当前是 root（或有权 chown），先把目标文件改属给另一个 uid，
-//     然后**降权到该 uid** 再调用 —— 但 Go 无法安全降权后恢复，
-//     故改为跳过并给出明确提示；
-//  2. 若非 root 且能读到「属于他人」的文件（例如由外部脚本准备），
-//     则真实验证降级行为。
+//	环境变量 GOUTILS_EPERM_TEST_FILE 指向一个由 root 创建、
+//	属主为第三方 uid 且对当前用户可读可写的文件。
 //
-// 由于单元测试进程无法自行改变自己的 uid，本测试在两种情况下都会
-// 明确跳过，并在消息中指出该分支由哪个环境覆盖（CI 的 root→非 root 编排）。
-// 这里至少保证：**不会给出「已验证 EPERM」的假象**。
+// CI 中由 workflow 以 root 准备该文件，再以普通用户运行本测试（见
+// .github/workflows/tests.yml 的 "Test EPERM degradation as unprivileged user"）。
+//
+// 未提供该环境变量时跳过 —— 这是刻意的：在本地开发机上不会伪造出一个
+// 「已验证 EPERM」的假象，跳过消息会说明该分支由哪个环境覆盖。
 func TestVerifyWriteFileAtomicEPERMDegradesGracefully(t *testing.T) {
-	dir := t.TempDir()
-	pth := filepath.Join(dir, "conf")
-
-	require.NoError(t, os.WriteFile(pth, []byte("old"), 0644))
-
-	info, err := os.Stat(pth)
-	require.NoError(t, err)
-
-	ss, ok := info.Sys().(*syscall.Stat_t)
-	require.True(t, ok)
-
-	// 只有在「文件属主不是当前用户」时，才可能产生 EPERM。
-	if int(ss.Uid) == os.Getuid() {
-		t.Skip("文件属主是当前用户，Chown(self) 不会 EPERM；" +
-			"该降级分支需由「root 准备 + 非 root 执行」的外部编排覆盖（见 CI）")
+	pth := os.Getenv("GOUTILS_EPERM_TEST_FILE")
+	if pth == "" {
+		t.Skip("未设置 GOUTILS_EPERM_TEST_FILE；" +
+			"该分支需由「root 准备属主为第三方的文件 + 非 root 执行」的外部编排覆盖（见 CI workflow）")
 	}
 
-	// 走到这里说明目标文件确实属于他人：此时 Chown 必然 EPERM，
-	// 验证函数仍返回 nil 且内容写入正确（属主降级为当前用户）。
-	require.NoError(t, WriteFileAtomic(pth, []byte("new"), 0644),
-		"属主降级属于可接受行为，不应返回错误")
+	// 前置条件：文件存在、且属主不是当前用户。
+	info, err := os.Stat(pth)
+	require.NoError(t, err, "GOUTILS_EPERM_TEST_FILE 指向的文件应存在：%s", pth)
+
+	ss, ok := info.Sys().(*syscall.Stat_t)
+	require.True(t, ok, "应能读取文件的 uid/gid")
+
+	require.NotEqual(t, uint32(os.Getuid()), ss.Uid,
+		"该测试要求文件属主是第三方（当前 uid=%d，文件 uid=%d）：\n"+
+			"若属主就是自己，Chown(self) 不会失败，本测试将失去意义",
+		os.Getuid(), ss.Uid)
+
+	require.NotEqual(t, 0, os.Geteuid(),
+		"该测试必须以非 root 运行：root 有 CAP_CHOWN，Chown 不会返回 EPERM")
+
+	// 写入内容。此时 writeFileAtomicKeepOwner 会尝试 Chown 到原属主（第三方），
+	// 以非 root 身份必然 EPERM —— 这正是要覆盖的分支。
+	const newContent = "NEW-CONTENT-FROM-EPERM-TEST"
+
+	require.NoError(t, WriteFileAtomic(pth, []byte(newContent), 0644),
+		"属主降级属于可接受行为（EPERM 被忽略），不应返回错误")
 
 	got, err := os.ReadFile(pth)
 	require.NoError(t, err)
-	assert.Equal(t, "new", string(got), "内容仍应正确写入")
+	assert.Equal(t, newContent, string(got), "内容仍应正确写入")
+
+	// 属主应降级为当前用户 —— 这是该分支的预期结果，也验证降级确实发生了
+	// （而不是「刚好没走到 Chown」）。
+	after, err := os.Stat(pth)
+	require.NoError(t, err)
+
+	as, ok := after.Sys().(*syscall.Stat_t)
+	require.True(t, ok)
+
+	assert.Equal(t, uint32(os.Getuid()), as.Uid,
+		"非 root 无法沿用他人属主，应降级为当前用户；\n"+
+			"若仍为原属主(%d)，说明 Chown 未被调用或调用失败被静默跳过",
+		ss.Uid)
+
+	// 权限位应被沿用（原文件 0644），不受传入 perm 影响。
+	assert.Equal(t, os.FileMode(0644), after.Mode().Perm(),
+		"权限位应沿用原文件")
 }
