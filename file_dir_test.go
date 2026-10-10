@@ -3,6 +3,7 @@ package goutils
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"testing"
@@ -622,4 +623,455 @@ func TestVerifyCopyDirIsIdempotent(t *testing.T) {
 	got, err := os.ReadFile(filepath.Join(dst, "a.txt"))
 	require.NoError(t, err)
 	assert.Equal(t, "aaa", string(got))
+}
+
+// TestVerifyChmodKeepsSpecialModeBits 验证复制时不会丢掉 setuid/setgid/sticky。
+//
+// os.FileMode.Perm() 只返回低 9 位（0777），setuid / setgid / sticky
+// 都存在 FileMode 的高位，用 Perm() 传给 os.Chmod 会把这三位丢掉。
+// os.Chmod 本身会忽略类型位（目录/普通文件等），只应用权限位与这三个特殊位，
+// 因此必须传 Mode() 而不是 Mode().Perm()。
+//
+// 共享目录（group-writable 的部署目录、sticky 目录）依赖这些位，
+// 丢掉后复制结果与源权限不一致。
+func TestVerifyChmodKeepsSpecialModeBits(t *testing.T) {
+	dir := t.TempDir()
+
+	// 第一部分：先说明为什么必须用 Mode() —— Perm() 会丢掉高位。
+	// 这里直接对 FileMode 做位运算断言（不依赖平台），
+	// 证明 Perm() 确实不含特殊位、而 Mode() 含。
+	modeWithBits := os.FileMode(0777) | os.ModeSetgid | os.ModeSticky
+
+	assert.Equal(t, os.FileMode(0777), modeWithBits.Perm(),
+		"Perm() 只保留低 9 位")
+	assert.Zero(t, modeWithBits.Perm()&os.ModeSetgid,
+		"Perm() 结果不含 setgid —— 这正是误用 Perm() 会丢位的原因")
+	assert.Zero(t, modeWithBits.Perm()&os.ModeSticky,
+		"Perm() 结果不含 sticky")
+	assert.NotZero(t, modeWithBits&os.ModeSetgid, "Mode() 保留 setgid")
+	assert.NotZero(t, modeWithBits&os.ModeSticky, "Mode() 保留 sticky")
+
+	// 第二部分：确认 sticky 能被真正写到文件上（跨平台稳定）。
+	pth2 := filepath.Join(dir, "mode")
+	require.NoError(t, os.WriteFile(pth2, []byte("x"), 0600))
+	require.NoError(t, os.Chmod(pth2, os.FileMode(0777)|os.ModeSticky))
+
+	info2, err := os.Stat(pth2)
+	require.NoError(t, err)
+	assert.NotZero(t, info2.Mode()&os.ModeSticky, "Mode() 应保留 sticky")
+
+	// 第三部分：确认把 info2.Mode()（含 sticky）传给 Chmod 能真正生效。
+	//
+	// 这里只断言 sticky：它在两个平台都会保留。
+	// setuid / setgid 不能在非 root 的 macOS 上断言 ——
+	// BSD 会在 chmod 时静默丢弃这两位（不报错但读不回来），
+	// 断言它们会导致「在有权限的平台上通过、在无权限的平台上失败」的假象，
+	// 而失败原因是平台权限而非本函数的行为。
+	pth3 := filepath.Join(dir, "chmod-result")
+	require.NoError(t, os.WriteFile(pth3, []byte("x"), 0600))
+	require.NoError(t, os.Chmod(pth3, info2.Mode()))
+
+	info3, err := os.Stat(pth3)
+	require.NoError(t, err)
+	assert.NotZero(t, info3.Mode()&os.ModeSticky,
+		"用 Mode() 调 Chmod 后 sticky 应生效")
+	assert.Equal(t, info2.Mode().Perm(), info3.Mode().Perm(),
+		"低 9 位权限应完整应用")
+}
+
+// TestVerifySetgidSilentlyDroppedOnBSD 记录 BSD 与 Linux 在 setgid 上的差异。
+//
+// 这不是本仓库的缺陷，而是平台语义差异，记录在此避免后人误判：
+// 在 macOS 上 Chmod 设置 setgid 不会报错，但读回来该位不存在，
+// 因此针对 setgid 的断言不能在 macOS 上执行。
+func TestVerifySetgidSilentlyDroppedOnBSD(t *testing.T) {
+	if runtime.GOOS == "linux" {
+		t.Skip("该差异仅在 BSD/macOS 上成立")
+	}
+
+	dir := t.TempDir()
+	pth := filepath.Join(dir, "sg")
+	require.NoError(t, os.WriteFile(pth, []byte("x"), 0600))
+
+	// 不报错，但位可能不生效。
+	require.NoError(t, os.Chmod(pth, os.FileMode(0640)|os.ModeSetgid))
+
+	info, err := os.Stat(pth)
+	require.NoError(t, err)
+
+	// 只断言权限位本身（低 9 位），特殊位在有权限时可能保留、否则被丢弃。
+	assert.Equal(t, os.FileMode(0640), info.Mode().Perm(),
+		"低 9 位权限应正常应用")
+}
+
+// TestVerifyCopyDirKeepsSpecialModeBits 验证 copyDir 保留目录的特殊权限位。
+func TestVerifyCopyDirKeepsSpecialModeBits(t *testing.T) {
+	base := t.TempDir()
+	src := filepath.Join(base, "src")
+	dst := filepath.Join(base, "dst")
+
+	require.NoError(t, os.Mkdir(src, 0755))
+
+	// 源目录带 sticky + group-writable（模拟 /tmp 风格的共享目录）
+	require.NoError(t, os.Chmod(src, os.FileMode(0775)|os.ModeSticky))
+
+	srcInfo, err := os.Stat(src)
+	require.NoError(t, err)
+	require.NotZero(t, srcInfo.Mode()&os.ModeSticky, "前置条件：源目录应带 sticky")
+
+	require.NoError(t, copyDir(src, dst))
+
+	dstInfo, err := os.Stat(dst)
+	require.NoError(t, err)
+
+	assert.NotZero(t, dstInfo.Mode()&os.ModeSticky,
+		"目标目录应保留 sticky（Perm() 会丢掉它）")
+	assert.Equal(t, srcInfo.Mode().Perm(), dstInfo.Mode().Perm())
+}
+
+// TestVerifyWriteFileAtomicKeepsOwnerAndSpecialBits 验证原子写入保留属主与特殊位。
+//
+// 临时文件由当前进程创建，rename 之后目标的 uid/gid 就是当前进程用户。
+// 若被改写的是属于其它服务账号的文件（以 root 运行），属主会被改掉，
+// 可能让那个服务无法读写该文件。因此实现中会在替换前记录原属主、
+// 对临时文件 Chown 后再 rename。
+//
+// 验证方式：非 root 无法把自己创建的文件 chown 给其它 uid，
+// 因此这里不直接断言「属主变了没有」，而是给出一个**当前用户不是其属主**
+// 的文件是不现实的。改为断言两件可验证的事：
+//
+//  1. 权限位（含 sticky）被完整沿用 —— 若实现退回 Perm() 会失败；
+//  2. 属主/属组与改写前一致 —— 在非 root 下这是必要条件（不变量），
+//     可防止实现给文件 chown 成错误的 uid（例如误用 tmp 文件的属主）。
+//
+// 跨账号场景（root 改写属于 postfix 的文件）无法在单元测试中构造，
+// 已由容器内的 root 环境手工验证：uid/gid 与 mode 均保持不变。
+func TestVerifyWriteFileAtomicKeepsOwnerAndSpecialBits(t *testing.T) {
+	dir := t.TempDir()
+	pth := filepath.Join(dir, "conf")
+
+	require.NoError(t, os.WriteFile(pth, []byte("old"), 0644))
+	require.NoError(t, os.Chmod(pth, os.FileMode(0640)|os.ModeSticky))
+
+	before, err := os.Stat(pth)
+	require.NoError(t, err)
+
+	// 传入一个不同的 perm，实现应沿用目标文件原有的权限而非这个值。
+	require.NoError(t, WriteFileAtomic(pth, []byte("new"), 0600))
+
+	after, err := os.Stat(pth)
+	require.NoError(t, err)
+
+	got, err := os.ReadFile(pth)
+	require.NoError(t, err)
+	assert.Equal(t, "new", string(got))
+
+	assert.Equal(t, before.Mode().Perm(), after.Mode().Perm(),
+		"权限位应沿用原文件，而不是调用方传入的 0600")
+	assert.Equal(t, before.Mode()&os.ModeSticky, after.Mode()&os.ModeSticky,
+		"sticky 应沿用原文件（Perm() 会丢掉它）")
+
+	// setuid / setgid 的断言只在 Linux 上成立：
+	// BSD（macOS）会在 chmod 时静默丢弃这两位，无论实现如何都读不回来，
+	// 在该平台上断言它们毫无意义（既抓不到回归，也可能误报）。
+	if runtime.GOOS == "linux" {
+		pth2 := filepath.Join(dir, "conf-sg")
+		require.NoError(t, os.WriteFile(pth2, []byte("old"), 0755))
+		require.NoError(t, os.Chmod(pth2, os.FileMode(0755)|os.ModeSetgid))
+
+		b2, err := os.Stat(pth2)
+		require.NoError(t, err)
+		require.NotZero(t, b2.Mode()&os.ModeSetgid, "前置条件：应能设上 setgid")
+
+		require.NoError(t, WriteFileAtomic(pth2, []byte("new"), 0644))
+
+		a2, err := os.Stat(pth2)
+		require.NoError(t, err)
+		assert.NotZero(t, a2.Mode()&os.ModeSetgid,
+			"setgid 应沿用原文件：若实现退回 Perm() 或把 Chown 放到 Chmod 之后，这里会丢位")
+	}
+
+	bs, ok := before.Sys().(*syscall.Stat_t)
+	if ok {
+		as, ok2 := after.Sys().(*syscall.Stat_t)
+		require.True(t, ok2)
+		assert.Equal(t, bs.Uid, as.Uid, "属主 uid 应保持不变")
+		assert.Equal(t, bs.Gid, as.Gid, "属组 gid 应保持不变")
+	}
+}
+
+// TestVerifyWriteFileAtomicDoesNotFollowSymlink 验证原子写入不沿符号链接取属主。
+//
+// 为什么要单独验证：实现用 os.Lstat（而非 os.Stat）判断目标，
+// 并对符号链接走「不沿用原文件属性」的分支。若改用 os.Stat、
+// 或删掉 ModeSymlink 判断，就会从**链接指向的文件**读取属主，
+// 后果是把临时文件 chown 成那个文件的属主 —— 等于沿链接泄露/篡改属主。
+//
+// 该用例在非 root 下也能运行：断言的是「受害文件的属主/内容不受影响」
+// 以及「链接被替换为普通文件」，不依赖跨账号 chown。
+func TestVerifyWriteFileAtomicDoesNotFollowSymlink(t *testing.T) {
+	dir := t.TempDir()
+
+	victim := filepath.Join(dir, "victim.conf")
+	require.NoError(t, os.WriteFile(victim, []byte("victim-content"), 0644))
+
+	vBefore, err := os.Stat(victim)
+	require.NoError(t, err)
+
+	link := filepath.Join(dir, "link.conf")
+	require.NoError(t, os.Symlink(victim, link))
+
+	require.NoError(t, WriteFileAtomic(link, []byte("new-content"), 0600))
+
+	// 受害文件的内容与属主都不应被改动。
+	gotVictim, err := os.ReadFile(victim)
+	require.NoError(t, err)
+	assert.Equal(t, "victim-content", string(gotVictim),
+		"受害文件内容被改写：说明沿链接写入了")
+
+	vAfter, err := os.Stat(victim)
+	require.NoError(t, err)
+	assert.Equal(t, vBefore.Mode(), vAfter.Mode(),
+		"受害文件权限被改动：说明沿链接取用了属性")
+
+	if vb, ok := vBefore.Sys().(*syscall.Stat_t); ok {
+		if va, ok2 := vAfter.Sys().(*syscall.Stat_t); ok2 {
+			assert.Equal(t, vb.Uid, va.Uid, "受害文件属主不应变化")
+			assert.Equal(t, vb.Gid, va.Gid, "受害文件属组不应变化")
+		}
+	}
+
+	// 链接应被替换为普通文件，承载新内容。
+	li, err := os.Lstat(link)
+	require.NoError(t, err)
+	assert.True(t, li.Mode().IsRegular(),
+		"符号链接应被替换为普通文件，而不是继续指向受害文件")
+
+	gotLink, err := os.ReadFile(link)
+	require.NoError(t, err)
+	assert.Equal(t, "new-content", string(gotLink))
+
+	// 关键断言：新文件的权限应来自**调用方传入的 perm**，
+	// 而不是从链接指向的 victim 读来的权限。
+	//
+	// 这是区分「用 os.Lstat + 判 ModeSymlink」与「用 os.Stat 跟随链接」的唯一
+	// 可观测差异：两种写法都不会改动 victim（rename 只替换链接本身），
+	// 但跟随链接的那版会错误地把 victim 的权限套用到新文件上。
+	//
+	// victim 是 0640，这里传入的是 0600，因此两者可区分。
+	assert.Equal(t, os.FileMode(0600), li.Mode().Perm(),
+		"新文件权限应来自传入的 perm；若等于 victim 的 0640，说明沿链接取了属性")
+	assert.NotEqual(t, vBefore.Mode().Perm(), li.Mode().Perm(),
+		"新文件权限不应等于链接目标的权限（那意味着跟随了符号链接）")
+}
+
+// TestVerifyCopyFileKeepsSpecialModeBits 验证 copyFile 保留特殊权限位。
+//
+// 覆盖缺口说明：针对 copyFile 的多数测试都只用普通权限（0644 等）的源文件，
+// 而 Perm() 与 Mode() 对这类文件的结果相同，因此**无法**发现
+// 「误用 Perm() 导致 setuid/setgid/sticky 丢失」这一回归。
+// 本测试给源文件设置 sticky，使两种写法产生可区分的差异。
+//
+// 只断言 sticky 而不含 setgid/setuid：BSD（macOS）在 chmod 时会静默丢弃
+// setuid/setgid（不报错但读不回来），sticky 在两个平台都会保留。
+func TestVerifyCopyFileKeepsSpecialModeBits(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "src.txt")
+	dst := filepath.Join(dir, "dst.txt")
+
+	require.NoError(t, os.WriteFile(src, []byte("data"), 0644))
+	require.NoError(t, os.Chmod(src, os.FileMode(0644)|os.ModeSticky))
+
+	srcInfo, err := os.Stat(src)
+	require.NoError(t, err)
+	require.NotZero(t, srcInfo.Mode()&os.ModeSticky,
+		"前置条件：源文件应带 sticky（否则本测试无法区分 Perm 与 Mode）")
+
+	require.NoError(t, copyFile(src, dst))
+
+	dstInfo, err := os.Stat(dst)
+	require.NoError(t, err)
+
+	got, err := os.ReadFile(dst)
+	require.NoError(t, err)
+	assert.Equal(t, "data", string(got))
+
+	assert.NotZero(t, dstInfo.Mode()&os.ModeSticky,
+		"目标文件应保留 sticky：用 Perm() 会丢掉它")
+	assert.Equal(t, srcInfo.Mode().Perm(), dstInfo.Mode().Perm(),
+		"低 9 位权限应与源文件一致")
+}
+
+// TestVerifyCopyFileOrderChownBeforeChmod 验证复制时「先 Chown 再 Chmod」的顺序。
+//
+// 为什么需要单独测顺序：Linux 的 chown(2) 在属主/属组**发生变化**时会清除
+// setgid（安全语义：换了主人就不该保留提权位）。因此若先 Chmod 再 Chown，
+// 刚设好的 setgid 会被紧接着的 Chown 抹掉，复制结果丢位。
+//
+// 触发条件有两个，缺一不可（均由实测得出）：
+//
+//  1. **chown 真的改变了属主**。若目标当前属主与源属主相同，Linux 视为
+//     no-op，不清位。因此本测试以 root 运行、把源文件 chown 给另一个 uid，
+//     使 chown 真正生效。非 root 无法构造，故跳过。
+//
+//  2. **setgid 与「组可执行位」同时存在**。实测：chmod(0755|setgid) 之后
+//     再 chown 会清掉 setgid；而 chmod(0644|setgid) 之后再 chown 则保留
+//     （普通文件的 setgid 语义依赖组执行位）。因此本测试用 0755。
+//
+// 两个条件同时满足时，顺序写反会导致断言失败，从而守护住这个顺序要求。
+func TestVerifyCopyFileOrderChownBeforeChmod(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("需要 root 才能把源文件 chown 给其它 uid，使 chown 真正改变属主")
+	}
+
+	dir := t.TempDir()
+	src := filepath.Join(dir, "src.txt")
+	dst := filepath.Join(dir, "dst.txt")
+
+	require.NoError(t, os.WriteFile(src, []byte("data"), 0755))
+
+	// 让源文件属于其它 uid，使复制时的 chown 真正改变属主。
+	const targetUid, targetGid = 1234, 5678
+	require.NoError(t, os.Chown(src, targetUid, targetGid))
+
+	// 0755 含组执行位 —— 这是 setgid 会被 chown 清掉的前提。
+	require.NoError(t, os.Chmod(src, os.FileMode(0755)|os.ModeSetgid))
+
+	srcInfo, err := os.Stat(src)
+	require.NoError(t, err)
+	require.NotZero(t, srcInfo.Mode()&os.ModeSetgid,
+		"前置条件：源文件应带 setgid")
+
+	require.NoError(t, copyFile(src, dst))
+
+	dstInfo, err := os.Stat(dst)
+	require.NoError(t, err)
+
+	assert.NotZero(t, dstInfo.Mode()&os.ModeSetgid,
+		"目标应保留 setgid：若先 Chmod 后 Chown，chown 会把它清掉")
+
+	ds, ok := dstInfo.Sys().(*syscall.Stat_t)
+	require.True(t, ok)
+	assert.Equal(t, uint32(targetUid), ds.Uid, "属主应与源文件一致")
+	assert.Equal(t, uint32(targetGid), ds.Gid, "属组应与源文件一致")
+}
+
+// TestVerifyCopyDirOrderChownBeforeChmod 验证目录复制同样「先 Chown 再 Chmod」。
+//
+// 与 copyFile 同理：Linux 的 chown(2) 在属主变化时清除 setgid，
+// 而 setgid 对**目录**的语义是「新建的子项继承目录属组」，是共享目录的常用配置。
+// 若先 Chmod 后 Chown，目录的 setgid 会被抹掉，子项便不再继承属组。
+//
+// 触发条件与 copyFile 相同：需要 root（才能让 chown 真正改变属主）。
+// 目录不涉及「组执行位」的额外约束，因此 setgid 是否存在即可判定。
+func TestVerifyCopyDirOrderChownBeforeChmod(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("需要 root 才能把源目录 chown 给其它 uid，使 chown 真正改变属主")
+	}
+
+	base := t.TempDir()
+	src := filepath.Join(base, "src")
+	dst := filepath.Join(base, "dst")
+
+	require.NoError(t, os.Mkdir(src, 0755))
+
+	const targetUid, targetGid = 1234, 5678
+	require.NoError(t, os.Chown(src, targetUid, targetGid))
+	require.NoError(t, os.Chmod(src, os.FileMode(0755)|os.ModeSetgid))
+
+	srcInfo, err := os.Stat(src)
+	require.NoError(t, err)
+	require.NotZero(t, srcInfo.Mode()&os.ModeSetgid,
+		"前置条件：源目录应带 setgid")
+
+	require.NoError(t, copyDir(src, dst))
+
+	dstInfo, err := os.Stat(dst)
+	require.NoError(t, err)
+
+	assert.NotZero(t, dstInfo.Mode()&os.ModeSetgid,
+		"目标目录应保留 setgid：若先 Chmod 后 Chown，chown 会把它清掉")
+
+	ds, ok := dstInfo.Sys().(*syscall.Stat_t)
+	require.True(t, ok)
+	assert.Equal(t, uint32(targetUid), ds.Uid,
+		"目录属主应与源目录一致")
+}
+
+// TestVerifyWriteFileAtomicSyncsParentDir 守护「rename 后 fsync 父目录」这一步。
+//
+// 为什么用源码检查而不是行为断言：目录项是否已落盘只能通过掉电实验观察，
+// 单元测试无法构造；而这一行很容易在重构中被当作「多余的 fsync」删掉，
+// 删掉后并不会立刻有任何测试失败。因此这里做一个存在性检查作为最低保障。
+//
+// 该检查只匹配调用本身，不匹配变量名，因此重命名局部变量不会误报；
+// 但把实现整体改写（例如换成 unix.Fsync(fd)）会使其失败 —— 那时应同步更新本检查。
+func TestVerifyWriteFileAtomicSyncsParentDir(t *testing.T) {
+	src, err := os.ReadFile("file_dir.go")
+	require.NoError(t, err)
+	body := string(src)
+
+	// 定位 WriteFileAtomic 函数体，避免匹配到其它函数中的同名调用。
+	start := strings.Index(body, "func WriteFileAtomic(")
+	require.GreaterOrEqual(t, start, 0, "应能在 file_dir.go 中找到 WriteFileAtomic")
+
+	rest := body[start:]
+	end := strings.Index(rest, "\n}\n")
+	require.Greater(t, end, 0, "应能定位 WriteFileAtomic 的函数体")
+
+	fn := rest[:end]
+
+	require.Contains(t, fn, "os.Rename(",
+		"WriteFileAtomic 应使用 os.Rename 原子替换")
+
+	// 统计 Sync 调用次数：一次给临时文件（rename 前），一次给父目录（rename 后）。
+	// 只检查「存在 .Sync()」是不够的 —— 文件自身的 tmp.Sync() 也会匹配，
+	// 因此父目录 fsync 被删除时检查依然通过。这里按次数断言。
+	count := strings.Count(fn, ".Sync()")
+	assert.GreaterOrEqual(t, count, 2,
+		"WriteFileAtomic 应对临时文件与父目录各调用一次 Sync（当前 %d 次）：\n"+
+			"仅 fsync 文件不能保证目录项（rename 结果）落盘，\n"+
+			"掉电后目标路径可能回退到旧内容或读不到文件。", count)
+
+	// 并确认父目录 fsync 发生在 rename 之后。
+	ri := strings.Index(fn, "os.Rename(")
+	require.GreaterOrEqual(t, ri, 0)
+	afterRename := fn[ri:]
+	assert.Contains(t, afterRename, ".Sync()",
+		"父目录的 Sync 应在 os.Rename 之后调用，否则无法保证目录项落盘")
+}
+
+// TestVerifyChownBeforeChmodOrder 守护 copyDir / copyFile 中 Chown 早于 Chmod 的顺序。
+//
+// 为什么需要：Linux 的 chown(2) 在属主改变时会清除 setgid，
+// 因此若先 Chmod 再 Chown，刚设好的位会被抹掉。
+// 该行为只在「以 root 运行 + 属主确实变化 + 文件带执行位」时可见，
+// 普通开发机（非 root）与 macOS 都无法触发，因此行为测试覆盖不到，
+// 这里补一个源码顺序检查。
+//
+// 实现方式：确认每个函数中 `os.Chown(` 的出现位置早于 `os.Chmod(`。
+func TestVerifyChownBeforeChmodOrder(t *testing.T) {
+	src, err := os.ReadFile("file_dir.go")
+	require.NoError(t, err)
+	body := string(src)
+
+	for _, name := range []string{"func copyDir(", "func copyFile("} {
+		start := strings.Index(body, name)
+		require.GreaterOrEqual(t, start, 0, "应能找到 %s", name)
+
+		rest := body[start:]
+		end := strings.Index(rest, "\n}\n")
+		require.Greater(t, end, 0, "应能定位 %s 的函数体", name)
+
+		fn := rest[:end]
+		ci := strings.Index(fn, "os.Chown(")
+		mi := strings.Index(fn, "os.Chmod(")
+
+		require.GreaterOrEqual(t, ci, 0, "%s 应调用 os.Chown", name)
+		require.GreaterOrEqual(t, mi, 0, "%s 应调用 os.Chmod", name)
+		assert.Less(t, ci, mi,
+			"%s 中 os.Chown 必须在 os.Chmod 之前：\n"+
+				"Linux 的 chown(2) 在属主改变时会清除 setgid，\n"+
+				"先 Chmod 再 Chown 会让刚设好的特殊位被抹掉。", name)
+	}
 }

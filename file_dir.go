@@ -246,8 +246,17 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 // 要么看到新内容，不会看到中间状态；失败时原文件保持不变。
 //
 // perm 用于新建文件时的权限。注意：若目标文件已存在，
-// 其原有权限会被保留（通过先把权限复制到临时文件实现），
+// 其原有权限与属主/属组会被沿用（见下方实现），
 // 因此显式传入的 perm 只对「文件原本不存在」的情况生效。
+//
+// 为什么要沿用属主：临时文件由当前进程创建，rename 之后目标文件的
+// uid/gid 是当前进程用户。若被改写的是属于其它服务账号的配置或状态文件
+// （例如以 root 运行、去改写属于 postfix 的文件），属主会被改掉，
+// 可能导致那个服务读不到或写不了该文件。因此这里在替换前记录原属主，
+// 并对临时文件 Chown 后再 rename。
+//
+// 沿用属主需要相应权限（非 root 只能 chown 给自己所属的组）；
+// 若无权限则忽略该错误，此时行为退化为「只沿用权限、属主变为当前用户」。
 //
 // 关于符号链接：本函数用 os.Rename 替换目标路径，
 // 因此若 pth 本身是符号链接，**链接会被替换成普通文件**，
@@ -256,12 +265,25 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
 	dir := filepath.Dir(pth)
 
-	// 若目标文件已存在，沿用它的权限，避免一次改写意外改变文件权限。
+	// 若目标文件已存在，沿用它的权限与属主，避免一次改写意外改变它们。
 	//
 	// 用 os.Lstat 而非 os.Stat：目标若是符号链接，则取到的是链接自身的权限
 	// （符号链接权限恒为 0777，无实际意义），此时应保留调用方传入的 perm。
+	var (
+		keepOwner bool
+		ownerUid  int
+		ownerGid  int
+	)
+
 	if info, err := os.Lstat(pth); err == nil && info.Mode()&os.ModeSymlink == 0 {
-		perm = info.Mode().Perm()
+		// 用 Mode() 而非 Perm()：后者会丢掉 setuid / setgid / sticky。
+		perm = info.Mode()
+
+		if ss, ok := info.Sys().(*syscall.Stat_t); ok {
+			keepOwner = true
+			ownerUid = int(ss.Uid)
+			ownerGid = int(ss.Gid)
+		}
 	}
 
 	tmp, err := os.CreateTemp(dir, "."+filepath.Base(pth)+".tmp-*")
@@ -276,6 +298,16 @@ func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
 	defer func() {
 		_ = os.Remove(tmpPath)
 	}()
+
+	// 先把属主设好再写入：这样文件一出现就属于正确的账号，
+	// 不会存在“短暂属于当前用户”的窗口。
+	if keepOwner {
+		if cerr := tmp.Chown(ownerUid, ownerGid); cerr != nil {
+			// 无权限时忽略：保留权限位仍然有意义，
+			// 属主退化为当前进程用户。
+			_ = cerr
+		}
+	}
 
 	if err = tmp.Chmod(perm); err != nil {
 		_ = tmp.Close()
@@ -303,6 +335,20 @@ func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
 
 	if err = os.Rename(tmpPath, pth); err != nil {
 		return fmt.Errorf("failed in replacing %s: %w", pth, err)
+	}
+
+	// 再 fsync 父目录，使目录项（即上面的 rename 结果）也真正落盘。
+	//
+	// 为什么文件自身的 fsync 不够：fsync(文件) 只保证该文件的数据与元数据落盘，
+	// 不保证「目录中新增/改名了一个条目」这件事落盘。断电时可能出现
+	// 数据已写入磁盘、但目录项仍指向旧文件（甚至指向已删除的 inode）的情况，
+	// 目标路径因此可能回退到旧内容或读不到文件。
+	//
+	// 目录 fsync 失败不视为写入失败：此时文件内容已正确替换，
+	// 只是崩溃后的持久性保证打了折扣，不值得让调用方认为写入失败。
+	if d, derr := os.Open(dir); derr == nil {
+		_ = d.Sync()
+		_ = d.Close()
 	}
 
 	return nil
@@ -380,18 +426,29 @@ func copyDir(src, dst string) error {
 		return fmt.Errorf("unsupported file info type for %s", src)
 	}
 
-	// 先用最小权限创建，随后再 Chmod 成源目录的权限。
+	// 先用最小权限创建，随后再设置属主与权限。
+	//
+	// 顺序很重要：必须**先 Chown 再 Chmod**。
+	// Linux 的 chown(2) 在属主/属组发生变化时会清除 setuid / setgid
+	// （安全语义：换了主人就不该保留提权位），因此若先 Chmod 再 Chown，
+	// 刚设好的 setuid / setgid 会被紧接着的 Chown 抹掉。
+	// 实测（Linux 容器）：源目录带 setgid 时，
+	//   Chmod → Chown 的结果是 setgid 丢失；Chown → Chmod 则保留。
 	if err = os.MkdirAll(dst, 0700); err != nil {
 		return fmt.Errorf("failed in creating directory %s: %w", dst, err)
 	}
 
-	if err = os.Chmod(dst, stat.Mode().Perm()); err != nil {
-		return fmt.Errorf("failed in setting permission of %s: %w", dst, err)
-	}
-
-	// Set the owner and group of the destination directory
 	if err = os.Chown(dst, int(sys.Uid), int(sys.Gid)); err != nil {
 		return fmt.Errorf("failed in setting owner/group of %s: %w", dst, err)
+	}
+
+	// 这里必须用 stat.Mode() 而不是 stat.Mode().Perm()。
+	// Perm() 只保留低 9 位（0777），会丢掉 setuid / setgid / sticky；
+	// os.Chmod 会忽略 FileMode 中的类型位、正确处理这三个特殊位。
+	// 共享目录（group-writable 的部署目录、sticky 的目录等）依赖这些位，
+	// 丢掉后目标目录权限就与源目录不一致了。
+	if err = os.Chmod(dst, stat.Mode()); err != nil {
+		return fmt.Errorf("failed in setting permission of %s: %w", dst, err)
 	}
 
 	entries, err := os.ReadDir(src)
@@ -505,17 +562,28 @@ func copyFile(src, dst string) (err error) {
 		return err
 	}
 
-	// Copy file permissions and ownership
-	if err = os.Chmod(dst, stat.Mode().Perm()); err != nil {
-		return err
-	}
-
+	// 先复制属主/属组，再复制权限位。
+	//
+	// 顺序很重要：必须**先 Chown 再 Chmod**。
+	// Linux 的 chown(2) 在属主/属组发生变化时会清除 setuid / setgid
+	// （安全语义：换了主人就不该保留提权位），因此若先 Chmod 再 Chown，
+	// 刚设好的 setuid / setgid 会被紧接着的 Chown 抹掉，这步修复就失效了。
+	// 实测（Linux 容器）：源文件带 setgid 时，
+	//   Chmod → Chown 的结果是 setgid 丢失；Chown → Chmod 则保留。
 	sys, ok := stat.Sys().(*syscall.Stat_t)
 	if !ok {
 		return fmt.Errorf("failed in reading owner/group info of %s", src)
 	}
 
 	if err = os.Chown(dst, int(sys.Uid), int(sys.Gid)); err != nil {
+		return err
+	}
+
+	// 这里必须用 stat.Mode() 而不是 stat.Mode().Perm()：
+	// Perm() 只保留低 9 位，会丢掉 setuid / setgid / sticky。
+	// 例如复制一份带 setgid 的可执行文件时，Perm() 会让目标失去该位。
+	// os.Chmod 会忽略 FileMode 里的类型位，只应用权限位与这三个特殊位。
+	if err = os.Chmod(dst, stat.Mode()); err != nil {
 		return err
 	}
 
