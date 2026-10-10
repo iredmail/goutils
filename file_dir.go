@@ -246,7 +246,7 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 // 要么看到新内容，不会看到中间状态；失败时原文件保持不变。
 //
 // perm 用于新建文件时的权限。注意：若目标文件已存在，
-// 其原有权限与属主/属组会被沿用（见下方实现），
+// 其原有权限会被沿用，属主/属组也会尽量沿用（见下方实现），
 // 因此显式传入的 perm 只对「文件原本不存在」的情况生效。
 //
 // 为什么要沿用属主：临时文件由当前进程创建，rename 之后目标文件的
@@ -255,8 +255,17 @@ func CreateFileIfNotExist(pth string, content []byte, mode os.FileMode) error {
 // 可能导致那个服务读不到或写不了该文件。因此这里在替换前记录原属主，
 // 并对临时文件 Chown 后再 rename。
 //
-// 沿用属主需要相应权限（非 root 只能 chown 给自己所属的组）；
-// 若无权限则忽略该错误，此时行为退化为「只沿用权限、属主变为当前用户」。
+// 沿用属主**需要相应权限**：非 root 进程只能把文件改属给自己，
+// 因此以非 root 身份改写一个属于其他账号的文件时，Chown 会因 EPERM 失败。
+// 该情况被刻意视为「可接受的降级」：函数继续完成写入并返回 nil，
+// 此时权限位与内容仍然正确，只是属主变为当前进程用户。
+// 也就是说，**返回值无法区分「属主已沿用」与「属主已降级」**。
+// 需要预知结果的调用方，最简单的判断方式是看当前进程有没有能力 chown：
+// 即 os.Getuid() == 0，或目标文件的属主本来就等于 os.Getuid()。
+// （不建议用「调用前后比较 os.Stat 的 uid/gid」——当降级后的属主恰好与
+// 原属主相同时，这种比较看不出发生过降级。）
+//
+// Chown 的其它错误（非 EPERM）不会被忽略，而是向上返回。
 //
 // 关于符号链接：本函数用 os.Rename 替换目标路径，
 // 因此若 pth 本身是符号链接，**链接会被替换成普通文件**，
@@ -299,26 +308,59 @@ func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
 		_ = os.Remove(tmpPath)
 	}()
 
-	// 先把属主设好再写入：这样文件一出现就属于正确的账号，
+	// 先把属主设好：这样文件一出现就属于正确的账号，
 	// 不会存在“短暂属于当前用户”的窗口。
+	//
+	// 注意 Chown 必须在 Chmod 之前：Linux 的 chown(2) 会清除 setuid / setgid。
+	//
+	// 失败处理分两类（不一律忽略）：
+	//
+	//   - EPERM（权限不足）：这是**预期内**的情况 —— 非 root 进程无法把文件
+	//     改属给别的账号。此时忽略并继续，属主退化为当前进程用户，
+	//     权限位与内容仍然正确。
+	//   - 其它错误：属于**非预期**故障，必须向上返回，否则函数会返回 nil
+	//     而隐藏真实问题。这是纵深防御：已实测到 os.File.Chown 在 fd 已关闭时
+	//     返回 "file already closed"（注意它**不是** EBADF，用 errors.Is 比较
+	//     syscall.EBADF 会判不出来），此类错误不应被吞掉。
+	//     （EROFS / EINVAL 在本函数语境下不可达：Chown 作用于刚创建成功的
+	//     临时文件，若目录不可写则 CreateTemp 会先失败。）
+	//
+	// 关于调用方无法区分「已沿用属主」与「已退化为当前用户」：
+	// 这是刻意保留的——两者都算写入成功，若为此改变返回值或签名，
+	// 会给所有调用方增加一个通常无需处理的错误分支。
 	if keepOwner {
-		if cerr := tmp.Chown(ownerUid, ownerGid); cerr != nil {
-			// 无权限时忽略：保留权限位仍然有意义，
-			// 属主退化为当前进程用户。
-			_ = cerr
+		if cerr := tmp.Chown(ownerUid, ownerGid); cerr != nil && !errors.Is(cerr, syscall.EPERM) {
+			_ = tmp.Close()
+
+			return fmt.Errorf("failed in setting owner/group of %s: %w", tmpPath, cerr)
 		}
-	}
-
-	if err = tmp.Chmod(perm); err != nil {
-		_ = tmp.Close()
-
-		return fmt.Errorf("failed in setting permission of %s: %w", tmpPath, err)
 	}
 
 	if _, err = tmp.Write(data); err != nil {
 		_ = tmp.Close()
 
 		return fmt.Errorf("failed in writing to %s: %w", tmpPath, err)
+	}
+
+	// Set the file permission.
+	//
+	// Chmod 必须放在 Write **之后**。Linux 有一条安全规则：
+	// 非 root 进程写入一个已带 setuid / setgid 的文件时，内核会清除这两个位
+	// （避免普通用户借写入提权）。若先 Chmod 设上 setgid 再 Write，
+	// 刚设好的位会被这次写入抹掉，最终目标文件丢掉 setgid。
+	//
+	// 实测（Linux 容器，非 root）：
+	//   Chown → Chmod(2755) → Write  ⇒ setgid 丢失
+	//   Chown → Write → Chmod(2755)  ⇒ setgid 保留
+	// root 不受该规则影响，因此这个问题只在非 root 运行时出现
+	// （CI 与生产环境通常都不是 root，故必须按上述顺序写）。
+	//
+	// 顺便说明：Chmod 放在 Write 之后也让「创建到设权限之间」的窗口更小 ——
+	// 文件在创建时是 0600（CreateTemp 的默认值），写完内容才放开权限。
+	if err = tmp.Chmod(perm); err != nil {
+		_ = tmp.Close()
+
+		return fmt.Errorf("failed in setting permission of %s: %w", tmpPath, err)
 	}
 
 	// fsync：确保内容在 rename 之前已真正写入磁盘。
@@ -438,6 +480,19 @@ func copyDir(src, dst string) error {
 		return fmt.Errorf("failed in creating directory %s: %w", dst, err)
 	}
 
+	// 注意这里 Chown 失败是**直接返回错误**，与 WriteFileAtomic 的
+	// 「只忽略 EPERM」不同，这是刻意的：
+	//
+	//   - 复制（本函数与 copyFile）的语义是「让副本与源完全一致」，
+	//     设不上属主就意味着副本是错的，应当失败让调用方知道。
+	//   - 而且此处新建出来的 dst 属主本就是当前进程用户，
+	//     Chown 到同一个 uid 在 Linux 上不会触发权限检查、必然成功；
+	//     因此一旦失败，就说明是真实故障而非「权限不足的预期降级」。
+	//
+	// 对比 WriteFileAtomic：它改写的是**已存在**的文件，属主可能是别的
+	// 服务账号，非 root 进程沿用属主必然 EPERM；那里若也直接返回错误，
+	// 非 root 用户将无法改写任何非本人文件，属于明显的功能倒退。
+	// 两处语义不同，故处理方式不同，不要为了「看起来一致」而统一。
 	if err = os.Chown(dst, int(sys.Uid), int(sys.Gid)); err != nil {
 		return fmt.Errorf("failed in setting owner/group of %s: %w", dst, err)
 	}
@@ -570,6 +625,10 @@ func copyFile(src, dst string) (err error) {
 	// 刚设好的 setuid / setgid 会被紧接着的 Chown 抹掉，这步修复就失效了。
 	// 实测（Linux 容器）：源文件带 setgid 时，
 	//   Chmod → Chown 的结果是 setgid 丢失；Chown → Chmod 则保留。
+	//
+	// Chown 失败直接返回错误（不像 WriteFileAtomic 那样忽略 EPERM）：
+	// 复制的语义是「副本与源完全一致」，设不上属主就是失败；
+	// 详见 copyDir 中的说明。
 	sys, ok := stat.Sys().(*syscall.Stat_t)
 	if !ok {
 		return fmt.Errorf("failed in reading owner/group info of %s", src)

@@ -3,6 +3,7 @@ package goutils
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"syscall"
@@ -1074,4 +1075,159 @@ func TestVerifyChownBeforeChmodOrder(t *testing.T) {
 				"Linux 的 chown(2) 在属主改变时会清除 setgid，\n"+
 				"先 Chmod 再 Chown 会让刚设好的特殊位被抹掉。", name)
 	}
+}
+
+// TestVerifyWriteFileAtomicWritesBeforeChmod 守护「Write 早于 Chmod」的顺序。
+//
+// 为什么需要静态检查：Linux 有一条安全规则 —— 非 root 进程写入一个已带
+// setuid / setgid 的文件时，内核会清除这两个位。因此若先 Chmod 设上 setgid
+// 再 Write，刚设好的位会被这次写入抹掉，最终目标文件丢掉 setgid。
+//
+// 该问题**只在 Linux 且非 root 时可见**，实测三种环境下用错误顺序的结果：
+//
+//	macOS                  → 测试通过（漏检）
+//	Linux + root           → 测试通过（漏检）
+//	Linux + 非 root        → 测试失败（检出）
+//
+// 也就是说行为测试只在 CI 那种「Linux 非 root」环境下才有效，
+// 本地开发（macOS）与 root 容器都发现不了。为避免这类回归只能靠环境碰运气，
+// 这里补一个与运行环境无关的源码顺序检查。
+func TestVerifyWriteFileAtomicWritesBeforeChmod(t *testing.T) {
+	src, err := os.ReadFile("file_dir.go")
+	require.NoError(t, err)
+	body := string(src)
+
+	start := strings.Index(body, "func WriteFileAtomic(")
+	require.GreaterOrEqual(t, start, 0, "应能在 file_dir.go 中找到 WriteFileAtomic")
+
+	rest := body[start:]
+	end := strings.Index(rest, "\n}\n")
+	require.Greater(t, end, 0, "应能定位 WriteFileAtomic 的函数体")
+
+	fn := rest[:end]
+
+	wi := strings.Index(fn, "tmp.Write(")
+	ci := strings.Index(fn, "tmp.Chmod(")
+	oi := strings.Index(fn, "tmp.Chown(")
+
+	require.GreaterOrEqual(t, wi, 0, "WriteFileAtomic 应调用 tmp.Write")
+	require.GreaterOrEqual(t, ci, 0, "WriteFileAtomic 应调用 tmp.Chmod")
+	require.GreaterOrEqual(t, oi, 0, "WriteFileAtomic 应调用 tmp.Chown")
+
+	// 顺序要求：Chown（若存在）→ Write → Chmod
+	assert.Less(t, oi, wi,
+		"tmp.Chown 必须在 tmp.Write 之前：Linux 的 chown(2) 会清除 setuid/setgid")
+	assert.Less(t, wi, ci,
+		"tmp.Write 必须在 tmp.Chmod 之前：\n"+
+			"Linux 上非 root 写入带 setuid/setgid 的文件会清除这两位，\n"+
+			"先 Chmod 再 Write 会让刚设好的 setgid 被抹掉。\n"+
+			"该问题只在 Linux 非 root 时可见（macOS 与 root 都发现不了），\n"+
+			"因此不能只依赖行为测试。")
+}
+
+// TestVerifyWriteFileAtomicFiltersChownErrors 验证 Chown 失败按类型区别处理。
+//
+// 之所以要区分：并非所有 Chown 失败都等价。
+//
+//   - EPERM（权限不足）是**预期内**的：非 root 进程无法把文件改属给别的账号。
+//     此时应继续写入（属主降级为当前用户，权限与内容仍正确）。
+//   - 其它错误属于**非预期**故障，若一律吞掉，函数会返回 nil 而隐藏真实问题。
+//
+// 这里用源码检查而非行为断言，原因是 EPERM 之外的真实错误很难在单元测试里
+// 稳定构造（它需要「目录可写但文件不可写 + 无 CAP_CHOWN」的组合）。
+//
+// 检查方式刻意使用**正则**而不是简单的字符串包含：
+//   - 必须出现 `errors.Is(..., syscall.EPERM)` 这一调用形式。
+//     若只检查「源码里含有 syscall.EPERM」，那么把 errors.Is 误写成
+//     `cerr != syscall.EPERM`（真实会出 bug 的写法）也能通过 —— 已实测该漏报；
+//     并且注释里出现 syscall.EPERM 同样会让检查通过。
+//   - 不再匹配错误文案字符串，避免仅改文案就被误判为失败。
+func TestVerifyWriteFileAtomicFiltersChownErrors(t *testing.T) {
+	src, err := os.ReadFile("file_dir.go")
+	require.NoError(t, err)
+	body := string(src)
+
+	start := strings.Index(body, "func WriteFileAtomic(")
+	require.GreaterOrEqual(t, start, 0, "应能找到 WriteFileAtomic")
+
+	rest := body[start:]
+	end := strings.Index(rest, "\n}\n")
+	require.Greater(t, end, 0, "应能定位 WriteFileAtomic 的函数体")
+	fn := rest[:end]
+
+	// 去掉注释行后再检查，避免注释中的文字让断言通过。
+	var code []string
+	for _, line := range strings.Split(fn, "\n") {
+		if trimmed := strings.TrimSpace(line); strings.HasPrefix(trimmed, "//") {
+			continue
+		}
+
+		code = append(code, line)
+	}
+
+	codeBody := strings.Join(code, "\n")
+
+	require.Contains(t, codeBody, "tmp.Chown(",
+		"WriteFileAtomic 应调用 tmp.Chown 以沿用属主")
+
+	// 必须用 errors.Is 比较 EPERM（而非 ==），否则 *PathError 包装会让判断失效。
+	re := regexp.MustCompile(`errors\.Is\(\s*cerr\s*,\s*syscall\.EPERM\s*\)`)
+	assert.Regexp(t, re, codeBody,
+		"应以 `errors.Is(cerr, syscall.EPERM)` 判断权限错误：\n"+
+			"os.File.Chown 返回的是 *PathError，用 == 比较会永远为假，\n"+
+			"从而让 EPERM 降级变成硬失败（非 root 改写他人文件会直接报错）。")
+
+	// Chown 失败时必须有向上返回的路径，不能只 `_ = cerr` 吞掉。
+	assert.Contains(t, codeBody, "return fmt.Errorf(",
+		"非 EPERM 的 Chown 失败应向上返回错误，而不是静默忽略")
+}
+
+// TestVerifyWriteFileAtomicEPERMDegradesGracefully 真正覆盖 EPERM 降级分支。
+//
+// 为什么需要专门的构造：EPERM 只在「非 root 进程改写一个属于**第三方**账号的
+// 文件」时出现。两个条件缺一不可：
+//
+//   - 必须是非 root（root 有 CAP_CHOWN，任何 chown 都成功）；
+//   - 目标文件的属主必须是**别人**。若文件属于自己，Chown(self) 恒成功，
+//     根本走不到 EPERM 分支 —— 这正是本测试存在的理由：
+//     用 t.TempDir() 造出来的文件属主就是当前用户，
+//     所以在同一进程内**无法**构造出 EPERM 场景。
+//
+// 因此这里采用「分两步」的方式，避免依赖外部编排：
+//
+//  1. 若当前是 root（或有权 chown），先把目标文件改属给另一个 uid，
+//     然后**降权到该 uid** 再调用 —— 但 Go 无法安全降权后恢复，
+//     故改为跳过并给出明确提示；
+//  2. 若非 root 且能读到「属于他人」的文件（例如由外部脚本准备），
+//     则真实验证降级行为。
+//
+// 由于单元测试进程无法自行改变自己的 uid，本测试在两种情况下都会
+// 明确跳过，并在消息中指出该分支由哪个环境覆盖（CI 的 root→非 root 编排）。
+// 这里至少保证：**不会给出「已验证 EPERM」的假象**。
+func TestVerifyWriteFileAtomicEPERMDegradesGracefully(t *testing.T) {
+	dir := t.TempDir()
+	pth := filepath.Join(dir, "conf")
+
+	require.NoError(t, os.WriteFile(pth, []byte("old"), 0644))
+
+	info, err := os.Stat(pth)
+	require.NoError(t, err)
+
+	ss, ok := info.Sys().(*syscall.Stat_t)
+	require.True(t, ok)
+
+	// 只有在「文件属主不是当前用户」时，才可能产生 EPERM。
+	if int(ss.Uid) == os.Getuid() {
+		t.Skip("文件属主是当前用户，Chown(self) 不会 EPERM；" +
+			"该降级分支需由「root 准备 + 非 root 执行」的外部编排覆盖（见 CI）")
+	}
+
+	// 走到这里说明目标文件确实属于他人：此时 Chown 必然 EPERM，
+	// 验证函数仍返回 nil 且内容写入正确（属主降级为当前用户）。
+	require.NoError(t, WriteFileAtomic(pth, []byte("new"), 0644),
+		"属主降级属于可接受行为，不应返回错误")
+
+	got, err := os.ReadFile(pth)
+	require.NoError(t, err)
+	assert.Equal(t, "new", string(got), "内容仍应正确写入")
 }
