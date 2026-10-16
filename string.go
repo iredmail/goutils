@@ -7,7 +7,6 @@ import (
 	"reflect"
 	"slices"
 	"strings"
-	"time"
 )
 
 const (
@@ -16,9 +15,10 @@ const (
 
 // genWeakerRandomString 使用 `math/rand` 包生成指定长度的随机字符串。
 // `math/rand` 被认为比 `crypt/rand` 弱。
+//
+// 注意：不再调用已弃用的 mRand.Seed()。自 Go 1.20 起，全局生成器在程序启动时
+// 会自动随机播种，用随机值调用 Seed 没有任何作用（math/rand.Seed 已弃用）。
 func genWeakerRandomString(length int) string {
-	mRand.Seed(time.Now().UnixNano())
-
 	s := []rune(charsForRandomString)
 	b := make([]rune, length)
 
