@@ -189,7 +189,7 @@ func (cb CharBool) Bool() bool {
 	return bool(cb)
 }
 
-func (cb *CharBool) Scan(value interface{}) error {
+func (cb *CharBool) Scan(value any) error {
 	switch x := value.(type) {
 	// mysql
 	case []uint8:

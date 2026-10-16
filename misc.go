@@ -54,7 +54,7 @@ func NotEmpty(v any) bool {
 		}
 
 		return rv.Len() > 0
-	case reflect.Ptr:
+	case reflect.Pointer:
 		return v != nil
 	}
 
@@ -86,7 +86,6 @@ func GetStructFieldNames(obj any) (names []string) {
 	t := reflect.TypeOf(obj)
 	if t.Kind() == reflect.Struct {
 		for field := range t.Fields() {
-			field := field
 			names = append(names, field.Name)
 		}
 

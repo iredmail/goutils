@@ -57,19 +57,19 @@ func (l *logger) parseLogLevel() (level slog.Level, priority syslog.Priority, er
 // 实现 Logger 接口。
 //
 
-func (l *logger) Info(msg string, args ...interface{}) {
+func (l *logger) Info(msg string, args ...any) {
 	l.sl.Info(fmt.Sprintf(msg, args...))
 }
 
-func (l *logger) Error(msg string, args ...interface{}) {
+func (l *logger) Error(msg string, args ...any) {
 	l.sl.Error(fmt.Sprintf(msg, args...))
 }
 
-func (l *logger) Warn(msg string, args ...interface{}) {
+func (l *logger) Warn(msg string, args ...any) {
 	l.sl.Warn(fmt.Sprintf(msg, args...))
 }
 
-func (l *logger) Debug(msg string, args ...interface{}) {
+func (l *logger) Debug(msg string, args ...any) {
 	l.sl.Debug(fmt.Sprintf(msg, args...))
 }
 

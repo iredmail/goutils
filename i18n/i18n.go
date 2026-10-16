@@ -10,10 +10,11 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/iredmail/goutils"
-	"github.com/iredmail/goutils/slice"
 	"github.com/vorlif/spreak"
 	"golang.org/x/text/language"
+
+	"github.com/iredmail/goutils"
+	"github.com/iredmail/goutils/slice"
 )
 
 const (
@@ -98,7 +99,7 @@ func walkLocaleDir(localesDir string) (customLanguages []string, errCustomLocale
 			return err
 		}
 
-		m := make(map[string]interface{})
+		m := make(map[string]any)
 
 		err = json.Unmarshal(jsonBytes, &m)
 		if err != nil {
