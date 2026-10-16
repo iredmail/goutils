@@ -1229,7 +1229,7 @@ func TestVerifyWriteFileAtomicFiltersChownErrors(t *testing.T) {
 
 	// 去掉注释行后再检查，避免注释中的文字让断言通过。
 	var code []string
-	for _, line := range strings.Split(fn, "\n") {
+	for line := range strings.SplitSeq(fn, "\n") {
 		if trimmed := strings.TrimSpace(line); strings.HasPrefix(trimmed, "//") {
 			continue
 		}

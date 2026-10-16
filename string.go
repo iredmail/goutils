@@ -50,7 +50,7 @@ func SplitLines(s string) (lines []string) {
 	// by first replacing Windows-style newlines with Unix-style ones.
 	s = strings.ReplaceAll(s, "\r\n", "\n")
 
-	for _, i := range strings.Split(s, "\n") {
+	for i := range strings.SplitSeq(s, "\n") {
 		lines = append(lines, strings.TrimSpace(i))
 	}
 

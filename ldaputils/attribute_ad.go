@@ -68,7 +68,7 @@ func GetAttrObjectSID(entry *ldap.Entry) string {
 		return ""
 	}
 
-	for i := 0; i < subAuthorityCount; i++ {
+	for i := range subAuthorityCount {
 		start := 8 + i*4
 		subAuthority := binary.LittleEndian.Uint32(sidBytes[start : start+4])
 		sidBuilder.WriteString("-")

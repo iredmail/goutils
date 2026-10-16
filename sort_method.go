@@ -90,7 +90,7 @@ func StrToSortMethod(s string) (sm SortMethod) {
 // StrToSortMethods 将以冒号、逗号分隔定义的排序方法转换为 SortMethod 列表。
 // 例如：`field1:asc`, `field1:asc,field2:desc`。
 func StrToSortMethods(s string) (sms SortMethods) {
-	for _, part := range strings.Split(s, ",") {
+	for part := range strings.SplitSeq(s, ",") {
 		name, order, found := strings.Cut(part, ":")
 		name = strings.TrimSpace(name)
 		order = strings.TrimSpace(order)

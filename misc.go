@@ -70,7 +70,7 @@ func GetStructJSONTags(v any) (tags []string) {
 		}
 
 		jsonTag := rv.Type().Field(i).Tag.Get("json")
-		tag := strings.Split(jsonTag, ",")[0]
+		tag, _, _ := strings.Cut(jsonTag, ",")
 		if tag == "" || tag == "-" {
 			continue
 		}
@@ -85,8 +85,8 @@ func GetStructJSONTags(v any) (tags []string) {
 func GetStructFieldNames(obj any) (names []string) {
 	t := reflect.TypeOf(obj)
 	if t.Kind() == reflect.Struct {
-		for i := range t.NumField() {
-			field := t.Field(i)
+		for field := range t.Fields() {
+			field := field
 			names = append(names, field.Name)
 		}
 
