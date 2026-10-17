@@ -41,6 +41,13 @@ func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQuerie
 
 	if len(ctxQueries) > 0 {
 		for k, v := range ctxQueries {
+			// 移除空值参数，避免生成类似 `&foo=` 的链接。
+			if v == "" {
+				uv.Del(k)
+
+				continue
+			}
+
 			if uv.Has(k) {
 				// 已经存在则替换旧值
 				uv.Set(k, v)
