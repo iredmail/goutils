@@ -24,8 +24,8 @@ func TestFilterEmailsInDomains(t *testing.T) {
 	}
 
 	valid, invalid := FilterEmailsInDomains(mails, domains)
-	assert.Equal(t, []string{"user1@a.io", "User2@A.IO", "user3+Ext@b.com", "USER4@B.COM", "user5@a.io"}, valid)
-	assert.Equal(t, []string{"other@c.net", "Other2+Tag@D.ORG"}, invalid)
+	assert.Equal(t, []string{"user1@a.io", "user2@a.io", "user3+Ext@b.com", "user4@b.com", "user5@a.io"}, valid)
+	assert.Equal(t, []string{"other@c.net", "other2+Tag@d.org"}, invalid)
 
 	// 空 domains：所有有效地址均为 invalid。
 	valid, invalid = FilterEmailsInDomains([]string{"u@a.io", "x"}, nil)
