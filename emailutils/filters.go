@@ -70,3 +70,40 @@ func FilterSameDomainEmails(domain string, mails []string) (same []string, other
 
 	return
 }
+
+// FilterEmailsInDomains 过滤出属于指定域名列表的邮件地址和不属于指定域名列表的邮件地址。
+//
+// - 无效的邮件地址和域名都会被忽略。
+// - 域名比较不区分大小写。
+// - 返回的邮件地址是去除了首尾空白的原始邮件地址（不做大小写格式化、不去除地址扩展），但重复地址只保留一个。
+func FilterEmailsInDomains(mails, domains []string) (valid, invalid []string) {
+	mDomains := make(map[string]bool)
+	for _, d := range domains {
+		d = strings.ToLower(strings.TrimSpace(d))
+		if d != "" {
+			mDomains[d] = true
+		}
+	}
+
+	for _, orig := range mails {
+		orig = strings.TrimSpace(orig)
+
+		if !IsEmail(orig) {
+			continue
+		}
+
+		e := ToLowerWithExt(orig)
+
+		if mDomains[ExtractDomainFromEmail(e)] {
+			if !slices.Contains(valid, e) {
+				valid = append(valid, orig)
+			}
+		} else {
+			if !slices.Contains(invalid, e) {
+				invalid = append(invalid, orig)
+			}
+		}
+	}
+
+	return
+}
