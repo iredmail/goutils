@@ -76,7 +76,7 @@ func FilterSameDomainEmails(domain string, mails []string) (same []string, other
 // - 无效的邮件地址和域名都会被忽略。
 // - 域名比较不区分大小写。
 // - 返回的邮件地址去除了首尾空白、转换为小写，但保留地址扩展。重复地址只保留一个。
-func FilterEmailsInDomains(mails, domains []string) (in, notIn []string) {
+func FilterEmailsInDomains(mails, domains []string, removeExt bool) (in, notIn []string) {
 	mDomains := make(map[string]bool)
 	for _, d := range domains {
 		d = strings.ToLower(strings.TrimSpace(d))
@@ -92,7 +92,12 @@ func FilterEmailsInDomains(mails, domains []string) (in, notIn []string) {
 			continue
 		}
 
-		e := ToLowerWithExt(orig)
+		var e string
+		if removeExt {
+			e = StripExtension(orig)
+		} else {
+			e = ToLowerWithExt(orig)
+		}
 
 		if mDomains[ExtractDomainFromEmail(e)] {
 			if !slices.Contains(in, e) {
