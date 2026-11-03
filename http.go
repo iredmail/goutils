@@ -1,6 +1,7 @@
 package goutils
 
 import (
+	"context"
 	"crypto/tls"
 	"io"
 	"net/http"
@@ -76,11 +77,17 @@ func DownloadFile(url, dest string, validateCert bool) (err error) {
 
 	// Write the body to file
 	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		_ = out.Close()
+		_ = os.Remove(dest)
 
-	return err
+		return err
+	}
+
+	return nil
 }
 
-func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gauger) (err error) {
+func DownloadFileWithGauger(ctx context.Context, url, dest string, validateCert bool, gaugers ...Gauger) (err error) {
 	client := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
@@ -89,7 +96,12 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 		},
 	}
 
-	resp, err := client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
@@ -123,5 +135,12 @@ func DownloadFileWithGauger(url, dest string, validateCert bool, gaugers ...Gaug
 		}
 	}
 
-	return err
+	if err != nil {
+		_ = out.Close()
+		_ = os.Remove(dest)
+
+		return err
+	}
+
+	return nil
 }
