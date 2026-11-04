@@ -21,14 +21,24 @@ type Pagination struct {
 }
 
 // GenPagination 根据当前页 `page`，总条目数 `total`，每页条目数 `limit` 生成分页链接。
+// limit <= 0 时返回零值；页码会被收敛到 [1, 总页数] 范围内。
 func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQueries map[string]string) (p Pagination) {
-	if limit <= 0 || page < 1 {
+	if limit <= 0 {
 		return
 	}
 
+	pages := 0
+	if total > 0 {
+		pages = int(math.Ceil(float64(total) / float64(limit)))
+	}
+
+	// 页码收敛到 [1, 总页数]，避免越界页码产生错误的记录区间和页码列表。
+	// total 为 0 时没有有效页，按第 1 页处理。
+	page = max(min(page, pages), 1)
+
 	p = Pagination{
 		TotalItems:   total,
-		TotalPages:   int(math.Ceil(float64(total) / float64(limit))),
+		TotalPages:   pages,
 		CurrentPage:  page,
 		Limit:        limit,
 		PageNumbers:  []int{},
@@ -77,8 +87,6 @@ func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQuerie
 
 		return
 	}
-
-	pages := int(math.Ceil(float64(total) / float64(limit)))
 
 	if pages <= 1 {
 		// 不需要分页

@@ -89,4 +89,33 @@ func TestGenPagination(t *testing.T) {
 
 	p = GenPagination(page, "/abc", total, limit, map[string]string{"foo": "bar"})
 	assert.Equal(t, p.URIPrefix, "/abc?foo=bar&limit=10")
+
+	// 页码越界时收敛到最后一页
+	total = 53
+	limit = 10
+	page = 999
+
+	p = GenPagination(page, "/", total, limit, nil)
+	assert.Equal(t, 6, p.TotalPages)
+	assert.Equal(t, 6, p.CurrentPage)
+	assert.Equal(t, 51, p.PageBeginNum)
+	assert.Equal(t, 53, p.PageLastNum)
+	assert.Equal(t, []int{1, 2, 3, 4, 5, 6}, p.PageNumbers)
+
+	// 页码小于 1 时收敛到第一页
+	page = 0
+	p = GenPagination(page, "/", total, limit, nil)
+	assert.Equal(t, 1, p.CurrentPage)
+	assert.Equal(t, 1, p.PageBeginNum)
+	assert.Equal(t, 10, p.PageLastNum)
+
+	// 没有数据时总页数为 0，按第 1 页处理
+	total = 0
+	page = 999
+	p = GenPagination(page, "/", total, limit, nil)
+	assert.Equal(t, 0, p.TotalPages)
+	assert.Equal(t, 1, p.CurrentPage)
+	assert.Equal(t, 0, p.PageBeginNum)
+	assert.Equal(t, 0, p.PageLastNum)
+	assert.Equal(t, []int{}, p.PageNumbers)
 }
