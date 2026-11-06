@@ -7,7 +7,7 @@ require (
 	github.com/Luzifer/go-openssl/v4 v4.2.5
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/alexedwards/argon2id v1.0.0
-	github.com/doug-martin/goqu/v9 v9.24.0
+	github.com/doug-martin/goqu/v9 v9.25.0
 	github.com/dustin/go-humanize v1.1.0
 	github.com/go-ldap/ldap/v3 v3.4.15
 	github.com/go-sql-driver/mysql v1.10.1
