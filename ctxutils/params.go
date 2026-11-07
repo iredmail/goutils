@@ -3,7 +3,6 @@ package ctxutils
 import (
 	"errors"
 	"net/url"
-	"strconv"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
@@ -77,14 +76,6 @@ func ParamEmailWithoutExt(ctx fiber.Ctx, name ...string) (addr string, err error
 // 如果没有指定则默认为 1。
 func ParamPage(ctx fiber.Ctx) (page int) {
 	page = max(fiber.Params[int](ctx, "page", 1), 1)
-
-	return
-}
-
-func ParamInt64(ctx fiber.Ctx, key string) (i int64) {
-	s := ctx.Params(key, "0")
-
-	i, _ = strconv.ParseInt(s, 10, 64)
 
 	return
 }
