@@ -69,8 +69,9 @@ func QueryDomain(ctx fiber.Ctx) (domain string, err error) {
 	return
 }
 
+// QueryEmail 读取 URL query 里的 `email` 参数并返回规范化后的邮件地址。
 func QueryEmail(ctx fiber.Ctx) (addr string, err error) {
-	addr = ctx.Params("email")
+	addr = ctx.Query("email")
 
 	if !emailutils.IsEmail(addr) {
 		return "", errors.New("INVALID_EMAIL")
