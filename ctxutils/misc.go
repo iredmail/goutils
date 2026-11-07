@@ -1,14 +1,14 @@
 package ctxutils
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
-func ReplyEmptyOK(ctx *fiber.Ctx) error {
+func ReplyEmptyOK(ctx fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).SendString("")
 }
 
-func RouteURI(ctx *fiber.Ctx, name string, params fiber.Map) (uri string) {
+func RouteURI(ctx fiber.Ctx, name string, params fiber.Map) (uri string) {
 	uri, err := ctx.GetRouteURL(name, params)
 	if err != nil {
 		uri = "/"

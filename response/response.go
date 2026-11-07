@@ -1,19 +1,19 @@
 package response
 
 import (
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
-type FuncTranslate func(ctx *fiber.Ctx, msg string, args ...any) string
+type FuncTranslate func(ctx fiber.Ctx, msg string, args ...any) string
 
 type Response struct {
-	ctx     *fiber.Ctx
+	ctx     fiber.Ctx
 	Suc     bool   `json:"_success"`
 	Message string `json:"_msg"`
 	Data    any    `json:"data"`
 }
 
-func New(ctx *fiber.Ctx) Response {
+func New(ctx fiber.Ctx) Response {
 	return Response{ctx: ctx}
 }
 
