@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 )
 
 func addQueryMark(uri string) (newURI string) {
@@ -19,14 +19,14 @@ func addQueryMark(uri string) (newURI string) {
 	return uri + "?"
 }
 
-func RedirectWithString(ctx fiber.Ctx, uri, msg string) error {
-	return ctx.Redirect().To(addQueryMark(uri) + "msg=" + url.QueryEscape(msg))
+func RedirectWithString(ctx *fiber.Ctx, uri, msg string) error {
+	return ctx.Redirect(addQueryMark(uri) + "msg=" + url.QueryEscape(msg))
 }
 
-func RedirectWithError(ctx fiber.Ctx, uri string, err error) error {
+func RedirectWithError(ctx *fiber.Ctx, uri string, err error) error {
 	if err != nil {
-		return ctx.Redirect().To(addQueryMark(uri) + "msg=" + url.QueryEscape(err.Error()))
+		return ctx.Redirect(addQueryMark(uri) + "msg=" + url.QueryEscape(err.Error()))
 	}
 
-	return ctx.Redirect().To(uri)
+	return ctx.Redirect(uri)
 }

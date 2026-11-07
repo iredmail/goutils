@@ -3,9 +3,10 @@ package ctxutils
 import (
 	"errors"
 	"net/url"
+	"strconv"
 	"strings"
 
-	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
 	"github.com/iredmail/goutils"
@@ -13,7 +14,7 @@ import (
 	"github.com/iredmail/goutils/respcode"
 )
 
-func ParamDomain(ctx fiber.Ctx, key ...string) (domain string, err error) {
+func ParamDomain(ctx *fiber.Ctx, key ...string) (domain string, err error) {
 	_key := "domain"
 	if len(key) > 0 {
 		_key = key[0]
@@ -32,7 +33,7 @@ func ParamDomain(ctx fiber.Ctx, key ...string) (domain string, err error) {
 	return strings.ToLower(domain), nil
 }
 
-func ParamEmail(ctx fiber.Ctx, name ...string) (addr string, err error) {
+func ParamEmail(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 	param := "email"
 
 	if len(name) > 0 {
@@ -52,7 +53,7 @@ func ParamEmail(ctx fiber.Ctx, name ...string) (addr string, err error) {
 	return emailutils.ToLowerWithExt(addr), nil
 }
 
-func ParamEmailWithoutExt(ctx fiber.Ctx, name ...string) (addr string, err error) {
+func ParamEmailWithoutExt(ctx *fiber.Ctx, name ...string) (addr string, err error) {
 	param := "email"
 
 	if len(name) > 0 {
@@ -74,13 +75,24 @@ func ParamEmailWithoutExt(ctx fiber.Ctx, name ...string) (addr string, err error
 
 // ParamPage 用于查询 URL parameters（`/xxx/:page`）的 `page` 参数的值。
 // 如果没有指定则默认为 1。
-func ParamPage(ctx fiber.Ctx) (page int) {
-	page = max(fiber.Params[int](ctx, "page", 1), 1)
+func ParamPage(ctx *fiber.Ctx) (page int) {
+	page, _ = ctx.ParamsInt("page", 1)
+	if page < 1 {
+		page = 1
+	}
 
 	return
 }
 
-func ParamUUID(ctx fiber.Ctx, name ...string) (value string, valid bool) {
+func ParamInt64(ctx *fiber.Ctx, key string) (i int64) {
+	s := ctx.Params(key, "0")
+
+	i, _ = strconv.ParseInt(s, 10, 64)
+
+	return
+}
+
+func ParamUUID(ctx *fiber.Ctx, name ...string) (value string, valid bool) {
 	param := "uuid"
 
 	if len(name) > 0 {
@@ -98,7 +110,7 @@ func ParamUUID(ctx fiber.Ctx, name ...string) (value string, valid bool) {
 }
 
 // ParamUUIDLicenseKey 用于查询 URL parameter（`/xxx/:license_key`）里 `license_key` 参数的值（必须是 UUID 格式）。
-func ParamUUIDLicenseKey(ctx fiber.Ctx) (key string, err error) {
+func ParamUUIDLicenseKey(ctx *fiber.Ctx) (key string, err error) {
 	key = strings.ToUpper(strings.TrimSpace(ctx.Params("license_key")))
 
 	if !goutils.IsUUIDLicenseKey(key) {
@@ -116,7 +128,7 @@ func ParamUUIDLicenseKey(ctx fiber.Ctx) (key string, err error) {
 
 // ParamString 获取指定的 URL parameter 的值，并移除首尾的空白字符。
 // 如果未指定参数名，则返回默认值。如果没有默认值则值为空字符串。
-func ParamString(ctx fiber.Ctx, name string, defaultValue ...string) (isEmpty bool, value string) {
+func ParamString(ctx *fiber.Ctx, name string, defaultValue ...string) (isEmpty bool, value string) {
 	if len(defaultValue) > 0 {
 		value = defaultValue[0]
 	}
