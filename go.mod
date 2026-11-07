@@ -11,6 +11,7 @@ require (
 	github.com/dustin/go-humanize v1.1.0
 	github.com/go-ldap/ldap/v3 v3.4.15
 	github.com/go-sql-driver/mysql v1.10.1
+	github.com/gofiber/fiber/v2 v2.52.16
 	github.com/gofiber/fiber/v3 v3.6.1
 	github.com/google/uuid v1.6.0
 	github.com/iredmail/ldappool v0.0.0-20261026021302-777421fbbf28
