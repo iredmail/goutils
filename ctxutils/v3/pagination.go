@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+// Pagination 描述分页结果：总条目数、当前页、页码列表与记录序号区间。
+// PageNumbers 中的 0 表示省略的页码范围；URIPrefix 为分页链接的前缀。
 type Pagination struct {
 	TotalItems  int64
 	TotalPages  int
