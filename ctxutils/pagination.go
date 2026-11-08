@@ -2,11 +2,12 @@ package ctxutils
 
 import (
 	"fmt"
-	"math"
 	"net/url"
 	"strings"
 )
 
+// Pagination 描述分页结果：总条目数、当前页、页码列表与记录序号区间。
+// PageNumbers 中的 0 表示省略的页码范围；URIPrefix 为分页链接的前缀。
 type Pagination struct {
 	TotalItems  int64
 	TotalPages  int
@@ -27,9 +28,13 @@ func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQuerie
 		return
 	}
 
+	// 用整数除法向上取整，避免超大 total 在浮点转换时丢失精度。
 	pages := 0
 	if total > 0 {
-		pages = int(math.Ceil(float64(total) / float64(limit)))
+		pages = int(total / int64(limit))
+		if total%int64(limit) != 0 {
+			pages++
+		}
 	}
 
 	// 页码收敛到 [1, 总页数]，避免越界页码产生错误的记录区间和页码列表。
@@ -49,23 +54,13 @@ func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQuerie
 
 	uv := url.Values{}
 
-	if len(ctxQueries) > 0 {
-		for k, v := range ctxQueries {
-			// 移除空值参数，避免生成类似 `&foo=` 的链接。
-			if v == "" {
-				uv.Del(k)
-
-				continue
-			}
-
-			if uv.Has(k) {
-				// 已经存在则替换旧值
-				uv.Set(k, v)
-			} else {
-				// 不存在则添加
-				uv.Add(k, v)
-			}
+	for k, v := range ctxQueries {
+		// 移除空值参数，避免生成类似 `&foo=` 的链接。
+		if v == "" {
+			continue
 		}
+
+		uv.Set(k, v)
 	}
 
 	// 总是覆盖 `limit` 参数
@@ -128,10 +123,13 @@ func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQuerie
 				0,     // 省略号
 				pages, // 最后一页
 			)
-		} else if page > 4 && page < pages-4 {
-			// 添加当前页及其前后3页
+		} else if page < pages-4 {
+			// 当前页及其前后 3 页。页码 1 与 page-3 相邻时不需要省略号。
+			if page-3 > 2 {
+				nums = append(nums, 0) // 省略号
+			}
+
 			nums = append(nums,
-				0, // 省略号
 				page-3,
 				page-2,
 				page-1,
@@ -154,8 +152,10 @@ func GenPagination(page int, URIPrefix string, total int64, limit int, ctxQuerie
 				page, // 当前页
 			)
 
-			// 最后几页全部显示
-			for i := page + 1; i <= pages; i++ {
+			// 最后几页全部显示。用 i < pages 判断，避免 pages 为 int 最大值时
+			// i++ 回绕导致死循环。
+			for i := page; i < pages; {
+				i++
 				nums = append(nums, i)
 			}
 		}
