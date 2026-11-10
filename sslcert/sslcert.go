@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -170,6 +171,23 @@ func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, 
 	}
 
 	return m.autocertMgr.GetCertificate(hello)
+}
+
+// HTTPHandler 返回处理 ACME http-01 挑战、并把其余请求交给 fallback 的
+// http.Handler，必须由调用方监听在 80 端口；fallback 为 nil 时，其余请求默认
+// 重定向到 HTTPS。
+//
+// 以 /.well-known/acme-challenge/ 开头的请求始终交给 autocert 处理，与 fallback
+// 无关；固定证书等未启用 autocert 的情况下通常返回 404。
+// 其余请求交给 fallback；fallback 为 nil 时使用 autocert 内置逻辑：GET/HEAD 返回
+// 302 跳转到 https://<Host><path>?<query>（显式端口会改写为 :443），其它方法返回
+// 400。内置逻辑不做 HostPolicy 校验，自定义 fallback 也不经过 HostPolicy，需要
+// 限制跳转目标时由调用方自行校验 Host。
+//
+// 调用本方法会把 http-01 加入 autocert 的域名验证方式（tls-alpn-01 仍然可用），
+// 并且可以重复或并发调用。
+func (m *Manager) HTTPHandler(fallback http.Handler) http.Handler {
+	return m.autocertMgr.HTTPHandler(fallback)
 }
 
 func (m *Manager) Listener(addr string) (net.Listener, error) {
