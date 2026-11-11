@@ -155,8 +155,9 @@ func (c *Composer) Bytes() (msg []byte, err error) {
 	if len(c.messageID) > 0 {
 		c.headers["Message-ID"] = c.messageID
 	} else {
-		// Use random Message-ID
-		c.headers["Message-ID"] = goutils.GenRandomString(32) + "@" + goutils.GetHostFQDN()
+		// 使用随机字符串作为 Message-ID.
+		// 注意：必须用 `<>` 包裹 Message-ID。
+		c.headers["Message-ID"] = "<" + goutils.GenRandomString(32) + "@" + goutils.GetHostFQDN() + ">"
 	}
 
 	if c.headers != nil {
