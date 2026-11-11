@@ -5,7 +5,7 @@
 
 ## 模块信息
 
-- module：`github.com/iredmail/goutils`；Go 1.27.3。
+- module：`github.com/iredmail/goutils`；Go 1.27.4。
 - 公共工具库，被 `ee`、`gosible`、`spiderd` 等项目直接依赖，API 兼容性优先。
 - 同时提供 fiber v2（`ctxutils`）与 fiber v3（`ctxutils/v3`）两套 API。
 - 主要包：`ctxutils`、`dbutils`、`dnsutils`、`emailutils`、`logger`、`respcode`、
