@@ -100,6 +100,26 @@ testify 的 `assert` / `require`（库内已有依赖）。
 - 本库被 `ee`、`gosible`、`spiderd` 等项目直接依赖：改公开 API 前先搜所有使用方，
   并分别跑测试。
 
+## 6. 组合型 API：薄封装写清委托范围
+
+对底层库做薄封装时，文档注释要写清哪些行为来自底层、哪些由调用方负责，避免把
+底层语义误写成新契约。
+
+```go
+// HTTPHandler 返回处理 ACME http-01 挑战、并把其余请求交给 fallback 的
+// http.Handler，必须由调用方监听在 80 端口；fallback 为 nil 时，其余请求默认
+// 重定向到 HTTPS。
+//
+// 以 /.well-known/acme-challenge/ 开头的请求始终交给 autocert 处理，与 fallback
+// 无关；固定证书等未启用 autocert 的情况下通常返回 404。
+func (m *Manager) HTTPHandler(fallback http.Handler) http.Handler {
+	return m.autocertMgr.HTTPHandler(fallback)
+}
+```
+
+要点：薄封装优先保持底层语义，不额外发明行为；契约里写清"必须由谁监听端口"、
+"哪些请求不经过 fallback"等边界，否则调用方容易误用。
+
 ## 不要这样做
 
 - 在工具函数里 `panic`、`os.Exit`、`log.Fatal`。
