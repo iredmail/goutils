@@ -1,6 +1,8 @@
 package goutils
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -1330,4 +1332,91 @@ func TestVerifyWriteFileAtomicEPERMDegradesGracefully(t *testing.T) {
 	// 权限位应被沿用（原文件 0644），不受传入 perm 影响。
 	assert.Equal(t, os.FileMode(0644), after.Mode().Perm(),
 		"权限位应沿用原文件")
+}
+
+func TestWriteTempFile(t *testing.T) {
+	t.Run("default pattern", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("TMPDIR", tmpDir)
+
+		content := []byte("test content\n")
+
+		path, err := WriteTempFile(content)
+		require.NoError(t, err)
+
+		defer func() {
+			require.NoError(t, os.Remove(path))
+		}()
+
+		assert.Equal(t, tmpDir, filepath.Dir(path),
+			"临时文件应位于系统临时目录 %s，实际为 %s", tmpDir, path)
+		assert.True(t, strings.HasPrefix(filepath.Base(path), "go-temp-"),
+			"临时文件名应带 go-temp- 前缀，实际为 %s", filepath.Base(path))
+
+		got, err := os.ReadFile(path)
+		require.NoError(t, err)
+		assert.Equal(t, content, got)
+
+		stat, err := os.Stat(path)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(0o600), stat.Mode().Perm(), "临时文件权限应为 0600")
+	})
+
+	t.Run("custom pattern", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("TMPDIR", tmpDir)
+
+		path, err := WriteTempFile([]byte("data"), "app-rendered-*.conf")
+		require.NoError(t, err)
+
+		defer func() {
+			require.NoError(t, os.Remove(path))
+		}()
+
+		assert.Equal(t, tmpDir, filepath.Dir(path))
+		assert.True(t, strings.HasPrefix(filepath.Base(path), "app-rendered-"),
+			"实际文件名: %s", filepath.Base(path))
+		assert.True(t, strings.HasSuffix(filepath.Base(path), ".conf"),
+			"实际文件名: %s", filepath.Base(path))
+	})
+
+	t.Run("only first pattern is used", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("TMPDIR", tmpDir)
+
+		path, err := WriteTempFile([]byte("data"), "first-*", "second-*")
+		require.NoError(t, err)
+
+		defer func() {
+			require.NoError(t, os.Remove(path))
+		}()
+
+		assert.True(t, strings.HasPrefix(filepath.Base(path), "first-"),
+			"实际文件名: %s", filepath.Base(path))
+	})
+
+	t.Run("empty pattern uses default", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("TMPDIR", tmpDir)
+
+		path, err := WriteTempFile([]byte("data"), "")
+		require.NoError(t, err)
+
+		defer func() {
+			require.NoError(t, os.Remove(path))
+		}()
+
+		assert.True(t, strings.HasPrefix(filepath.Base(path), "go-temp-"),
+			"实际文件名: %s", filepath.Base(path))
+	})
+
+	t.Run("create temp file fails", func(t *testing.T) {
+		t.Setenv("TMPDIR", filepath.Join(t.TempDir(), "missing"))
+
+		path, err := WriteTempFile([]byte("data"))
+		require.Error(t, err)
+		assert.Empty(t, path)
+		assert.Contains(t, err.Error(), "failed in creating temporary file")
+		assert.True(t, errors.Is(err, fs.ErrNotExist), "错误应保留底层错误链: %v", err)
+	})
 }
