@@ -396,6 +396,42 @@ func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
 	return nil
 }
 
+// WriteTempFile 把 content 写入系统临时目录下的随机文件并返回其路径。
+// 文件已关闭，权限为 0600；调用方负责在使用完毕后删除该文件。
+// 失败时返回空路径，错误保留错误链。本函数不做 fsync 或原子替换，
+// 需要这些语义时使用 WriteFileAtomic。
+//
+// pattern 的语义与 os.CreateTemp 相同：最后一个 * 会被替换为随机串，
+// 不含 * 时随机串追加到末尾；pattern 不能包含路径分隔符。pattern 为空
+// 时使用 "goutils-temp-*"。
+func WriteTempFile(pattern string, content []byte) (path string, err error) {
+	if pattern == "" {
+		pattern = "goutils-temp-*"
+	}
+
+	f, err := os.CreateTemp("", pattern)
+	if err != nil {
+		return "", fmt.Errorf("failed in creating temporary file: %w", err)
+	}
+
+	path = f.Name()
+
+	if _, err = f.Write(content); err != nil {
+		_ = f.Close()
+		_ = os.Remove(path)
+
+		return "", fmt.Errorf("failed in writing to temporary file %s: %w", path, err)
+	}
+
+	if err = f.Close(); err != nil {
+		_ = os.Remove(path)
+
+		return "", fmt.Errorf("failed in closing temporary file %s: %w", path, err)
+	}
+
+	return path, nil
+}
+
 // ReadFullFileContent 读取指定文件的所有内容，并去除首尾的空白字符。
 func ReadFullFileContent(pth string) (content []byte, err error) {
 	content, err = os.ReadFile(pth)
