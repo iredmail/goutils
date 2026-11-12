@@ -1341,7 +1341,7 @@ func TestWriteTempFile(t *testing.T) {
 
 		content := []byte("test content\n")
 
-		path, err := WriteTempFile("", content)
+		path, err := WriteTempFile(content)
 		require.NoError(t, err)
 
 		defer func() {
@@ -1350,8 +1350,8 @@ func TestWriteTempFile(t *testing.T) {
 
 		assert.Equal(t, tmpDir, filepath.Dir(path),
 			"临时文件应位于系统临时目录 %s，实际为 %s", tmpDir, path)
-		assert.True(t, strings.HasPrefix(filepath.Base(path), "goutils-temp-"),
-			"临时文件名应带 goutils-temp- 前缀，实际为 %s", filepath.Base(path))
+		assert.True(t, strings.HasPrefix(filepath.Base(path), "go-temp-"),
+			"临时文件名应带 go-temp- 前缀，实际为 %s", filepath.Base(path))
 
 		got, err := os.ReadFile(path)
 		require.NoError(t, err)
@@ -1366,7 +1366,7 @@ func TestWriteTempFile(t *testing.T) {
 		tmpDir := t.TempDir()
 		t.Setenv("TMPDIR", tmpDir)
 
-		path, err := WriteTempFile("app-rendered-*.conf", []byte("data"))
+		path, err := WriteTempFile([]byte("data"), "app-rendered-*.conf")
 		require.NoError(t, err)
 
 		defer func() {
@@ -1380,10 +1380,40 @@ func TestWriteTempFile(t *testing.T) {
 			"实际文件名: %s", filepath.Base(path))
 	})
 
+	t.Run("only first pattern is used", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("TMPDIR", tmpDir)
+
+		path, err := WriteTempFile([]byte("data"), "first-*", "second-*")
+		require.NoError(t, err)
+
+		defer func() {
+			require.NoError(t, os.Remove(path))
+		}()
+
+		assert.True(t, strings.HasPrefix(filepath.Base(path), "first-"),
+			"实际文件名: %s", filepath.Base(path))
+	})
+
+	t.Run("empty pattern uses default", func(t *testing.T) {
+		tmpDir := t.TempDir()
+		t.Setenv("TMPDIR", tmpDir)
+
+		path, err := WriteTempFile([]byte("data"), "")
+		require.NoError(t, err)
+
+		defer func() {
+			require.NoError(t, os.Remove(path))
+		}()
+
+		assert.True(t, strings.HasPrefix(filepath.Base(path), "go-temp-"),
+			"实际文件名: %s", filepath.Base(path))
+	})
+
 	t.Run("create temp file fails", func(t *testing.T) {
 		t.Setenv("TMPDIR", filepath.Join(t.TempDir(), "missing"))
 
-		path, err := WriteTempFile("goutils-temp-*", []byte("data"))
+		path, err := WriteTempFile([]byte("data"))
 		require.Error(t, err)
 		assert.Empty(t, path)
 		assert.Contains(t, err.Error(), "failed in creating temporary file")

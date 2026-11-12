@@ -125,12 +125,13 @@ func (m *Manager) HTTPHandler(fallback http.Handler) http.Handler {
 ```go
 // WriteTempFile 把 content 写入系统临时目录下的随机文件并返回其路径。
 // 文件已关闭，权限为 0600；调用方负责在使用完毕后删除该文件。
-func WriteTempFile(pattern string, content []byte) (path string, err error)
+func WriteTempFile(content []byte, pattern ...string) (pth string, err error)
 ```
 
 要点：临时文件 API 返回路径而不是 `*os.File`，调用方无需再关闭；权限固定 0600；
-"调用方负责删除"属于契约，必须写进文档注释，否则容易泄漏临时文件。`pattern` 的
-语义与 `os.CreateTemp` 一致（最后一个 `*` 会被替换为随机串），空 pattern 使用默认前缀。
+"调用方负责删除"属于契约，必须写进文档注释，否则容易泄漏临时文件。`pattern` 为
+可选参数，语义与 `os.CreateTemp` 一致（最后一个 `*` 会被替换为随机串）；只使用第一
+个 pattern，未提供或为空时使用默认前缀 `go-temp-*`。
 
 ## 不要这样做
 

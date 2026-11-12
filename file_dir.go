@@ -401,35 +401,36 @@ func WriteFileAtomic(pth string, data []byte, perm os.FileMode) error {
 // 失败时返回空路径，错误保留错误链。本函数不做 fsync 或原子替换，
 // 需要这些语义时使用 WriteFileAtomic。
 //
-// pattern 的语义与 os.CreateTemp 相同：最后一个 * 会被替换为随机串，
-// 不含 * 时随机串追加到末尾；pattern 不能包含路径分隔符。pattern 为空
-// 时使用 "goutils-temp-*"。
-func WriteTempFile(pattern string, content []byte) (path string, err error) {
-	if pattern == "" {
-		pattern = "goutils-temp-*"
+// pattern 为可选参数，只使用第一个：语义与 os.CreateTemp 相同，最后一个 *
+// 会被替换为随机串，不含 * 时随机串追加到末尾；不能包含路径分隔符。
+// 未提供或为空时使用 "go-temp-*"。
+func WriteTempFile(content []byte, pattern ...string) (pth string, err error) {
+	pat := "go-temp-*"
+	if len(pattern) > 0 && pattern[0] != "" {
+		pat = pattern[0]
 	}
 
-	f, err := os.CreateTemp("", pattern)
+	f, err := os.CreateTemp("", pat)
 	if err != nil {
 		return "", fmt.Errorf("failed in creating temporary file: %w", err)
 	}
 
-	path = f.Name()
+	pth = f.Name()
 
 	if _, err = f.Write(content); err != nil {
 		_ = f.Close()
-		_ = os.Remove(path)
+		_ = os.Remove(pth)
 
-		return "", fmt.Errorf("failed in writing to temporary file %s: %w", path, err)
+		return "", fmt.Errorf("failed in writing to temporary file %s: %w", pth, err)
 	}
 
 	if err = f.Close(); err != nil {
-		_ = os.Remove(path)
+		_ = os.Remove(pth)
 
-		return "", fmt.Errorf("failed in closing temporary file %s: %w", path, err)
+		return "", fmt.Errorf("failed in closing temporary file %s: %w", pth, err)
 	}
 
-	return path, nil
+	return pth, nil
 }
 
 // ReadFullFileContent 读取指定文件的所有内容，并去除首尾的空白字符。
