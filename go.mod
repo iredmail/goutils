@@ -7,7 +7,7 @@ require (
 	github.com/Luzifer/go-openssl/v4 v4.2.5
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/alexedwards/argon2id v1.0.0
-	github.com/doug-martin/goqu/v9 v9.25.0
+	github.com/doug-martin/goqu/v9 v9.27.0
 	github.com/dustin/go-humanize v1.1.0
 	github.com/go-ldap/ldap/v3 v3.4.15
 	github.com/go-sql-driver/mysql v1.10.2
@@ -39,7 +39,7 @@ require (
 	github.com/go-asn1-ber/asn1-ber v1.5.8 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/goccy/go-json v0.12.0 // indirect
-	github.com/gofiber/schema v1.9.5 // indirect
+	github.com/gofiber/schema v1.10.0 // indirect
 	github.com/gofiber/utils/v2 v2.6.5 // indirect
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
 	github.com/inbucket/html2text v1.0.0 // indirect

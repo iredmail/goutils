@@ -22,8 +22,8 @@ github.com/clipperhouse/displaywidth v0.11.0 h1:lBc6kY44VFw+TDx4I8opi/EtL9m20WSE
 github.com/clipperhouse/displaywidth v0.11.0/go.mod h1:bkrFNkf81G8HyVqmKGxsPufD3JhNl3dSqnGhOoSD/o0=
 github.com/clipperhouse/uax29/v2 v2.7.0 h1:+gs4oBZ2gPfVrKPthwbMzWZDaAFPGYK72F0NJv2v7Vk=
 github.com/clipperhouse/uax29/v2 v2.7.0/go.mod h1:EFJ2TJMRUaplDxHKj1qAEhCtQPW2tJSwu5BF98AuoVM=
-github.com/doug-martin/goqu/v9 v9.25.0 h1:g8zy34MwS1Q/RcEnY/9wB21xv9AQQXfE0mSlWmwsVtI=
-github.com/doug-martin/goqu/v9 v9.25.0/go.mod h1:N2bFjEJdaSS63muKeblweBurK81jQ+WSGja8gT6ykL8=
+github.com/doug-martin/goqu/v9 v9.27.0 h1:eiAjkaQxpDf6aLechblYKxw4SA8Rgm9lDDMfvhR6mHg=
+github.com/doug-martin/goqu/v9 v9.27.0/go.mod h1:N2bFjEJdaSS63muKeblweBurK81jQ+WSGja8gT6ykL8=
 github.com/dustin/go-humanize v1.1.0 h1:dbKTrvD0klcbBV/h4AWJdMuZogJACoMlvWIWZ5b2xWg=
 github.com/dustin/go-humanize v1.1.0/go.mod h1:hc1CvRkJMsgxqjmjMQF3QNRAZBwY8AXBAzKYoSX9sFI=
 github.com/ebitengine/purego v0.11.2 h1:WWiTx8rD8zYdOwSj8O/NiNbsOvSAgJMTlyV1XlbUSeU=
@@ -51,8 +51,8 @@ github.com/gofiber/fiber/v2 v2.52.16 h1:lBemN7sjeTPwEdK/9AIAQ3YpYpzEZefiWI/vQT/6
 github.com/gofiber/fiber/v2 v2.52.16/go.mod h1:dFf1PKExrrSfg/hvoP2yXL35W3bGlzZf71KX+IYzkpg=
 github.com/gofiber/fiber/v3 v3.7.0 h1:aF+GfB7nP9Dd0wVsv6wmr8675v66OGfjSyoDhPmvKEo=
 github.com/gofiber/fiber/v3 v3.7.0/go.mod h1:7dlbpUZ789TJg4q/VfdS1UWDtB6Fl/Smk6ZYZusMpAQ=
-github.com/gofiber/schema v1.9.5 h1:MSRaBIi0xTvhyokhNHg88B8ZhvsZk0y5R/IYrfMTfVQ=
-github.com/gofiber/schema v1.9.5/go.mod h1:scfpXbReJ8y9xKlNnrwlewJ8nIGVZZmzoHZ4i5yGxG0=
+github.com/gofiber/schema v1.10.0 h1:d/2/NpHOVD0f29aNvM3KSPmaEDLJZvxW5edtN4Ymd8U=
+github.com/gofiber/schema v1.10.0/go.mod h1:scfpXbReJ8y9xKlNnrwlewJ8nIGVZZmzoHZ4i5yGxG0=
 github.com/gofiber/utils/v2 v2.6.5 h1:rU+8ao6LKi3fKOA3sEjfLv1T+2C2IwomeVmEKaqkr4A=
 github.com/gofiber/utils/v2 v2.6.5/go.mod h1:OqPxdhDW7fPz0dupDanqf4e5O15IyFKy724y/EY9RI4=
 github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f h1:3BSP1Tbs2djlpprl7wCLuiqMaUh5SJkkzI2gDs+FgLs=
