@@ -34,6 +34,10 @@ func DeleteElems[T comparable](s []T, elems ...T) (newS []T) {
 
 // DeduplicateAndSort 移除 slice `s` 里的所有重复元素，并按升序排序。
 func DeduplicateAndSort[T cmp.Ordered](s []T) (newS []T) {
+	if len(s) == 0 {
+		return
+	}
+
 	m := make(map[T]bool)
 
 	for _, elem := range s {
