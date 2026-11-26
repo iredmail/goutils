@@ -9,6 +9,7 @@ import (
 	"github.com/miekg/dns"
 
 	"github.com/iredmail/goutils/emailutils"
+	"github.com/iredmail/goutils/slice"
 )
 
 var (
@@ -26,6 +27,10 @@ const (
 	spfDNSQueryTypePTR uint16 = 12 // RFC 1035: PTR
 	// exists 不是实际 RR type，只用于 LookupRecursiveSPF 内部标记“会触发一次 DNS 查询”。
 	spfDNSQueryTypeExists uint16 = 0
+
+	// defaultMaxSPFQueries 是 SPF 递归解析默认允许的 DNS 查询次数。
+	// RFC 7208 要求一次 SPF 求值中会触发 DNS 查询的机制/修饰符总数最多为 10。
+	defaultMaxSPFQueries = 10
 )
 
 func NewResolver(server string, timeout int) Resolver {
@@ -57,6 +62,7 @@ type Resolver interface {
 	LookupDMARC(domain string) (notfound bool, records []string, errText string)
 	LookupSPF(domain string) (notfound bool, records []string, errText string)
 	LookupRecursiveSPF(domain string, _totalQueries int, dnsType ...uint16) (notfound bool, spf []string, totalQueries int, errText string)
+	LookupRecursiveSPFIPs(domain string, maxQueries ...int) (notfound bool, ips []string, errText string)
 	LookupSRV(domain, dnsTypeStr string) (notfound bool, records []SRVRecord, errText string)
 	LookupPtr(ip string) (notfound bool, records []string, errText string)
 }
@@ -208,6 +214,158 @@ func lookupRecursiveSPF(r Resolver, domain string, _totalQueries int, dnsType ..
 			_, _, totalQueries, _ = lookupRecursiveSPF(r, after, totalQueries)
 		} else if after, ok = strings.CutPrefix(mech, "redirect="); ok {
 			_, _, totalQueries, _ = lookupRecursiveSPF(r, after, totalQueries)
+		}
+	}
+
+	return
+}
+
+func lookupRecursiveSPFIPs(r Resolver, domain string, maxQueries ...int) (notfound bool, ips []string, errText string) {
+	maxQuery := defaultMaxSPFQueries
+	if len(maxQueries) > 0 && maxQueries[0] > 0 {
+		maxQuery = maxQueries[0]
+	}
+
+	notfound, ips, _, errText = lookupSPFIPs(r, domain, 0, maxQuery)
+
+	return
+}
+
+func lookupSPFIPs(r Resolver, domain string, currentQuery, maxQuery int, dnsType ...uint16) (notfound bool, ips []string, queried int, errText string) {
+	queried = currentQuery
+	if currentQuery > maxQuery {
+		return
+	}
+
+	if len(dnsType) > 0 {
+		switch dnsType[0] {
+		case spfDNSQueryTypeA:
+			queried = currentQuery + 1
+			_, ips, _ = r.LookupA(domain)
+
+			return
+		case spfDNSQueryTypeMX:
+			// mx 机制本身会产生一次 MX 查询；即使后面没有任何 MX 主机，
+			// 这次查询也应该计入总次数。
+			queried = currentQuery + 1
+
+			_, mx, _ := r.LookupMX(domain)
+			for _, _r := range mx {
+				var ipsMX []string
+				_, ipsMX, queried, _ = lookupSPFIPs(r, _r.MX, queried, maxQuery, spfDNSQueryTypeA)
+				ips = slice.AddMissingElems(ips, ipsMX...)
+			}
+
+			return
+		case spfDNSQueryTypePTR:
+			// ptr 机制至少会触发一次 PTR 查询；这里先把这一步记入计数。
+			// 注意：完整的 PTR SPF 语义仍然依赖连接 IP，当前 API 只能做近似统计。
+			queried = currentQuery + 1
+
+			_, ptr, _ := r.LookupPtr(domain)
+			for _, p := range ptr {
+				var ipsPTR []string
+				_, ipsPTR, queried, _ = lookupSPFIPs(r, p, queried, maxQuery, spfDNSQueryTypeA)
+				ips = slice.AddMissingElems(ips, ipsPTR...)
+			}
+
+			return
+		}
+	}
+
+	queried = currentQuery + 1
+
+	var spf []string
+	notfound, spf, errText = r.LookupSPF(domain)
+
+	if notfound || len(spf) == 0 {
+		return
+	}
+
+	var after string
+	var ok bool
+	for mech := range strings.FieldsSeq(spf[0]) {
+		mech = strings.ToLower(mech)
+
+		if strings.HasPrefix(mech, "+") || strings.HasPrefix(mech, "-") ||
+			strings.HasPrefix(mech, "~") || strings.HasPrefix(mech, "?") {
+			mech = mech[1:]
+		}
+
+		if mech == "a" {
+			var ipsA []string
+			_, ipsA, queried, _ = lookupSPFIPs(r, domain, queried, maxQuery, spfDNSQueryTypeA)
+			ips = slice.AddMissingElems(ips, ipsA...)
+		} else if mech == "mx" {
+			var ipsMX []string
+			_, ipsMX, queried, _ = lookupSPFIPs(r, domain, queried, maxQuery, spfDNSQueryTypeMX)
+			ips = slice.AddMissingElems(ips, ipsMX...)
+		} else if mech == "ptr" {
+			var ipsPTR []string
+			_, ipsPTR, queried, _ = lookupSPFIPs(r, domain, queried, maxQuery, spfDNSQueryTypePTR)
+			ips = slice.AddMissingElems(ips, ipsPTR...)
+		} else if after, ok = strings.CutPrefix(mech, "a:"); ok {
+			// a:<domain>
+			// a:<domain>/<prefix-length>
+			a := after
+			split := strings.Split(a, "/")
+			if len(split) > 1 {
+				a = split[0]
+			}
+
+			if !emailutils.IsDomain(a) {
+				continue
+			}
+
+			var ipsA []string
+			_, ipsA, queried, _ = lookupSPFIPs(r, a, queried, maxQuery, spfDNSQueryTypeA)
+			ips = slice.AddMissingElems(ips, ipsA...)
+		} else if after, ok = strings.CutPrefix(mech, "mx:"); ok {
+			// mx:<domain>
+			// mx:<domain>/<prefix-length>
+			mx := after
+			split := strings.Split(mx, "/")
+			if len(split) > 1 {
+				mx = split[0]
+			}
+
+			if !emailutils.IsDomain(mx) {
+				continue
+			}
+
+			var ipsMX []string
+			_, ipsMX, queried, _ = lookupSPFIPs(r, mx, queried, maxQuery, spfDNSQueryTypeMX)
+			ips = slice.AddMissingElems(ips, ipsMX...)
+		} else if after, ok = strings.CutPrefix(mech, "ip4:"); ok {
+			// ip4:<ip4-network>
+			// ip4:<ip4-network>[/<prefix-length>]
+			ips = slice.AddMissingElems(ips, after)
+		} else if after, ok = strings.CutPrefix(mech, "ip6:"); ok {
+			// ip6:<ip6-network>
+			// ip6:<ip6-network>[/<prefix-length>]
+			ips = slice.AddMissingElems(ips, after)
+		} else if after, ok = strings.CutPrefix(mech, "ptr:"); ok {
+			// ptr:<domain-spec> 的真实语义依赖连接 IP，这里只占用一次配额。
+			_, _, queried, _ = lookupSPFIPs(r, after, queried, maxQuery, spfDNSQueryTypePTR)
+		} else if after, ok = strings.CutPrefix(mech, "exists:"); ok {
+			// exists:<domain-spec> 是 RFC 7208 里的 SPF 机制之一：
+			// 1) 先对 domain-spec 做 macro 展开；
+			// 2) 再查询展开后的域名是否“存在”可解析的 A 记录；
+			// 3) 这个动作本身会消耗一次 DNS 查询配额，必须计入上限。
+			//
+			// 但当前函数只是“递归查询次数估算器”，并没有 client IP / macro 上下文，
+			// 因此这里只做计数，不尝试做完整的 exists 匹配求值。
+			if queried < maxQuery {
+				queried++
+			}
+		} else if after, ok = strings.CutPrefix(mech, "include:"); ok {
+			var ipsInclude []string
+			_, ipsInclude, queried, _ = lookupSPFIPs(r, after, queried, maxQuery)
+			ips = slice.AddMissingElems(ips, ipsInclude...)
+		} else if after, ok = strings.CutPrefix(mech, "redirect="); ok {
+			var ipsRedirect []string
+			_, ipsRedirect, queried, _ = lookupSPFIPs(r, after, queried, maxQuery)
+			ips = slice.AddMissingElems(ips, ipsRedirect...)
 		}
 	}
 

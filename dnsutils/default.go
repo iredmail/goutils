@@ -229,6 +229,10 @@ func (dr *defaultResolver) LookupRecursiveSPF(domain string, _totalQueries int, 
 	return lookupRecursiveSPF(dr, domain, _totalQueries, dnsType...)
 }
 
+func (dr *defaultResolver) LookupRecursiveSPFIPs(domain string, maxQueries ...int) (notfound bool, ips []string, errText string) {
+	return lookupRecursiveSPFIPs(dr, domain, maxQueries...)
+}
+
 func (dr *defaultResolver) isDNSErrorNoSuchHost(err error) (v bool, e string) {
 	if err == nil {
 		return false, ""

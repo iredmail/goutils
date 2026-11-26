@@ -255,6 +255,10 @@ func (cr *customResolver) LookupRecursiveSPF(domain string, _totalQueries int, d
 	return lookupRecursiveSPF(cr, domain, _totalQueries, dnsType...)
 }
 
+func (cr *customResolver) LookupRecursiveSPFIPs(domain string, maxQueries ...int) (notfound bool, ips []string, errText string) {
+	return lookupRecursiveSPFIPs(cr, domain, maxQueries...)
+}
+
 func (cr *customResolver) exchange(domain string, dnsType uint16) (notfound bool, answers []dns.RR, errText string) {
 	msg := new(dns.Msg)
 	msg.SetQuestion(dns.Fqdn(domain), dnsType)
